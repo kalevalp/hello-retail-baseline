@@ -1,0 +1,43 @@
+{
+  "name": "hello-retail",
+  "version": "0.0.1",
+  "description": "An introduction to the event stream processing model for the purpose of implementing a retail system backbone",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive -R min ./**/*.spec.js",
+    "lint": "eslint . bin util"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nordstrom/hello-retail.git"
+  },
+  "keywords": [
+    "retail",
+    "event",
+    "stream",
+    "log",
+    "processing"
+  ],
+  "author": "Nordstrom",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Nordstrom/hello-retail/issues"
+  },
+  "homepage": "https://github.com/Nordstrom/hello-retail#readme",
+  "pre-commit": [
+    "test",
+    "lint"
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-plugin-import": "^1.16.0",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-react": "^6.4.1",
+    "mocha": "^3.0.2",
+    "pre-commit": "^1.1.3"
+  }
+}

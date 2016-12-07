@@ -1,0 +1,20 @@
+extends: airbnb
+rules:
+  max-len:
+    - error
+    - 120
+    - ignoreTrailingComments: true
+    - ignoreUrls: true
+  no-console: off
+  no-plusplus:
+    - error
+    - allowForLoopAfterthoughts: true
+  no-else-return: off
+  strict: off # doesn't work in node v4
+plugins:
+  - react
+  - jsx-a11y
+  - import
+env:
+  es6: true
+  node: true

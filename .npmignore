@@ -1,0 +1,11 @@
+# project files
+.editorconfig
+.eslintignore
+.eslintrc.yml
+.gitignore
+.travis.yml
+docs
+tests
+
+# Serverless files
+**/.serverless

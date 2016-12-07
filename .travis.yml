@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - "4.3.2"
+  - "4"
+  - "5"
+  - "6"
+before_script:
+  - 'if [ "$NPM_VERSION" ]; then npm install -g npm@^$NPM_VERSION; fi'
+  - 'npm --version'
+
+env:
+  - NPM_VERSION=2
+  - NPM_VERSION=3
