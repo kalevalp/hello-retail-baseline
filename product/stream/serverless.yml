@@ -1,0 +1,99 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: hello-retail-product-stream
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+  environment:
+    STAGE: ${self:custom.stage}
+
+resources:
+  Resources:
+    # Product Stream
+    ProductStream:
+      Type: 'AWS::Kinesis::Stream'
+      Properties:
+        Name: ${self:custom.stage}Product
+        ShardCount: 10
+    ProductStreamWriter: # role for producers
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductStreamWriter
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+#                AWS: # role ARNs that are allowed to write to the Product stream
+#                  - 'arn:aws:iam::${accountId}:role/${persFdnTeamRole}'
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: WriteToStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: Allow
+                   Action:
+                     - 'kinesis:DescribeStream'
+                     - 'kinesis:PutRecord'
+                     - 'kinesis:PutRecords'
+                   Resource:
+                     'Fn::GetAtt': [ ProductStream, Arn ]
+    ProductStreamReader: # role for consumers
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductStreamReader
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+#                AWS: # role ARNs that are allowed to write to the Product stream
+#                  - 'arn:aws:iam::${accountId}:role/${persFdnTeamRole}'
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ReadFromStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: Allow
+                   Action:
+                     - 'kinesis:DescribeStream'
+                     - 'kinesis:GetRecords'
+                     - 'kinesis:GetShardIterator'
+                     - 'kinesis:ListStreams'
+                   Resource:
+                     'Fn::GetAtt': [ ProductStream, Arn ]
+  Outputs:
+    ProductStreamArn:
+      Description: The ARN for the Product Stream
+      Value:
+        'Fn::GetAtt': [ ProductStream, Arn ]
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductStreamArn'
+    ProductStreamWriterArn:
+      Description: The ARN for the defined Role that can write events to the ProductStream
+      Value:
+        'Fn::GetAtt': [ ProductStreamWriter, Arn ]
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductStreamWriterArn'
+    ProductStreamReaderArn:
+      Description: The ARN for the defined Role that can read events from the ProductStream
+      Value:
+        'Fn::GetAtt': [ ProductStreamWriter, Arn ]
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductStreamReaderArn'
