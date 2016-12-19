@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: hello-retail-product-stream
+service: hello-retail-stream
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -17,25 +17,27 @@ provider:
 
 resources:
   Resources:
-    # Product Stream
-    ProductStream:
+    # Retail Stream
+    RetailStream:
       Type: 'AWS::Kinesis::Stream'
       Properties:
-        Name: ${self:custom.stage}Product
+        Name: ${self:custom.stage}RetailStream
         ShardCount: 10
-    ProductStreamWriter: # role for producers
+    RetailStreamWriter: # role for producers
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductStreamWriter
+        RoleName: ${self:custom.stage}RetailStreamWriter
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
-                AWS: # role ARNs that are allowed to write to the Product stream
-                  - 'arn:aws:iam::${accountId}:role/${teamRole}'
+                AWS: # role ARNs that are allowed to write to the Retail stream
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
               Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: WriteToStream
             PolicyDocument:
@@ -47,20 +49,22 @@ resources:
                      - 'kinesis:PutRecord'
                      - 'kinesis:PutRecords'
                    Resource:
-                     'Fn::GetAtt': [ ProductStream, Arn ]
-    ProductStreamReader: # role for consumers
+                     'Fn::GetAtt': [ RetailStream, Arn ]
+    RetailStreamReader: # role for consumers
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductStreamReader
+        RoleName: ${self:custom.stage}RetailStreamReader
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
-                AWS: # role ARNs that are allowed to write to the Product stream
-                  - 'arn:aws:iam::${accountId}:role/${teamRole}'
+                AWS: # role ARNs that are allowed to write to the Retail stream
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
               Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: ReadFromStream
             PolicyDocument:
@@ -73,23 +77,23 @@ resources:
                      - 'kinesis:GetShardIterator'
                      - 'kinesis:ListStreams'
                    Resource:
-                     'Fn::GetAtt': [ ProductStream, Arn ]
+                     'Fn::GetAtt': [ RetailStream, Arn ]
   Outputs:
-    ProductStreamArn:
-      Description: The ARN for the Product Stream
+    RetailStreamArn:
+      Description: The ARN for the Retail Stream
       Value:
-        'Fn::GetAtt': [ ProductStream, Arn ]
+        'Fn::GetAtt': [ RetailStream, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductStreamArn'
-    ProductStreamWriterArn:
-      Description: The ARN for the defined Role that can write events to the ProductStream
+        Name: '${self:service}:${self:custom.stage}:RetailStreamArn'
+    RetailStreamWriterArn:
+      Description: The ARN for the defined Role that can write events to the RetailStream
       Value:
-        'Fn::GetAtt': [ ProductStreamWriter, Arn ]
+        'Fn::GetAtt': [ RetailStreamWriter, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductStreamWriterArn'
-    ProductStreamReaderArn:
-      Description: The ARN for the defined Role that can read events from the ProductStream
+        Name: '${self:service}:${self:custom.stage}:RetailStreamWriterArn'
+    RetailStreamReaderArn:
+      Description: The ARN for the defined Role that can read events from the RetailStream
       Value:
-        'Fn::GetAtt': [ ProductStreamWriter, Arn ]
+        'Fn::GetAtt': [ RetailStreamReader, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductStreamReaderArn'
+        Name: '${self:service}:${self:custom.stage}:RetailStreamReaderArn'
