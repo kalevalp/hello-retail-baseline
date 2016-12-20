@@ -4,7 +4,7 @@ service: hello-retail-stream
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../../private.yml)}
+  private: ${file(../private.yml)}
 
 provider:
   name: aws
@@ -79,6 +79,12 @@ resources:
                    Resource:
                      'Fn::GetAtt': [ RetailStream, Arn ]
   Outputs:
+    RetailStreamName:
+      Description: The Name of the Retail Stream
+      Value:
+        Ref: RetailStream
+      Export:
+        Name: '${self:service}:${self:custom.stage}:RetailStreamName'
     RetailStreamArn:
       Description: The ARN for the Retail Stream
       Value:
