@@ -2,7 +2,7 @@
 
 root = true  ; top-most EditorConfig file
 
-; Unix-style newlines with a newline ending every file
+; Unix-style newlines with a newline ending every file, except md
 [*]
 charset = utf-8
 end_of_line = lf
@@ -10,3 +10,6 @@ indent_size = 2
 indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
