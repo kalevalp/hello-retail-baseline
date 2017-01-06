@@ -10,9 +10,8 @@ System Diagram:
 <img
   src="cloudcraft-hello-retail.png"
   alt="System Diagram depicting the produce, collect, distribute, consume pattern"
-  style="width:864px;height:500px"
+  style="width:860px;height:500px"
  />
-<!-- original size style="width:1984px;height:1147px" -->
 
 Reference:  
 1. <a href='retail-stream-ingress.json'>Ingress Event Schema</a>  
