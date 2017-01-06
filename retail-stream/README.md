@@ -10,7 +10,7 @@ System Diagram:
 <img
   src="cloudcraft-hello-retail.png"
   alt="System Diagram depicting the produce, collect, distribute, consume pattern"
-  style="width:860px;height:500px"
+  style="width:861px;height:500px"
  />
 
 Reference:  
