@@ -9,12 +9,7 @@
   "type": "object",
   "properties": {
     "schema":      { "type": "string", "format": "url" },
-    "precursors": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
+    "followsFrom": { "type": "string" },
     "origin":      { "type": "string" },
     "timeOrigin":  { "type": "string", "format": "date-time" },
     "data": {

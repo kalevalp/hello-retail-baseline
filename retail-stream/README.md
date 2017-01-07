@@ -27,15 +27,12 @@ For details, please see the <a href='retail-stream-ingress.json'>Ingress Schema<
 
 ```
 {
-  schema:     <string>      // see *1 below
-  precursors: [             // optional, see *2 below
-    <string>,
-    ...
-  ]
-  origin:     <string>      // see *3 below
-  timeOrigin: <date-time>   // local originator time stamp
-  data: {                   // an arbitrary object with a schema declaration
-    schema:   <url>,        // see *1 below (again)
+  schema:       <string>      // see *1 below
+  followsFrom:  <string>      // optional, see *2 below
+  origin:       <string>      // see *3 below
+  timeOrigin:   <date-time>   // local originator time stamp
+  data: {                     // an arbitrary object with a schema declaration
+    schema:     <url>,        // see *1 below (again)
     ...
   }
 }
@@ -48,11 +45,9 @@ For details, please see the <a href='retail-stream-ingress.json'>Ingress Schema<
 // see http://jsonschema.net/
 
 // *2
-// array of eventIds for immediate precursor events
-// please do not build up an exhaustive history, only direct precursors are necessary
+// an optional eventId for an event which is the direct precursor of this event
 // these will be used to identify and calculate providence throughout the system
-// this provides the ability to build a trace of events flowing through the system
-// other advantages exist to providing precursors
+// As such traces and other useful analyses may be performed
 
 // *3
 // please supply a unique ID.
@@ -64,9 +59,7 @@ For details, please see the <a href='retail-stream-ingress.json'>Ingress Schema<
 ```
 {
   schema:      "com.company/retail-stream/1-0-0",
-  precursors: [
-    "shardId-000000000000:12345678901234567890123456789012345678901234567890123456"
-  ]
+  followsFrom: "shardId-000000000000:12345678901234567890123456789012345678901234567890123456",
   origin:      "merchant/12345678-1234-4123-a123-123456789012",
   timeOrigin:  "1234-12-12T12:34:56.01Z",
   data: {
@@ -83,10 +76,7 @@ For details, please see the <a href='retail-stream-egress.json'>Egress Schema</a
 ```
 {
   schema:       <url>       // [as above] see ingress comment *1
-  precursors: [             // [as above] optional, see ingress comment *2
-    <string>,
-    ...
-  ]
+  followsFrom:  <string>    // [as above] optional, see ingress comment *2
   eventId:      <string>    // a unique ID for this specific event
   origin:       <string>    // [as above] see ingress comment *3
   timeOrigin:   <date-time> // [as above] local originator time stamp
@@ -103,10 +93,8 @@ For details, please see the <a href='retail-stream-egress.json'>Egress Schema</a
 ```
 {
   schema:       "com.company/retail-stream/1-0-0",
-  precursors: [
-    "shardId-000000000000:12345678901234567890123456789012345678901234567890123456"
-  ]
-  eventID:      "shardId-000000000000:12345678901234567890123456789012345678901234567890123456",
+  followsFrom:  "shardId-000000000000:12345678901234567890123456789012345678901234567890123456",
+  eventID:      "shardId-000000000001:12345678901234567890123456789012345678901234567890123456",
   origin:       "merchant/12345678-1234-4123-a123-123456789012",
   timeOrigin:   "1234-12-12T12:34:56.01Z",
   timeIngest:   "1234-12-12T12:34:56.01Z",
