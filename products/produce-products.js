@@ -32,7 +32,7 @@ exports.handler = (event, context, callback) => {
 
         let newProduct = createEnvelopeEvent();
         newProduct.data = {
-          schema: 'com.nordstrom/product-create/1-0-0',
+          schema: 'com.nordstrom/product/create/1-0-0',
           id: product.Id.toString(),
           brand: product.Brand.Label,
           name: product.Title,

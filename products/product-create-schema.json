@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/schema#",
   "self": {
     "vendor": "com.nordstrom",
-    "name": "product-create",
+    "name": "product/create",
     "format": "jsonschema",
     "version": "1-0-0"
   },
@@ -13,13 +13,15 @@
     "brand":  { "type": "string" },
     "name":  { "type": "string" },
     "description": { "type": "string" },
+    "category": { "type": "string"},
   },
   "required": [
     "schema",
     "id",
     "brand",
     "name",
-    "description"
+    "description",
+    "category",
   ],
   "additionalProperties": false
 }
