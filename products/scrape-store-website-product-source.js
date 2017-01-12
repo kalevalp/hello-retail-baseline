@@ -3,22 +3,38 @@
 const http = require('http');
 
 exports.ProductSource = function ProductSource() {
-  let productCache = [];
+  const nordstromStoreHost = 'shop.nordstrom.com';
+  const siteMapPagePath = '/c/sitemap';
+  const productCache = [];
+
   let categoryList;
   let categoryIndex = 0;
   let productPage = 1;
 
-  const nordstromStoreHost = 'shop.nordstrom.com';
-  const siteMapPagePath = '/c/sitemap';
+  function fetchPageContent(host, path, callback) {
+    http.get({
+      host,
+      path,
+    }, (response) => {
+      let body = '';
+
+      response.on('data', (data) => {
+        body += data;
+      });
+
+      response.on('end', () => {
+        callback(body);
+      });
+    });
+  }
 
   function scrapeProductsFromCategoryPage(categoryInfo, pageIndex, callback) {
-    fetchPageContent(nordstromStoreHost, categoryInfo.path + '?page=' + pageIndex, function(body) {
+    fetchPageContent(nordstromStoreHost, `${categoryInfo.path}?page=${pageIndex}`, (body) => {
       const productRenderRegEx = /ProductResultsDesktop\.ProductResults,(.*)\),/g;
 
-      //console.log(body);
-      let matches = productRenderRegEx.exec(body);
-      if(matches && matches.length > 1) {
-        let products = JSON.parse(matches[1]);
+      const matches = productRenderRegEx.exec(body);
+      if (matches && matches.length > 1) {
+        const products = JSON.parse(matches[1]);
 
         callback(products.data.ProductResult.ProductData);
       } else {
@@ -27,48 +43,24 @@ exports.ProductSource = function ProductSource() {
     });
   }
 
-  function fetchPageContent(host, path, callback) {
-    //console.log({host,path});
-
-    http.get({
-      host,
-      path,
-    }, function(response) {
-      let body = '';
-
-      response.on('data', function(data) {
-        body += data;
-      });
-
-      response.on('end', function() {
-        callback(body);
-      })
-    })
-  }
-
   function scrapeAllCategories(callback) {
-    /*
-     For the brand index page, the initial HTML response contains links to the individual brand pages.
-     */
-
-    fetchPageContent(nordstromStoreHost, siteMapPagePath, function (body) {
-      // List of link "brands" which are not really brands.
-      const nonCategories = [
-
-      ];
-
+    fetchPageContent(nordstromStoreHost, siteMapPagePath, (body) => {
+      const nonCategories = [];
+      /* eslint no-useless-escape: 0 */
       const codeRenderingProductsRegEx = /<a href="(http:[\/.a-zA-Z0-9\-]+)" title="(.+)"></g;
-      const codeRenderingProductsRegExSingle = /<a href="http:\/\/shop.nordstrom.com([\/.a-zA-Z0-9\-]+)" title="(.+)"></;
-      let linkMatches = body.match(codeRenderingProductsRegEx);
-      let categories = [];
+      const codeRenderingProductsRegExSingle =
+        /<a href="http:\/\/shop.nordstrom.com([\/.a-zA-Z0-9\-]+)" title="(.+)"></;
+      /* eslint no-useless-escape: 0 */
+      const linkMatches = body.match(codeRenderingProductsRegEx);
+      const categories = [];
 
-      linkMatches.forEach(function(link) {
-        let linkResult = codeRenderingProductsRegExSingle.exec(link);
-        let categoryPath = linkResult[1];
-        let categoryName = linkResult[2]
+      linkMatches.forEach((link) => {
+        const linkResult = codeRenderingProductsRegExSingle.exec(link);
+        const categoryPath = linkResult[1];
+        const categoryName = linkResult[2];
 
         // Make sure this brand is not contained in the list of non-brands
-        if(nonCategories.indexOf(categoryName) != -1) return;
+        if (nonCategories.indexOf(categoryName) !== -1) return;
 
         categories.push({
           name: categoryName,
@@ -83,60 +75,58 @@ exports.ProductSource = function ProductSource() {
 
   function loadMoreProducts(callback, category) {
     console.log('loading more products...');
-    console.log(category)
-    scrapeProductsFromCategoryPage(categoryList[categoryIndex], productPage, function(result) {
-      if(Object.keys(result).length === 0) {
+    console.log(category);
+
+    scrapeProductsFromCategoryPage(categoryList[categoryIndex], productPage, (result) => {
+      if (Object.keys(result).length === 0) {
         // No products on this page, check next brand.
         categoryIndex++;
         productPage = 1;
 
-        if(categoryIndex >= categoryList.length) {
-          throw new Error(`Ran out of brands! ${categoryList.length} brands available.`);
+        if (categoryIndex >= categoryList.length) {
+          throw new Error(`Ran out of categories! ${categoryList.length} categories processed total.`);
         }
 
         loadMoreProducts(callback, categoryList[categoryIndex]);
       } else {
-        console.log(Object.keys(result).length);
         productPage++;
 
-        Object.keys(result).forEach(function(productId) {
-          result[productId].category = category.name;
+        Object.keys(result).forEach((productId) => {
+          result[productId].category = category.name; // eslint-disable-line no-param-reassign
           productCache.push(result[productId]);
         });
 
         callback();
       }
-
     });
   }
 
-  function nextProduct(callback) {
-    updateBrands(function(listOfCategories) {
-      if(!categoryList) {
-        categoryList = listOfCategories;
-      }
-
-      if(productCache.length > 0) {
-        callback(productCache.pop());
-      } else {
-        loadMoreProducts(function() {
-          callback(productCache.pop());
-        }, categoryList[categoryIndex]);
-      }
-    });
-  }
-
-  function updateBrands(callback) {
-
-    if(!categoryList) {
-      console.log('updatingBrands...')
+  function updateCategories(callback) {
+    if (!categoryList) {
+      console.log('updatingBrands...');
       scrapeAllCategories(callback);
     } else {
       callback(categoryList);
     }
   }
 
+  function nextProduct(callback) {
+    updateCategories((listOfCategories) => {
+      if (!categoryList) {
+        categoryList = listOfCategories;
+      }
+
+      if (productCache.length > 0) {
+        callback(productCache.pop());
+      } else {
+        loadMoreProducts(() => {
+          callback(productCache.pop());
+        }, categoryList[categoryIndex]);
+      }
+    });
+  }
+
   return {
-    nextProduct
+    nextProduct,
   };
-}
+};

@@ -1,7 +1,4 @@
-"use strict";
-
-console.log(JSON.stringify(process.env,null,2));
-
+'use strict';
 
 const AWS = require('aws-sdk');
 const ProductSource = require('./scrape-store-website-product-source').ProductSource;
@@ -15,56 +12,54 @@ function createEnvelopeEvent() {
 }
 
 exports.handler = (event, context, callback) => {
-    let ps = new ProductSource();
-    let productCount = 0;
-    let errorCount = 0;
+  const ps = new ProductSource();
+  let productCount = 0;
+  let errorCount = 0;
 
-    const kinesis = new AWS.Kinesis();
+  const kinesis = new AWS.Kinesis();
 
-    kinesis.config.credentials = new AWS.TemporaryCredentials({
-      RoleArn: process.env.STREAM_WRITER_ROLE,
-    });
+  kinesis.config.credentials = new AWS.TemporaryCredentials({
+    RoleArn: process.env.STREAM_WRITER_ROLE,
+  });
 
 
-    let oneProductInterval = setInterval(function() {
-      ps.nextProduct(function(product) {
-        console.log(product);
+  const oneProductInterval = setInterval(() => {
+    ps.nextProduct((product) => {
+      const newProduct = createEnvelopeEvent();
+      newProduct.data = {
+        schema: 'com.nordstrom/product/create/1-0-0',
+        id: product.Id.toString(),
+        brand: product.Brand.Label,
+        name: product.Title,
+        description: `PAGE:${product.ProductPageUrl}`,
+        category: product.category,
+      };
 
-        let newProduct = createEnvelopeEvent();
-        newProduct.data = {
-          schema: 'com.nordstrom/product/create/1-0-0',
-          id: product.Id.toString(),
-          brand: product.Brand.Label,
-          name: product.Title,
-          description: `PAGE:${product.ProductPageUrl}`,
-          category: product.category,
-        };
+      console.log(newProduct);
 
-        console.log(newProduct);
+      const newProductCreatedEvent = {
+        Data: JSON.stringify(newProduct),
+        PartitionKey: `${newProduct.Id}`,
+        StreamName: process.env.STREAM_NAME,
+      };
 
-        let newProductCreatedEvent = {
-          Data: JSON.stringify(newProduct),
-          PartitionKey: `${newProduct.Id}`,
-          StreamName: process.env.STREAM_NAME,
-        };
+      kinesis.putRecord(newProductCreatedEvent, (err, data) => {
+        productCount++;
 
-        kinesis.putRecord(newProductCreatedEvent, function(err, data) {
-          productCount++;
+        if (data) {
+          console.log(data);
+        }
 
-          if(data) {
-            console.log(data);
-          }
-
-          if (err) {
-            errorCount++;
-            console.error(err);
-          }
-        });
+        if (err) {
+          errorCount++;
+          console.error(err);
+        }
       });
-    }, event.productFrequency);
+    });
+  }, event.productFrequency);
 
-    let lambdaTimeout = setTimeout(function() {
-      clearInterval(oneProductInterval);
-      callback(null, `${productCount} products produced, ${errorCount} errors`);
-    }, event.lambdaTimeout);
+  setTimeout(() => {
+    clearInterval(oneProductInterval);
+    callback(null, `${productCount} products produced, ${errorCount} errors`);
+  }, event.lambdaTimeout);
 };

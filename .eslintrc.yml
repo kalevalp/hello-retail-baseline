@@ -6,11 +6,9 @@ rules:
     - ignoreTrailingComments: true
     - ignoreUrls: true
   no-console: off
-  no-plusplus:
-    - error
-    - allowForLoopAfterthoughts: true
   no-else-return: off
   strict: off # doesn't work in node v4
+  no-plusplus: off
 plugins:
   - react
   - jsx-a11y
