@@ -28,7 +28,7 @@ exports.handler = (event, context, callback) => {
       const newProduct = createEnvelopeEvent();
       newProduct.data = {
         schema: 'com.nordstrom/product/create/1-0-0',
-        id: product.Id.toString(),
+        id: product.id.toString(),
         brand: product.Brand.Label,
         name: product.Title,
         description: `PAGE:${product.ProductPageUrl}`,

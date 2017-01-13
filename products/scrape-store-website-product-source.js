@@ -74,8 +74,8 @@ exports.ProductSource = function ProductSource() {
 
 
   function loadMoreProducts(callback, category) {
-    console.log('loading more products...');
-    console.log(category);
+    console.log(`${Date.now()} loading more products...`);
+    console.log(`${Date.now()} ${category}`);
 
     scrapeProductsFromCategoryPage(categoryList[categoryIndex], productPage, (result) => {
       if (Object.keys(result).length === 0) {
@@ -103,7 +103,7 @@ exports.ProductSource = function ProductSource() {
 
   function updateCategories(callback) {
     if (!categoryList) {
-      console.log('updatingBrands...');
+      console.log(`${Date.now()} updatingBrands...`);
       scrapeAllCategories(callback);
     } else {
       callback(categoryList);
