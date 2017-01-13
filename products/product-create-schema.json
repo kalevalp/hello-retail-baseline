@@ -13,7 +13,7 @@
     "brand":  { "type": "string" },
     "name":  { "type": "string" },
     "description": { "type": "string" },
-    "category": { "type": "string"},
+    "category": { "type": "string" }
   },
   "required": [
     "schema",
@@ -21,7 +21,7 @@
     "brand",
     "name",
     "description",
-    "category",
+    "category"
   ],
   "additionalProperties": false
 }
