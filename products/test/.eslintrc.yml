@@ -1,0 +1,7 @@
+rules:
+  import/no-extraneous-dependencies: off
+  func-names: off
+  prefer-arrow-callback: off
+  no-unused-expressions: off
+env:
+  mocha: true
