@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive -R min ./**/*.spec.js",
-    "lint": "eslint . bin util"
+    "lint": "eslint . bin util",
+    "test:scrape": "node ./products/test/scrape-products-exec.js"
   },
   "repository": {
     "type": "git",

@@ -17,7 +17,7 @@ provider:
 
 functions:
   scrapeProducts:
-    handler: 'produce-products.handler'
+    handler: 'test/scrape-products.handler'
     environment:
       STREAM_WRITER_ROLE:
         'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamWriterArn'

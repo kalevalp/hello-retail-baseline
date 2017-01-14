@@ -8,22 +8,24 @@ const Serverless = require('./serverless-fx');
 const url = require('url');
 const yaml = require('js-yaml');
 
-const secrets = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', 'private.yml'), 'utf8'));
+const secrets = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', '..', 'private.yml'), 'utf8'));
 
 const event = require('./event.json');
-const targetHandler = require('./produce-products.js').handler;
+const targetHandler = require('./scrape-products.js').handler;
 
 const PROXY_SERVER = secrets.proxyServer;
 const AWS_REGION = secrets.region;
 const AWS_PROFILE = secrets.profile;
 
-aws0.config.httpOptions.agent = new HttpsProxyAgent(url.parse(PROXY_SERVER));
 aws0.config.region = AWS_REGION;
 aws0.config.credentials = new aws0.SharedIniFileCredentials({ profile: AWS_PROFILE });
+if (PROXY_SERVER) {
+  aws0.config.httpOptions.agent = new HttpsProxyAgent(url.parse(PROXY_SERVER));
+}
 
 const serverless = new Serverless({
   interactive: false,
-  servicePath: __dirname,
+  servicePath: path.join(__dirname, '..'),
 });
 
 serverless.init()

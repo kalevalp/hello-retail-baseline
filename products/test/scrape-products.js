@@ -22,13 +22,12 @@ exports.handler = (event, context, callback) => {
     RoleArn: process.env.STREAM_WRITER_ROLE,
   });
 
-
   const oneProductInterval = setInterval(() => {
     ps.nextProduct((product) => {
       const newProduct = createEnvelopeEvent();
       newProduct.data = {
         schema: 'com.nordstrom/product/create/1-0-0',
-        id: product.id.toString(),
+        id: product.Id.toString(),
         brand: product.Brand.Label,
         name: product.Title,
         description: `PAGE:${product.ProductPageUrl}`,
@@ -39,7 +38,7 @@ exports.handler = (event, context, callback) => {
 
       const newProductCreatedEvent = {
         Data: JSON.stringify(newProduct),
-        PartitionKey: `${newProduct.Id}`,
+        PartitionKey: `${newProduct.id}`,
         StreamName: process.env.STREAM_NAME,
       };
 
