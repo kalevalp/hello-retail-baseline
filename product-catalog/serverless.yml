@@ -1,0 +1,173 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: hello-retail-product-catalog
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../private.yml)}
+  productCatalogVersion: 1
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  catalog:
+    role:
+      'Fn::GetAtt': [ ProductCatalogReaderWriter, Arn ]
+    handler: catalog.processEvent
+    environment:
+      STAGE: ${self:custom.stage}
+      STREAM_ARN:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+      STREAM_ROLE_ARN:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+      TABLE_PRODUCT_CATALOG_NAME:
+        Ref: ProductCatalog
+    events:
+      - stream:
+          arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
+#            'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+          enabled: true
+          startingPosition: 'TRIM_HORIZON'
+
+resources:
+  Resources:
+    # Log Group
+    CatalogLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/hello-retail-product-catalog-dev-catalog'
+        RetentionInDays: 7
+    # Product Catalog
+    ProductCatalog:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: '${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}'
+    ProductCatalogReaderWriter: # role for this Lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductCatalogReaderWriter
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to write to the Product Catalog
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ CatalogLogGroup, Arn ]
+                        - '*'
+          - PolicyName: ReadFromKinesis
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'kinesis:GetRecords'
+                    - 'kinesis:GetShardIterator'
+                    - 'kinesis:DescribeStream'
+                    - 'kinesis:ListStreams'
+                  Resource:
+                    'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+          - PolicyName: ReadFromCatalog
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamo:GetItem'
+                     - 'dynamodb:BatchGetItem'
+                     - 'dynamodb:PutItem'
+                     - 'dynamodb:DeleteItem'
+                     - 'dynamodb:BatchWriteItem'
+                     - 'dynamodb:UpdateItem'
+                     - 'dynamodb:Query'
+                     - 'dynamodb:Scan'
+                   Resource:
+                    'Fn::Join':
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: ProductCatalog
+    ProductCatalogReader: # role for consumers of the catalog
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductCatalogReader
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: # role ARNs that are allowed to read from the Product Catalog
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: ReadFromCatalog
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamo:GetItem'
+                     - 'dynamo:BatchGetItem'
+                   Resource:
+                    'Fn::Join':
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: ProductCatalog
+  Outputs:
+    ProductCatalogName:
+      Description: The Name of the Product Catalog Table
+      Value:
+        Ref: ProductCatalog
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogName'
+    ProductCatalogArn:
+      Description: The ARN for the Product Catalog Table
+      Value:
+        'Fn::Join':
+          - '/'
+          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+            - Ref: ProductCatalog
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogArn'
+    ProductCatalogReaderArn:
+      Description: The ARN for a Product Catalog Reader Role
+      Value:
+        'Fn::GetAtt': [ ProductCatalogReader, Arn ]
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogReaderArn'
