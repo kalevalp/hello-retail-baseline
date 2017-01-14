@@ -43,14 +43,14 @@ exports.handler = (event, context, callback) => {
       };
 
       kinesis.putRecord(newProductCreatedEvent, (err, data) => {
-        productCount++;
+        productCount += 1;
 
         if (data) {
           console.log(data);
         }
 
         if (err) {
-          errorCount++;
+          errorCount += 1;
           console.error(err);
         }
       });

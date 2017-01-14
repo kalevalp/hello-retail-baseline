@@ -80,7 +80,7 @@ exports.ProductSource = function ProductSource() {
     scrapeProductsFromCategoryPage(categoryList[categoryIndex], productPage, (result) => {
       if (Object.keys(result).length === 0) {
         // No products on this page, check next brand.
-        categoryIndex++;
+        categoryIndex += 1;
         productPage = 1;
 
         if (categoryIndex >= categoryList.length) {
@@ -89,7 +89,7 @@ exports.ProductSource = function ProductSource() {
 
         loadMoreProducts(callback, categoryList[categoryIndex]);
       } else {
-        productPage++;
+        productPage += 1;
 
         Object.keys(result).forEach((productId) => {
           result[productId].category = category.name; // eslint-disable-line no-param-reassign
