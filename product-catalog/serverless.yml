@@ -49,6 +49,18 @@ resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
+        GlobalSecondaryIndexes:
+          -
+            IndexName: Categories
+            KeySchema:
+              -
+                AttributeName: category
+                KeyType: hash
+            Projection:
+              ProjectionType: KEYS_ONLY
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
         KeySchema:
           - AttributeName: id
             KeyType: HASH
@@ -144,6 +156,7 @@ resources:
                    Action:
                      - 'dynamo:GetItem'
                      - 'dynamo:BatchGetItem'
+                     - 'dynamo:Query'
                    Resource:
                     'Fn::Join':
                       - '/'
