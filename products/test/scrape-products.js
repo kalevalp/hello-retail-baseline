@@ -2,19 +2,13 @@
 
 const AWS = require('aws-sdk');
 const ProductSource = require('./scrape-store-website-product-source').ProductSource;
-
-function createEnvelopeEvent() {
-  return {
-    schema: 'com.nordstrom/retail-stream/1-0-0',
-    origin: 'hello-retail/product-producer-automation',
-    timeOrigin: new Date().toISOString(),
-  };
-}
+const Product = require('../product');
+const ProductEvents = require('../product-events');
 
 exports.handler = (event, context, callback) => {
   const ps = new ProductSource();
-  let productCount = 0;
-  let errorCount = 0;
+  const productCount = 0;
+  const errorCount = 0;
 
   const kinesis = new AWS.Kinesis();
 
@@ -23,37 +17,16 @@ exports.handler = (event, context, callback) => {
   });
 
   const oneProductInterval = setInterval(() => {
-    ps.nextProduct((product) => {
-      const newProduct = createEnvelopeEvent();
-      newProduct.data = {
-        schema: 'com.nordstrom/product/create/1-0-0',
-        id: product.Id.toString(),
-        brand: product.Brand.Label,
-        name: product.Title,
-        description: `PAGE:${product.ProductPageUrl}`,
-        category: product.category,
-      };
+    ps.nextProduct((scraped) => {
+      const product = new Product(
+        scraped.Id.toString(),
+        scraped.Title,
+        scraped.Brand.Label,
+        scraped.category,
+        `PAGE:${scraped.ProductPageUrl}`
+      );
 
-      console.log(newProduct);
-
-      const newProductCreatedEvent = {
-        Data: JSON.stringify(newProduct),
-        PartitionKey: `${newProduct.id}`,
-        StreamName: process.env.STREAM_NAME,
-      };
-
-      kinesis.putRecord(newProductCreatedEvent, (err, data) => {
-        productCount += 1;
-
-        if (data) {
-          console.log(data);
-        }
-
-        if (err) {
-          errorCount += 1;
-          console.error(err);
-        }
-      });
+      ProductEvents.sendCreateEvent(product);
     });
   }, event.productFrequency);
 
