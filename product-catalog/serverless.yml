@@ -49,6 +49,10 @@ resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
+          - AttributeName: category
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
@@ -56,6 +60,21 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: '${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}'
+        GlobalSecondaryIndexes:
+          - IndexName: Category
+            KeySchema:
+              - AttributeName: category
+                KeyType: hash
+              - AttributeName: name
+                KeyType: range
+            Projection:
+              ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - brand
+              - description
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
     ProductCatalogReaderWriter: # role for this Lambda
       Type: AWS::IAM::Role
       Properties:
