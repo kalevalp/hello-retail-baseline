@@ -68,7 +68,10 @@ resources:
               - AttributeName: name
                 KeyType: range
             Projection:
-              ProjectionType: KEYS_ONLY
+              ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - brand
+              - description
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
