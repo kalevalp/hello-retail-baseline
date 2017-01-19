@@ -40,7 +40,7 @@ resources:
     CatalogLogGroup:
       Type: 'AWS::Logs::LogGroup'
       Properties:
-        LogGroupName: '/aws/lambda/hello-retail-product-catalog-dev-catalog'
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-catalog'
         RetentionInDays: 7
     # Product Catalog
     ProductCatalog:
