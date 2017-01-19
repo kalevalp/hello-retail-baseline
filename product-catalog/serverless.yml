@@ -54,8 +54,6 @@ resources:
         KeySchema:
           - AttributeName: category
             KeyType: HASH
-          - AttributeName: category
-            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
@@ -81,14 +79,14 @@ resources:
           - IndexName: Category
             KeySchema:
               - AttributeName: category
-                KeyType: hash
+                KeyType: HASH
               - AttributeName: name
-                KeyType: range
+                KeyType: RANGE
             Projection:
               ProjectionType: INCLUDE
-            NonKeyAttributes:
-              - brand
-              - description
+              NonKeyAttributes:
+                - brand
+                - description
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
