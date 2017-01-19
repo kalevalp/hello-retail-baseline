@@ -25,6 +25,7 @@ const constants = {
   // methods
   METHOD_PUT_PRODUCT: 'putProduct',
   // resources
+  TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
 };
 
@@ -44,12 +45,60 @@ const impl = {
    *     "category": "Socks for Men"
    *   }
    * }
-   * @param product The product to put in the catalog.
+   * @param event The product to put in the catalog.
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putProduct: (event, complete) => {
     const updated = Date.now();
-    const dbParams = {
+    let priorErr;
+    const updateCallback = (err) => {
+      if (priorErr === undefined) { // first update result
+        if (err) {
+          priorErr = err;
+        } else {
+          priorErr = false;
+        }
+      } else if (priorErr && err) { // second update result, if an error was previously received and we have a new one
+        complete(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - errors updating DynamoDb: ${[priorErr, err]}`);
+      } else if (priorErr || err) {
+        complete(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - error updating DynamoDb: ${priorErr || err}`);
+      } else { // second update result if error was not previously seen
+        complete();
+      }
+    };
+    const dbParamsCategory = {
+      TableName: constants.TABLE_PRODUCT_CATEGORY_NAME,
+      Key: {
+        category: event.data.category,
+      },
+      UpdateExpression: [
+        'set',
+        '#c=if_not_exists(#c,:c),',
+        '#cb=if_not_exists(#cb,:cb),',
+        '#u=:u,',
+        '#ub=:ub,',
+        '#cat=:cat',
+      ].join(' '),
+      ExpressionAttributeNames: {
+        '#c': 'created',
+        '#cb': 'createdBy',
+        '#u': 'updated',
+        '#ub': 'updatedBy',
+        '#cat': 'category',
+      },
+      ExpressionAttributeValues: {
+        ':c': updated,
+        ':cb': event.origin,
+        ':u': updated,
+        ':ub': event.origin,
+        ':cat': event.data.category,
+      },
+      ReturnValues: 'NONE',
+      ReturnConsumedCapacity: 'NONE',
+      ReturnItemCollectionMetrics: 'NONE',
+    };
+    dynamo.update(dbParamsCategory, updateCallback);
+    const dbParamsProduct = {
       TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
       Key: {
         id: event.data.id,
@@ -89,13 +138,7 @@ const impl = {
       ReturnConsumedCapacity: 'NONE',
       ReturnItemCollectionMetrics: 'NONE',
     };
-    dynamo.update(dbParams, (err) => {
-      if (err) {
-        complete(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - error updating DynamoDb: ${err}`);
-      } else {
-        complete();
-      }
-    });
+    dynamo.update(dbParamsProduct, updateCallback);
   },
   /**
    * Process the given event, reporting failure or success to the given callback

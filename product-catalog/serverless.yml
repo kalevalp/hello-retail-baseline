@@ -25,6 +25,8 @@ functions:
         'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
       STREAM_ROLE_ARN:
         'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+      TABLE_PRODUCT_CATEGORY_NAME:
+        Ref: ProductCategory
       TABLE_PRODUCT_CATALOG_NAME:
         Ref: ProductCatalog
     events:
@@ -42,7 +44,22 @@ resources:
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-catalog'
         RetentionInDays: 7
-    # Product Catalog
+    # Product Catalog Tables
+    ProductCategory:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: category
+            AttributeType: S
+        KeySchema:
+          - AttributeName: category
+            KeyType: HASH
+          - AttributeName: category
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: '${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}'
     ProductCatalog:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -75,7 +92,8 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
-    ProductCatalogReaderWriter: # role for this Lambda
+    # Product Catalog Roles
+    ProductCatalogReaderWriter: # role for the Catalog (Maintaining) Lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
@@ -120,20 +138,21 @@ resources:
                     - 'kinesis:ListStreams'
                   Resource:
                     'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
-          - PolicyName: ReadFromCatalog
+          - PolicyName: WriteToCatalog
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamo:GetItem'
-                     - 'dynamodb:BatchGetItem'
-                     - 'dynamodb:PutItem'
-                     - 'dynamodb:DeleteItem'
-                     - 'dynamodb:BatchWriteItem'
                      - 'dynamodb:UpdateItem'
-                     - 'dynamodb:Query'
-                     - 'dynamodb:Scan'
+                   Resource:
+                    'Fn::Join':
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: ProductCategory
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamodb:UpdateItem'
                    Resource:
                     'Fn::Join':
                       - '/'
@@ -161,6 +180,14 @@ resources:
               Statement:
                 -  Effect: 'Allow'
                    Action:
+                     - 'dynamodb:Query'
+                   Resource:
+                    'Fn::Join':
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: ProductCategory
+                -  Effect: 'Allow'
+                   Action:
                      - 'dynamo:GetItem'
                      - 'dynamo:BatchGetItem'
                    Resource:
@@ -168,14 +195,39 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamo:Query'
+                   Resource:
+                    'Fn::Join':
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: ProductCatalog
+                        - index
+                        - Category
   Outputs:
-    ProductCatalogName:
+    ProductCategoryTableName:
+      Description: The Name of the Product Catalog Table
+      Value:
+        Ref: ProductCategory
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableName'
+    ProductCategoryTableArn:
+      Description: The ARN for the Product Catalog Table
+      Value:
+        'Fn::Join':
+          - '/'
+          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+            - Ref: ProductCategory
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableArn'
+    ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogName'
-    ProductCatalogArn:
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableName'
+    ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
         'Fn::Join':
@@ -183,9 +235,20 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogArn'
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableArn'
+    ProductCatalogTableCategoryIndexArn:
+      Description: The ARN for the Product Catalog Table's Category Index
+      Value:
+        'Fn::Join':
+          - '/'
+          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+            - Ref: ProductCatalog
+            - index
+            - Category
+      Export:
+        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn'
     ProductCatalogReaderArn:
-      Description: The ARN for a Product Catalog Reader Role
+      Description: The Role ARN for a Product Catalog Reader
       Value:
         'Fn::GetAtt': [ ProductCatalogReader, Arn ]
       Export:
