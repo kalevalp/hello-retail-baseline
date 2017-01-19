@@ -49,18 +49,10 @@ resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
-        GlobalSecondaryIndexes:
-          -
-            IndexName: Categories
-            KeySchema:
-              -
-                AttributeName: category
-                KeyType: hash
-            Projection:
-              ProjectionType: KEYS_ONLY
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
+          - AttributeName: category
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
@@ -68,6 +60,18 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: '${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}'
+        GlobalSecondaryIndexes:
+          - IndexName: Category
+            KeySchema:
+              - AttributeName: category
+                KeyType: hash
+              - AttributeName: name
+                KeyType: range
+            Projection:
+              ProjectionType: KEYS_ONLY
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
     ProductCatalogReaderWriter: # role for this Lambda
       Type: AWS::IAM::Role
       Properties:
@@ -156,7 +160,6 @@ resources:
                    Action:
                      - 'dynamo:GetItem'
                      - 'dynamo:BatchGetItem'
-                     - 'dynamo:Query'
                    Resource:
                     'Fn::Join':
                       - '/'
