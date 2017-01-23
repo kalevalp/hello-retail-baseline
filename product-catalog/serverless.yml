@@ -18,7 +18,7 @@ functions:
   catalog:
     role:
       'Fn::GetAtt': [ ProductCatalogReaderWriter, Arn ]
-    handler: catalog.processEvent
+    handler: catalog.processKinesisEvent
     environment:
       STAGE: ${self:custom.stage}
       STREAM_ARN:

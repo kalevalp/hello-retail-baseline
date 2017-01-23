@@ -24,6 +24,10 @@ const constants = {
   MODULE: 'product-catalog/catalog.js',
   // methods
   METHOD_PUT_PRODUCT: 'putProduct',
+  METHOD_PROCESS_EVENT: 'processEvent',
+  METHOD_PROCESS_KINESIS_EVENT: 'processKinesisEvent',
+  // errors
+  BAD_MSG: 'bad msg:',
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
@@ -59,9 +63,9 @@ const impl = {
           priorErr = false;
         }
       } else if (priorErr && err) { // second update result, if an error was previously received and we have a new one
-        complete(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - errors updating DynamoDb: ${[priorErr, err]}`);
+        complete(`${constants.METHOD_PUT_PRODUCT} - errors updating DynamoDb: ${[priorErr, err]}`);
       } else if (priorErr || err) {
-        complete(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - error updating DynamoDb: ${priorErr || err}`);
+        complete(`${constants.METHOD_PUT_PRODUCT} - error updating DynamoDb: ${priorErr || err}`);
       } else { // second update result if error was not previously seen
         complete();
       }
@@ -77,21 +81,18 @@ const impl = {
         '#cb=if_not_exists(#cb,:cb),',
         '#u=:u,',
         '#ub=:ub,',
-        '#cat=:cat',
       ].join(' '),
       ExpressionAttributeNames: {
         '#c': 'created',
         '#cb': 'createdBy',
         '#u': 'updated',
         '#ub': 'updatedBy',
-        '#cat': 'category',
       },
       ExpressionAttributeValues: {
         ':c': updated,
         ':cb': event.origin,
         ':u': updated,
         ':ub': event.origin,
-        ':cat': event.data.category,
       },
       ReturnValues: 'NONE',
       ReturnConsumedCapacity: 'NONE',
@@ -147,21 +148,21 @@ const impl = {
    */
   processEvent: (event, complete) => {
     if (!event || !event.schema) {
-      complete('event or schema was not truthy.');
+      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}event or schema was not truthy.`);
     } else if (event.schema !== eventSchemaId) {
-      complete(`event did not have proper schema.  observed: '${event.schema}' expected: '${eventSchemaId}'`);
+      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}event did not have proper schema.  observed: '${event.schema}' expected: '${eventSchemaId}'`);
     } else if (!ajv.validate(eventSchemaId, event)) {
-      complete(`could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`);
+      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`);
     } else if (event.data.schema === productCreateSchemaId) {
       if (!ajv.validate(productCreateSchemaId, event.data)) {
-        complete(`could not validate event to '${productCreateSchema}' schema.  Errors: ${ajv.errorsText()}`);
+        complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}could not validate event to '${productCreateSchema}' schema.  Errors: ${ajv.errorsText()}`);
       } else {
         impl.putProduct(event, complete);
       }
     } else {
-      console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT
-        } - event with unsupported schema (${event.data.schema}) observed.`);
-      complete(); // TODO pass the above message once we are only receiving subscribed events
+      // TODO remove console.log and pass the above message once we are only receiving subscribed events
+      console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}- event with unsupported schema (${event.data.schema}) observed.`);
+      complete();
     }
   },
 };
@@ -209,10 +210,9 @@ module.exports = {
    * @param context The Lambda context object.
    * @param callback The callback with which to call with results of event processing.
    */
-  processEvent: (kinesisEvent, context, callback) => {
+  processKinesisEvent: (kinesisEvent, context, callback) => {
     try {
-      console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT
-        } - kinesis event received: ${JSON.stringify(kinesisEvent, null, 2)}`);
+      console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - kinesis event received: ${JSON.stringify(kinesisEvent, null, 2)}`);
       if (
         kinesisEvent &&
         kinesisEvent.Records &&
@@ -221,12 +221,22 @@ module.exports = {
         let successes = 0;
         const complete = (err) => {
           if (err) {
-            throw new Error(err);
+            // TODO uncomment following
+            // throw new Error(`${constants.MODULE} ${err}`);
+            // TODO remove rest of block to use above.
+            const msg = `${constants.MODULE} ${err}`;
+            if (err.indexOf(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}`) !== -1) {
+              console.log('######################################################################################');
+              console.log(msg);
+              console.log('######################################################################################');
+              successes += 1;
+            } else {
+              throw new Error(msg);
+            }
           } else {
             successes += 1;
             if (successes === kinesisEvent.Records.length) {
-              console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT
-                } - all ${kinesisEvent.Records.length} events processed successfully.`);
+              console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - all ${kinesisEvent.Records.length} events processed successfully.`);
               callback(null, true);
             }
           }
@@ -238,19 +248,19 @@ module.exports = {
             record.kinesis.data
           ) {
             const payload = new Buffer(record.kinesis.data, 'base64').toString('ascii');
-            console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - payload: ${payload}`);
+            console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - payload: ${payload}`);
             impl.processEvent(JSON.parse(payload), complete);
           }
         }
       } else {
-        callback(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - no records received.`);
+        callback(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - no records received.`);
       }
     } catch (ex) {
-      console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - exception: ${JSON.stringify(ex, null, 2)}`);
+      console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - exception: ${ex.stack}`);
       callback(ex);
     }
   },
 };
 
-console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - ENV: ${JSON.stringify(process.env, null, 2)}`);
-console.log(`${constants.MODULE} ${constants.METHOD_PUT_PRODUCT} - TABLE: ${constants.TABLE_PRODUCT_CATALOG_NAME}`);
+console.log(`${constants.MODULE} - CONST: ${JSON.stringify(constants, null, 2)}`);
+console.log(`${constants.MODULE} - ENV:   ${JSON.stringify(process.env, null, 2)}`);
