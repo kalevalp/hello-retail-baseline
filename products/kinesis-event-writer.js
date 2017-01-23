@@ -32,7 +32,7 @@ class KinesisEventWriter {
 }
 
 KinesisEventWriter.envelopeEvent = () => ({
-  schema: 'com.nordstrom/retail-stream/1-0-0',
+  schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
   origin: 'hello-retail/product-service',
   timeOrigin: new Date().toISOString(),
 });
