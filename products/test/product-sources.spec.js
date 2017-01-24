@@ -1,7 +1,7 @@
 'use strict';
 
 const expect = require('chai').expect;
-const ProductSource = require('./scrape-store-website-product-source').ProductSource;
+const ProductSource = require('./../lambda/scrape-products/scrape-store-website-product-source');
 
 describe('The store scraping from the website ProductSource', function () {
   it('class is exported', function () {

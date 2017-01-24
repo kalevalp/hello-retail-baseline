@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: product-provider
+service: new-product-simulator
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -41,12 +41,12 @@ resources:
     ProductServiceLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: "/aws/lambda/product-provider-${self:custom.stage}-scrapeProducts"
+        LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-newProductSimulator"
     ProductStreamProducer: # role for producing test products
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductStreamProducer
+        RoleName: ${self:custom.stage}-${self:service}-newProductSimulator
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:

@@ -40,19 +40,12 @@ serverless.init()
     process.env.AWS_REGION = AWS_REGION;
 
     targetHandler(event, null, (err, res) => {
-      console.log('Handler execution complete with results:');
-      console.log('\tError: ', (typeof err === 'object') ? JSON.stringify(err, null, 2) : err);
-      if (res && res.aggregate) {
-        res.aggregate.latencies = undefined;  // eslint-disable-line no-param-reassign
-        console.log('\tResult:', (typeof res === 'object') ? JSON.stringify(res.aggregate, null, 2) : res);
-      } else if (res && Array.isArray(res)) {
-        console.log('\tResults:');
-        for (let i = 0; i < res.length; i++) {
-          res[i].aggregate.latencies = undefined; // eslint-disable-line no-param-reassign
-          console.log('\t\t', (typeof res[i] === 'object') ? JSON.stringify(res[i].aggregate, null, 2) : res[i]);
-        }
+      console.log('Handler execution complete.');
+
+      if (err) {
+        throw new Error(err);
       } else {
-        console.log('\tResults to be output to exterior system');
+        console.log(res);
       }
     });
   });

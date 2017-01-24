@@ -1,6 +1,6 @@
 'use strict';
 
-const AWS = require('aws-sdk');
+const AWS = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 class KinesisEventWriter {
   constructor() {
@@ -33,7 +33,7 @@ class KinesisEventWriter {
 
 KinesisEventWriter.envelopeEvent = () => ({
   schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
-  origin: 'hello-retail/product-service',
+  origin: 'hello-retail/product-scraper',
   timeOrigin: new Date().toISOString(),
 });
 

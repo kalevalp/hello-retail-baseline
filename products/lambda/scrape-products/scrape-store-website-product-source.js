@@ -2,7 +2,7 @@
 
 const http = require('http');
 
-exports.ProductSource = function ProductSource() {
+module.exports = function ProductSource() {
   const nordstromStoreHost = 'shop.nordstrom.com';
   const siteMapPagePath = '/c/sitemap';
   const productCache = [];
@@ -109,7 +109,7 @@ exports.ProductSource = function ProductSource() {
     }
   }
 
-  function nextProduct(callback) {
+  this.nextProduct = function nextProduct(callback) {
     updateCategories((listOfCategories) => {
       if (!categoryList) {
         categoryList = listOfCategories;
@@ -123,9 +123,5 @@ exports.ProductSource = function ProductSource() {
         }, categoryList[categoryIndex]);
       }
     });
-  }
-
-  return {
-    nextProduct,
   };
 };

@@ -1,7 +1,7 @@
 'use strict';
 
-const AWS = require('aws-sdk');
-const ProductSource = require('./../../test/scrape-store-website-product-source').ProductSource;
+const AWS = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const ProductSource = require('./scrape-store-website-product-source');
 const Product = require('../product');
 const ProductEvents = require('../product-events');
 
@@ -16,6 +16,12 @@ exports.handler = (event, context, callback) => {
     RoleArn: process.env.STREAM_WRITER_ROLE,
   });
 
+  if (!event
+      || !event.lambdaTimeout || !(typeof event.lambdaTimeout === 'number') || event.lambdaTimeout <= 0
+      || !event.productFrequency || !(typeof event.productFrequency === 'number') || event.productFrequency <= 0) {
+    throw new Error('Invalid timeout or scrap frequency. Both must be positive numbers.');
+  }
+
   const oneProductInterval = setInterval(() => {
     ps.nextProduct((scraped) => {
       const product = new Product(
@@ -23,8 +29,7 @@ exports.handler = (event, context, callback) => {
         scraped.Title,
         scraped.Brand.Label,
         scraped.category,
-        `PAGE:${scraped.ProductPageUrl}`,
-      );
+        `PAGE:${scraped.ProductPageUrl}`);
 
       ProductEvents.sendCreateEvent(product);
     });

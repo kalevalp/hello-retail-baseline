@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --recursive -R min ./**/*.spec.js",
     "lint": "./node_modules/.bin/eslint ./**/",
-    "test:scrape": "node ./products/test/scrape-products-exec.js"
+    "sim:scrape": "node ./products/test/scrape-products-exec.js"
   },
   "repository": {
     "type": "git",
