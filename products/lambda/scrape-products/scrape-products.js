@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const ProductSource = require('./scrape-store-website-product-source').ProductSource;
+const ProductSource = require('./../../test/scrape-store-website-product-source').ProductSource;
 const Product = require('../product');
 const ProductEvents = require('../product-events');
 
@@ -23,7 +23,7 @@ exports.handler = (event, context, callback) => {
         scraped.Title,
         scraped.Brand.Label,
         scraped.category,
-        `PAGE:${scraped.ProductPageUrl}`
+        `PAGE:${scraped.ProductPageUrl}`,
       );
 
       ProductEvents.sendCreateEvent(product);

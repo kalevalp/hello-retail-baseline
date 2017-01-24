@@ -4,7 +4,7 @@ service: product-provider
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../private.yml)}
+  private: ${file(../../private.yml)}
 
 provider:
   name: aws
@@ -17,7 +17,7 @@ provider:
 
 functions:
   scrapeProducts:
-    handler: 'test/scrape-products.handler'
+    handler: 'scrape-products/scrape-products.handler'
     environment:
       STREAM_WRITER_ROLE:
         'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamWriterArn'
@@ -27,11 +27,18 @@ functions:
       Fn::GetAtt:
         - ProductStreamProducer
         - Arn
+  queryCategories:
+    handler: 'products-categories.handler'
+    environment:
+      STREAM_READER_ROLE:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+      DYNAMO_READER_ROLE:
+        'Fn::ImportValue': 'hello-retail-product-catalog:${self:custom.stage}:ProductCatalogReaderArn'
 
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    ScrapeProductsLogGroup:
+    ProductServiceLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: "/aws/lambda/product-provider-${self:custom.stage}-scrapeProducts"
@@ -61,7 +68,7 @@ resources:
                     - logs:CreateLogStream
                   Resource:
                     - Fn::GetAtt:
-                      - ScrapeProductsLogGroup
+                      - ProductServiceLogGroup
                       - Arn
                 - Effect: Allow
                   Action:
@@ -70,10 +77,6 @@ resources:
                     - Fn::Join:
                       - ":"
                       - - Fn::GetAtt:
-                          - ScrapeProductsLogGroup
+                          - ProductServiceLogGroup
                           - Arn
                         - "*"
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"

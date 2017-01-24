@@ -10,8 +10,8 @@ const yaml = require('js-yaml');
 
 const secrets = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', '..', 'private.yml'), 'utf8'));
 
-const event = require('./event.json');
-const targetHandler = require('./scrape-products.js').handler;
+const event = require('./../lambda/scrape-products/event.json');
+const targetHandler = require('./../lambda/scrape-products/scrape-products.js').handler;
 
 const PROXY_SERVER = secrets.proxyServer;
 const AWS_REGION = secrets.region;
@@ -25,7 +25,7 @@ if (PROXY_SERVER) {
 
 const serverless = new Serverless({
   interactive: false,
-  servicePath: path.join(__dirname, '..'),
+  servicePath: path.join(__dirname, '..', 'lambda'),
 });
 
 serverless.init()

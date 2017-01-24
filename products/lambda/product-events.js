@@ -1,6 +1,6 @@
 'use strict';
 
-const KinesisEventWriter = require('./kinesis-event-writer.js');
+const KinesisEventWriter = require('./scrape-products/kinesis-event-writer.js');
 
 class ProductEvents {
   static sendCreateEvent(product) {

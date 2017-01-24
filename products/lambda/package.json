@@ -1,0 +1,11 @@
+{
+  "name": "hello-retail-product-producer",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "Nordstrom",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.7.16",
+    "js-yaml": "^3.7.0"
+  }
+}
