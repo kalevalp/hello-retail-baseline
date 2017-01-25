@@ -1,0 +1,82 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: new-product-simulator
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+  environment:
+    STAGE: ${self:custom.stage}
+
+functions:
+  scrapeProducts:
+    handler: 'scrape-products/scrape-products.handler'
+    environment:
+      STREAM_WRITER_ROLE:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamWriterArn'
+      STREAM_NAME:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamName'
+    role:
+      Fn::GetAtt:
+        - ProductStreamProducer
+        - Arn
+  queryCategories:
+    handler: 'products-categories.handler'
+    environment:
+      STREAM_READER_ROLE:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+      DYNAMO_READER_ROLE:
+        'Fn::ImportValue': 'hello-retail-product-catalog:${self:custom.stage}:ProductCatalogReaderArn'
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    ProductServiceLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-newProductSimulator"
+    ProductStreamProducer: # role for producing test products
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}-${self:service}-newProductSimulator
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: Logging
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                  Resource:
+                    - Fn::GetAtt:
+                      - ProductServiceLogGroup
+                      - Arn
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - Fn::Join:
+                      - ":"
+                      - - Fn::GetAtt:
+                          - ProductServiceLogGroup
+                          - Arn
+                        - "*"

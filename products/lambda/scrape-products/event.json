@@ -1,0 +1,4 @@
+{
+  "productFrequency": 1000,
+  "lambdaTimeout": 3600000
+}

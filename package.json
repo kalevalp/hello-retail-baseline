@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive -R min ./**/*.spec.js",
-    "lint": "eslint . bin util"
+    "lint": "./node_modules/.bin/eslint ./**/",
+    "sim:scrape": "node ./products/test/scrape-products-exec.js"
   },
   "repository": {
     "type": "git",
@@ -28,16 +29,19 @@
     "test",
     "lint"
   ],
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "aws-sdk": "^2.7.16",
     "chai": "^3.5.0",
-    "eslint": "^3.8.1",
-    "eslint-config-airbnb": "^12.0.0",
-    "eslint-plugin-import": "^1.16.0",
-    "eslint-plugin-jsx-a11y": "^2.2.3",
-    "eslint-plugin-react": "^6.4.1",
+    "eslint": "^3.14.0",
+    "eslint-config-airbnb": "^14.0.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jsx-a11y": "^3.0.2",
+    "eslint-plugin-react": "^6.9.0",
+    "https-proxy-agent": "^1.0.0",
+    "js-yaml": "^3.7.0",
     "mocha": "^3.0.2",
-    "pre-commit": "^1.1.3"
+    "pre-commit": "^1.1.3",
+    "serverless": "^1.4.0"
   }
 }
