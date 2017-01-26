@@ -8,24 +8,15 @@ version: 0.1
 phases:
   install:
     commands:
-      - echo $STAGE
-      - echo `$STAGE`
-      - npm install -q -g serverless
+      - ./build/0.install.sh
   pre_build:
     commands:
-      - npm install -q
-      - cd products/lambda && npm install -q
-      - cd product-catalog && npm install -q
+      - ./build/1.prebuild.sh
   build:
     commands:
-      - npm run test
-      - npm run lint
-#      - cd build           && sls deploy -s $STAGE
-      - cd retail-stream   && SLS_DEBUG=* && sls deploy -s $STAGE
-      - cd products/lambda && sls deploy -s $STAGE
-      - cd product-catalog && sls deploy -s $STAGE
-  post_build:
-    commands:
+      - ./build/2.build.sh
+#  post_build:
+#    commands:
       # TODO acceptance tests
       # TODO (In a different project) integration tests
       # TODO (In a different project?) performance tests
