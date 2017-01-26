@@ -8,16 +8,23 @@ version: 0.1
 phases:
   install:
     commands:
+      - pwd
       - npm install -g serverless
   pre_build:
     commands:
+      - pwd
       - npm install
+      - pwd
       - cd products/lambda
+      - pwd
       - npm install
       - cd ../..
+      - pwd
       - cd product-catalog
+      - pwd
       - npm install
       - cd ..
+      - pwd
   build:
     commands:
       - npm run test
@@ -25,15 +32,22 @@ phases:
 #      - cd build
 #      - sls deploy -s $STAGE
 #      - cd ..
+      - pwd
       - cd retail-stream
+      - pwd
       - sls deploy -s $STAGE
       - cd ..
+      - pwd
       - cd products/lambda
+      - pwd
       - sls deploy -s $STAGE
       - cd ../..
+      - pwd
       - cd product-catalog
+      - pwd
       - sls deploy -s $STAGE
       - cd ..
+      - pwd
   post_build:
     commands:
       # TODO acceptance tests
