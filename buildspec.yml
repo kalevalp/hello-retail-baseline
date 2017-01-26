@@ -8,13 +8,16 @@ version: 0.1
 phases:
   install:
     commands:
-      - ./build/0.install.sh
+      - chmod 700 $CODEBUILD_SRC_DIR/build/0.install.sh
+      - $CODEBUILD_SRC_DIR/build/0.install.sh
   pre_build:
     commands:
-      - ./build/1.prebuild.sh
+      - chmod 700 $CODEBUILD_SRC_DIR/build/1.prebuild.sh
+      - $CODEBUILD_SRC_DIR/build/1.prebuild.sh
   build:
     commands:
-      - ./build/2.build.sh
+      - chmod 700 $CODEBUILD_SRC_DIR/build/2.build.sh
+      - $CODEBUILD_SRC_DIR/build/2.build.sh
 #  post_build:
 #    commands:
       # TODO acceptance tests
