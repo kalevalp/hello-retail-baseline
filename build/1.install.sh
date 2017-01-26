@@ -1,11 +1,6 @@
 #!/bin/sh
 
-# begin debug
-echo $1
-echo $2
-# end debug
-
-echo $1
+echo $1 in $2
 if cd $2
 then
   npm install -s
