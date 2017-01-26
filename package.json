@@ -29,7 +29,10 @@
     "test",
     "lint"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "ajv": "^4.10.4",
+    "js-yaml": "^3.7.0"
+  },
   "devDependencies": {
     "aws-sdk": "^2.7.16",
     "chai": "^3.5.0",
