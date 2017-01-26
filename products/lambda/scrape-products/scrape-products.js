@@ -9,8 +9,8 @@ exports.handler = (event, context, callback) => {
   const ps = new ProductSource();
   const productCount = 0;
   const errorCount = 0;
-
   const kinesis = new AWS.Kinesis();
+  const productEvents = new ProductEvents(kinesis);
 
   kinesis.config.credentials = new AWS.TemporaryCredentials({
     RoleArn: process.env.STREAM_WRITER_ROLE,
@@ -31,7 +31,7 @@ exports.handler = (event, context, callback) => {
         scraped.category,
         `PAGE:${scraped.ProductPageUrl}`);
 
-      ProductEvents.sendCreateEvent(product);
+      productEvents.sendCreateEvent(product);
     });
   }, event.productFrequency);
 

@@ -1,12 +1,8 @@
 'use strict';
 
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-
 class KinesisEventWriter {
-  constructor() {
-    this.kinesis = new AWS.Kinesis();
-    this.kinesis.config.region = AWS.config.region;
-    this.kinesis.config.credentials = AWS.config.credentials;
+  constructor(kinesis) {
+    this.kinesis = kinesis;
   }
 
   writeKinesisEvent(data, partitionKey) {
