@@ -14,6 +14,8 @@ phases:
       - npm install -s -g serverless
       - sls --version
       - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail/private.yml . --region $REGION
+      - ls -l
+      - head -50 ./private.yml
   pre_build:
     commands:
       - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
