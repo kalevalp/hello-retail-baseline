@@ -18,8 +18,8 @@ phases:
     commands:
       - npm run test
       - npm run lint
-#      - cd build && sls deploy -s $STAGE
-      - cd retail-stream   && sls deploy -s $STAGE
+#      - cd build           && sls deploy -s $STAGE
+      - cd retail-stream   && sls deploy --debug -s $STAGE
       - cd products/lambda && sls deploy -s $STAGE
       - cd product-catalog && sls deploy -s $STAGE
   post_build:
