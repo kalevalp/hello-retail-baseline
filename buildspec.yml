@@ -8,6 +8,8 @@ version: 0.1
 phases:
   install:
     commands:
+      - echo $STAGE
+      - echo `$STAGE`
       - npm install -q -g serverless
   pre_build:
     commands:
