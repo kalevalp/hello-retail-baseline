@@ -1,0 +1,55 @@
+version: 0.1
+
+#environment_variables:
+#  plaintext:
+#    key: "value"
+#    key: "value"
+
+phases:
+  install:
+    commands:
+      - echo Installing Serverless...
+      - npm install -g serverless
+  pre_build:
+    commands:
+      - echo Installing hello-retail Project Dependencies...
+      - npm install
+      - echo Installing hello-retail/products Project Dependencies...
+      - pushd products/lambda
+      - npm install
+      - popd
+      - echo Installing hello-retail/product-catalog Project Dependencies...
+      - pushd product-catalog
+      - npm install
+      - popd
+  build:
+    commands:
+      - echo Running Unit Tests...
+      - npm run test
+      - echo Running Code Lint...
+      - npm run lint
+      - echo Deploying Build Infrastructure (hello-retail-build)...
+      - pushd build
+      - sls deploy -s $STAGE
+      - popd
+      - echo Deploying Core Stream (hello-retail-stream)...
+      - pushd retail-stream
+      - sls deploy -s $STAGE
+      - popd
+      - echo Deploying Build Infrastructure (hello-retail-scrape-products)...
+      - pushd products/lambda
+      - sls deploy -s $STAGE
+      - popd
+      - echo Deploying Build Infrastructure (hello-retail-product-catalog)...
+      - pushd product-catalog
+      - sls deploy -s $STAGE
+      - popd
+  post_build:
+    commands:
+      # TODO acceptance tests
+      # TODO (In a different project) integration tests
+      # TODO (In a different project?) performance tests
+      - echo Deploy completed on `date`
+#artifacts:
+#  files:
+#    - .travis.yml # a useless but small file to satisfy the buildspec.yml requirement

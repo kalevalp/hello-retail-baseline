@@ -1,0 +1,238 @@
+# An initial deploy of this is necessary, since it creates the build infrastructure.
+# Afterward, it can modify the infrastructure it describes.
+
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: hello-retail-build
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../private.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+  environment:
+    STAGE: ${self:custom.stage}
+
+resources:
+  Resources:
+     # Log Group
+    BuildLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/codebuild/${self:service}'
+        RetentionInDays: 7
+    # Deployment Role
+    DeploymentRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}-${self:service}-DeploymentRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - 'codebuild.amazonaws.com'
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: WriteToBuildLog
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                  Resource:
+                    - arn:aws:logs:${self:provider.region}:${self:custom.private.accountId}:log-group:/aws/codebuild/${self:service}
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - arn:aws:logs:${self:provider.region}:${self:custom.private.accountId}:log-group:/aws/codebuild/${self:service}:*
+          - PolicyName: DeployLambda
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:PutObject
+                    - s3:GetObject
+                    - s3:GetObjectVersion
+                  Resource:
+                    - arn:aws:s3:::codepipeline-${self:provider.region}-*
+    DeploymentBuild:
+      Type: 'AWS::CodeBuild::Project'
+      Properties:
+        Name: '${self:service}-build'
+        Artifacts:
+          Artifacts
+        Description: String
+        EncryptionKey: String
+        Environment:
+          Environment
+        Name: String
+        ServiceRole: String
+        Source:
+          Source
+        Tags:
+          - Resource Tag
+        TimeoutInMinutes: Integer
+      # example
+#      Type: AWS::CodeBuild::Project
+#      Properties:
+#        Name: '${self:service}-build-deploy'
+#        Description: A description about my project
+#        ServiceRole: !GetAtt ServiceRole.Arn
+#        Artifacts:
+#          Type: no_artifacts
+#        Environment:
+#          Type: linuxContainer
+#          ComputeType: BUILD_GENERAL1_SMALL
+#          Image: aws/codebuild/java:openjdk-8
+#          EnvironmentVariables:
+#          - Name: varName
+#            Value: varValue
+#        Source:
+#          Location: codebuild-demo-test/0123ab9a371ebf0187b0fe5614fbb72c
+#          Type: S3
+#        TimeoutInMinutes: 10
+#        Tags:
+#          - Key: Key1
+#            Value: Value1
+#          - Key: Key2
+#            Value: Value2
+    DeploymentPipeline______Action:
+      Type: 'AWS::CodePipeline::CustomActionType'
+      Properties:
+        Category: String,
+        ConfigurationProperties:
+          - ConfigurationProperties
+        InputArtifactDetails:
+          ArtifactDetails
+        OutputArtifactDetails:
+          ArtifactDetails
+        Provider: String
+        Settings:
+          Settings
+        Version: String
+    # example
+#    MyCustomActionType:
+#      Type: 'AWS::CodePipeline::CustomActionType'
+#      Properties:
+#        Category: Build
+#        Provider: 'My-Build-Provider-Name'
+#        Version:
+#          Ref: Version
+#        ConfigurationProperties:
+#          -
+#            Description: 'The name of the build project must be provided when this action is added to the pipeline.'
+#            Key: true
+#            Name: MyProjectName
+#            Queryable: false
+#            Required: true
+#            Secret: false
+#            Type: String
+#        InputArtifactDetails:
+#          MaximumCount: 1
+#          MinimumCount: 1
+#        OutputArtifactDetails:
+#          MaximumCount:
+#            Ref: MaximumCountForOutputArtifactDetails
+#          MinimumCount: 0
+#        Settings:
+#          EntityUrlTemplate: 'https://my-build-instance/job/{Config:ProjectName}/'
+#          ExecutionUrlTemplate: 'https://my-build-instance/job/{Config:ProjectName}/lastSuccessfulBuild/{ExternalExecutionId}/'
+    DeploymentPipeline:
+      Type: 'AWS::CodePipeline::Pipeline'
+      Properties:
+        Name: '${self:service}-pipeline'
+        Properties:
+          ArtifactStore:
+            ArtifactStore
+          DisableInboundStageTransitions:
+            - DisableInboundStageTransitions
+          Name: String
+          RestartExecutionOnUpdate: Boolean
+          RoleArn: String
+          Stages:
+            - Stages
+#    AppPipeline:
+#      Type: "AWS::CodePipeline::Pipeline"
+#      Properties:
+#        RoleArn:
+#          Ref: CodePipelineServiceRole
+#        Stages:
+#          -
+#            Name: Source
+#            Actions:
+#              -
+#                Name: SourceAction
+#                ActionTypeId:
+#                  Category: Source
+#                  Owner: AWS
+#                  Version: 1
+#                  Provider: S3
+#                OutputArtifacts:
+#                  -
+#                    Name: SourceOutput
+#                Configuration:
+#                  S3Bucket:
+#                    Ref: SourceS3Bucket
+#                  S3ObjectKey:
+#                    Ref: SourceS3ObjectKey
+#                RunOrder: 1
+#          -
+#            Name: Beta
+#            Actions:
+#              -
+#                Name: BetaAction
+#                InputArtifacts:
+#                  -
+#                    Name: SourceOutput
+#                ActionTypeId:
+#                  Category: Deploy
+#                  Owner: AWS
+#                  Version: 1
+#                  Provider: CodeDeploy
+#                Configuration:
+#                  ApplicationName:
+#                    Ref: ApplicationName
+#                  DeploymentGroupName:
+#                    Ref: DeploymentGroupName
+#                RunOrder: 1
+#          -
+#            Name: Release
+#            Actions:
+#              -
+#                Name: ReleaseAction
+#                InputArtifacts:
+#                  -
+#                    Name: SourceOutput
+#                ActionTypeId:
+#                  Category: Deploy
+#                  Owner: AWS
+#                  Version: 1
+#                  Provider: CodeDeploy
+#                Configuration:
+#                  ApplicationName:
+#                    Ref: ApplicationName
+#                  DeploymentGroupName:
+#                    Ref: DeploymentGroupName
+#                RunOrder: 1
+#        ArtifactStore:
+#          Type: S3
+#          Location:
+#            Ref: ArtifactStoreS3Location
+#        DisableInboundStageTransitions:
+#          -
+#            StageName: Release
+#            Reason: "Disabling the transition until integration tests are completed"
+
