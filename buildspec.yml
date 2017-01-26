@@ -9,15 +9,18 @@ phases:
   install:
     commands:
       - printenv
+      - echo
       - node --version
       - npm --version
 #      - npm install -g serverless
       - npm install -g git+https://github.com/erikerikson/serverless.git#enable-long-stack-traces
       - sls --version
+      - echo
       # Is this up to date?
       - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail . --region $REGION
       - ls -l
       - head -50 ./private.yml
+      - echo
   pre_build:
     commands:
       - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
