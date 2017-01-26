@@ -8,16 +8,28 @@ version: 0.1
 phases:
   install:
     commands:
-      - chmod 700 $CODEBUILD_SRC_DIR/build/0.install.sh
-      - $CODEBUILD_SRC_DIR/build/0.install.sh
+      - printenv
+      - node --version
+      - npm --version
+      - npm install -s -g serverless
+      - sls --version
+      - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail/private.yml . --region $REGION
   pre_build:
     commands:
-      - chmod 700 $CODEBUILD_SRC_DIR/build/1.prebuild.sh
-      - $CODEBUILD_SRC_DIR/build/1.prebuild.sh
+      - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Top-Level Project Dependencies"     $CODEBUILD_SRC_DIR
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies" $CODEBUILD_SRC_DIR/products/lambda
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog Dependencies"       $CODEBUILD_SRC_DIR/product-catalog
   build:
     commands:
-      - chmod 700 $CODEBUILD_SRC_DIR/build/2.build.sh
-      - $CODEBUILD_SRC_DIR/build/2.build.sh
+      - npm run test
+      - npm run lint
+      - chmod 700 $CODEBUILD_SRC_DIR/build/2.deploy.sh
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Build Infrastructure"       $CODEBUILD_SRC_DIR/build
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Retail Stream"              $CODEBUILD_SRC_DIR/retail-stream
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"     $CODEBUILD_SRC_DIR/products/lambda
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"  $CODEBUILD_SRC_DIR/product-catalog
+
 #  post_build:
 #    commands:
       # TODO acceptance tests
@@ -26,3 +38,26 @@ phases:
 #artifacts:
 #  files:
 #    - .travis.yml # a useless but small file to satisfy the buildspec.yml requirement
+
+
+#lockdir="somedir"
+#testlock(){
+#    if mkdir "$lockdir"
+#    then # directory did not exist, but was created successfully
+#         echo >&2 "successfully acquired lock: $lockdir"
+#         retval=0
+#    else
+#         echo >&2 "cannot acquire lock, giving up on $lockdir"
+#         retval=1
+#    fi
+#    return "$retval"
+#}
+#
+#testlock
+#retval=$?
+#if [ "$retval" == 0 ]
+#then
+#     echo "directory not created"
+#else
+#     echo "directory already created"
+#fi
