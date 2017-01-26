@@ -15,6 +15,7 @@ phases:
       - sls --version
       - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail/private.yml ./private.yml --region $REGION
       - ls -l
+      - ls -l private.yml
       - head -50 ./private.yml
   pre_build:
     commands:
