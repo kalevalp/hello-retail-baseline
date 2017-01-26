@@ -11,7 +11,8 @@ phases:
       - printenv
       - node --version
       - npm --version
-      - npm install -s -g serverless
+#      - npm install -g serverless
+      - npm install -g git+https://github.com/erikerikson/serverless.git#enable-long-stack-traces
       - sls --version
       # Is this up to date?
       - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail . --region $REGION
