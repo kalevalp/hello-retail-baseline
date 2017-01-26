@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 export SLS_DEBUG=*
 
 echo Running Unit Tests
@@ -8,21 +8,17 @@ echo Running Code Linting
 npm run lint
 
 # echo Deploying Build Infrastructure
-# pushd build
-#   sls deploy -s $STAGE
-# popd
+# cd $CODEBUILD_SRC_DIR/build
+# sls deploy -s $STAGE
 
 echo Deploying Retail Stream
-pushd retail-stream
-  sls deploy -s $STAGE
-popd
+cd $CODEBUILD_SRC_DIR/retail-stream
+sls deploy -s $STAGE
 
 echo Deploying New Products Simulator
-pushd products/lambda
-  sls deploy -s $STAGE
-popd
+cd $CODEBUILD_SRC_DIR/products/lambda
+sls deploy -s $STAGE
 
 echo Deploying Product Catalog Processor
-pushd product-catalog
-  sls deploy -s $STAGE
-popd
+cd $CODEBUILD_SRC_DIR/product-catalog
+sls deploy -s $STAGE
