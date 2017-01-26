@@ -8,21 +8,22 @@ version: 0.1
 phases:
   install:
     commands:
+      - ls -R
       - pwd
-      - npm install -g serverless
+      - npm install -q -g serverless
   pre_build:
     commands:
       - pwd
-      - npm install
+      - npm install -q
       - pwd
       - cd products/lambda
       - pwd
-      - npm install
+      - npm install -q
       - cd ../..
       - pwd
       - cd product-catalog
       - pwd
-      - npm install
+      - npm install -q
       - cd ..
       - pwd
   build:
