@@ -8,7 +8,6 @@ version: 0.1
 phases:
   install:
     commands:
-    # comment for demo
       - printenv
       - echo
       - node --version
@@ -46,26 +45,3 @@ phases:
 #artifacts:
 #  files:
 #    - .travis.yml # a useless but small file to satisfy the buildspec.yml requirement
-
-
-#lockdir="somedir"
-#testlock(){
-#    if mkdir "$lockdir"
-#    then # directory did not exist, but was created successfully
-#         echo >&2 "successfully acquired lock: $lockdir"
-#         retval=0
-#    else
-#         echo >&2 "cannot acquire lock, giving up on $lockdir"
-#         retval=1
-#    fi
-#    return "$retval"
-#}
-#
-#testlock
-#retval=$?
-#if [ "$retval" == 0 ]
-#then
-#     echo "directory not created"
-#else
-#     echo "directory already created"
-#fi
