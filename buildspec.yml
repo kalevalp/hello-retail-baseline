@@ -8,6 +8,7 @@ version: 0.1
 phases:
   install:
     commands:
+    # comment for demo
       - printenv
       - echo
       - node --version
