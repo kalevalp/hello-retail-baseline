@@ -57,58 +57,111 @@ resources:
                     - logs:PutLogEvents
                   Resource:
                     - arn:aws:logs:${self:provider.region}:${self:custom.private.accountId}:log-group:/aws/codebuild/${self:service}:*
-          - PolicyName: DeployLambda
+          - PolicyName: FarTooPermissive
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
-                    - s3:PutObject
+                    - apigateway:DELETE
+                    - apigateway:PUT
+                    - apigateway:POST
+                    - apigateway:GET
+                    - cloudformation:CreateStack
+                    - cloudformation:DescribeStacks
+                    - cloudformation:DescribeStackEvents
+                    - cloudformation:DescribeStackResource
+                    - cloudformation:DescribeStackResources
+                    - cloudformation:CreateUploadBucket
+                    - cloudformation:UpdateStack
+                    - dynamodb:CreateTable
+                    - dynamodb:DescribeTable
+                    - dynamodb:DeleteTable
+                    - execute-api:Invoke
+                    - iam:GetUser
+                    - iam:GetRole
+                    - iam:CreateRole
+                    - iam:DeleteRole
+                    - iam:PutRolePolicy
+                    - iam:DeleteRolePolicy
+                    - iam:AttachRolePolicy
+                    - iam:DetachRolePolicy
+                    - iam:PassRole
+                    - kinesis:DescribeLimits
+                    - kinesis:CreateStream
+                    - kinesis:DeleteStream
+                    - kinesis:ListStreams
+                    - kinesis:DescribeStream
+                    - kinesis:EnableEnhancedMonitoring
+                    - kinesis:DisableEnhancedMonitoring
+                    - kinesis:IncreaseStreamRetentionPeriod
+                    - kinesis:DecreaseStreamRetentionPeriod
+                    - kinesis:UpdateShardCount
+                    - kinesis:AddTagsToStream
+                    - kinesis:ListTagsForStream
+                    - kinesis:RemoveTagsFromStream
+                    - kinesis:SplitShard
+                    - kinesis:MergeShards
+                    - kinesis:GetShardIterator
+                    - kinesis:GetRecords
+                    - kinesis:PutRecord
+                    - kinesis:PutRecords
+                    - lambda:CreateFunction
+                    - lambda:DeleteFunction
+                    - lambda:GetFunctionConfiguration
+                    - lambda:ListVersionsByFunction
+                    - lambda:PublishVersion
+                    - lambda:UpdateFunctionCode
+                    - lambda:GetFunction
+                    - lambda:AddPermission
+                    - lambda:CreateEventSourceMapping
+                    - lambda:GetEventSourceMapping
+                    - lambda:DeleteEventSourceMapping
+                    - logs:CreateLogGroup
+                    - logs:DescribeLogGroups
+                    - logs:PutRetentionPolicy
+                    - logs:DeleteLogGroup
+                    - s3:CreateBucket
+                    - s3:ListBucket
+                    - s3:GetBucketLocation
+                    - s3:DeleteObject
                     - s3:GetObject
-                    - s3:GetObjectVersion
-                  Resource:
-                    - arn:aws:s3:::codepipeline-${self:provider.region}-*
+                    - s3:PutObject
+                  Resource: *
     DeploymentBuild:
       Type: 'AWS::CodeBuild::Project'
       Properties:
-        Name: '${self:service}-build'
+        Name: '${self:service}-codebuild'
+        Description: The CodeBuild project responsible for unit testing and deploying
+        DependsOn: DeploymentRole
+        ServiceRole: !GetAtt DeploymentRole.Arn
         Artifacts:
-          Artifacts
-        Description: String
-        EncryptionKey: String
+          Type: CODEPIPELINE
         Environment:
-          Environment
-        Name: String
-        ServiceRole: String
+          Type: LINUX_CONTAINER
+          ComputeType: BUILD_GENERAL1_SMALL
+          Image: aws/codebuild/nodejs:4.3.2
+          EnvironmentVariables:
+          - Name: STAGE
+            Value: ci
+          - Name: COMPANY
+            Value: ${self:custom.private.company}
+          - Name: TEAM
+            Value: ${self:custom.private.team}
+          - Name: REGION
+            Value: ${self:provider.region}
         Source:
-          Source
-        Tags:
-          - Resource Tag
-        TimeoutInMinutes: Integer
-      # example
-#      Type: AWS::CodeBuild::Project
-#      Properties:
-#        Name: '${self:service}-build-deploy'
-#        Description: A description about my project
-#        ServiceRole: !GetAtt ServiceRole.Arn
-#        Artifacts:
-#          Type: no_artifacts
-#        Environment:
-#          Type: linuxContainer
-#          ComputeType: BUILD_GENERAL1_SMALL
-#          Image: aws/codebuild/java:openjdk-8
-#          EnvironmentVariables:
-#          - Name: varName
-#            Value: varValue
-#        Source:
-#          Location: codebuild-demo-test/0123ab9a371ebf0187b0fe5614fbb72c
-#          Type: S3
-#        TimeoutInMinutes: 10
-#        Tags:
-#          - Key: Key1
-#            Value: Value1
-#          - Key: Key2
-#            Value: Value2
+          Type: CODEPIPELINE
+        TimeoutInMinutes: 15
+
+
+
+
+
+
+
+
+
     DeploymentPipeline______Action:
       Type: 'AWS::CodePipeline::CustomActionType'
       Properties:
@@ -235,4 +288,3 @@ resources:
 #          -
 #            StageName: Release
 #            Reason: "Disabling the transition until integration tests are completed"
-
