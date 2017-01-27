@@ -27,13 +27,6 @@ functions:
       Fn::GetAtt:
         - ProductStreamProducer
         - Arn
-  queryCategories:
-    handler: 'products-categories.handler'
-    environment:
-      STREAM_READER_ROLE:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
-      DYNAMO_READER_ROLE:
-        'Fn::ImportValue': 'hello-retail-product-catalog:${self:custom.stage}:ProductCatalogReaderArn'
 
 # you can add CloudFormation resource templates here
 resources:
