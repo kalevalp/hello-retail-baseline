@@ -13,7 +13,7 @@ phases:
       - node --version
       - npm --version
 #      - npm install -g serverless
-      - npm install -g git+https://github.com/erikerikson/serverless.git#enable-long-stack-traces
+      - npm install -g git+https://github.com/erikerikson/serverless.git#bug-fix-use-sts-instead-of-iam-to-get-account-id
       - sls --version
       - echo
       # Is this up to date?
