@@ -80,7 +80,7 @@ const impl = {
         '#c=if_not_exists(#c,:c),',
         '#cb=if_not_exists(#cb,:cb),',
         '#u=:u,',
-        '#ub=:ub,',
+        '#ub=:ub',
       ].join(' '),
       ExpressionAttributeNames: {
         '#c': 'created',
@@ -148,20 +148,20 @@ const impl = {
    */
   processEvent: (event, complete) => {
     if (!event || !event.schema) {
-      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}event or schema was not truthy.`)
+      complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} event or schema was not truthy.`)
     } else if (event.schema !== eventSchemaId) {
-      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}event did not have proper schema.  observed: '${event.schema}' expected: '${eventSchemaId}'`)
+      complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} event did not have proper schema.  observed: '${event.schema}' expected: '${eventSchemaId}'`)
     } else if (!ajv.validate(eventSchemaId, event)) {
-      complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`)
+      complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`)
     } else if (event.data.schema === productCreateSchemaId) {
       if (!ajv.validate(productCreateSchemaId, event.data)) {
-        complete(`${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}could not validate event to '${productCreateSchema}' schema.  Errors: ${ajv.errorsText()}`)
+        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchema}' schema. Errors: ${ajv.errorsText()}`)
       } else {
         impl.putProduct(event, complete)
       }
     } else {
       // TODO remove console.log and pass the above message once we are only receiving subscribed events
-      console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT}  ${constants.BAD_MSG}- event with unsupported schema (${event.data.schema}) observed.`)
+      console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} - event with unsupported schema (${event.data.schema}) observed.`)
       complete()
     }
   },
