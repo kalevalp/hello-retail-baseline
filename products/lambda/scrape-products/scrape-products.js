@@ -22,21 +22,27 @@ exports.handler = (event, context, callback) => {
     throw new Error('Invalid timeout or scrap frequency. Both must be positive numbers.')
   }
 
-  const oneProductInterval = setInterval(() => {
-    ps.nextProduct((scraped) => {
-      const product = new Product(
-        scraped.Id.toString(),
-        scraped.Title,
-        scraped.Brand.Label,
-        scraped.category,
-        `PAGE:${scraped.ProductPageUrl}`)
+  const oneProductInterval = setInterval(
+    () => {
+      ps.nextProduct((scraped) => {
+        const product = new Product(
+          scraped.Id.toString(),
+          scraped.Title,
+          scraped.Brand.Label,
+          scraped.category,
+          `PAGE:${scraped.ProductPageUrl}`,
+        )
+        ProductEvents.sendCreateEvent(product)
+      })
+    },
+    event.productFrequency,
+  )
 
-      ProductEvents.sendCreateEvent(product)
-    })
-  }, event.productFrequency)
-
-  setTimeout(() => {
-    clearInterval(oneProductInterval)
-    callback(null, `${productCount} products produced, ${errorCount} errors`)
-  }, event.lambdaTimeout)
+  setTimeout(
+    () => {
+      clearInterval(oneProductInterval)
+      callback(null, `${productCount} products produced, ${errorCount} errors`)
+    },
+    event.lambdaTimeout,
+  )
 }
