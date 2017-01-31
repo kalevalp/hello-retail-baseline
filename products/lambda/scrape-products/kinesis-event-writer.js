@@ -1,13 +1,21 @@
 'use strict';
 
+const impl = {
+  createEnvelopeEvent: data => ({
+    schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
+    origin: 'hello-retail/product-scraper',
+    timeOrigin: new Date().toISOString(),
+    data,
+  }),
+};
+
 class KinesisEventWriter {
   constructor(kinesis) {
     this.kinesis = kinesis;
   }
 
   writeKinesisEvent(data, partitionKey) {
-    const envelopeEvent = KinesisEventWriter.envelopeEvent();
-    envelopeEvent.data = data;
+    const envelopeEvent = impl.createEnvelopeEvent(data);
 
     const newProductCreatedEvent = {
       Data: JSON.stringify(envelopeEvent),
@@ -26,11 +34,5 @@ class KinesisEventWriter {
     });
   }
 }
-
-KinesisEventWriter.envelopeEvent = () => ({
-  schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
-  origin: 'hello-retail/product-scraper',
-  timeOrigin: new Date().toISOString(),
-});
 
 module.exports = KinesisEventWriter;
