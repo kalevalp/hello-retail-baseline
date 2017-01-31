@@ -1,16 +1,14 @@
 root: true
 extends: airbnb
 rules:
-  max-len:
-    - error
-    - 120
-    - ignoreTrailingComments: true
-    - ignoreUrls: true
+  max-len: off
   no-console: off
-  no-plusplus:
-    - error
-    - allowForLoopAfterthoughts: true
   no-else-return: off
+  no-plusplus: off
+  no-unexpected-multiline: error
+  semi:
+    - error
+    - never
   strict: off # doesn't work in node v4
 plugins:
   - react
