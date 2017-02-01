@@ -31,8 +31,6 @@ phases:
       - npm run test
       - npm run lint
       - chmod 700 $CODEBUILD_SRC_DIR/build/2.deploy.sh
-# TODO get the build infrastructure creation spec at ./build/serverless.yml sorted out and deploy it too!
-#      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Build Infrastructure"       $CODEBUILD_SRC_DIR/build
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Retail Stream"              $CODEBUILD_SRC_DIR/retail-stream
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"     $CODEBUILD_SRC_DIR/products/lambda
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"  $CODEBUILD_SRC_DIR/product-catalog
