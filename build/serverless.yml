@@ -90,6 +90,7 @@ resources:
                     - iam:AttachRolePolicy
                     - iam:DetachRolePolicy
                     - iam:PassRole
+                    - iam:UpdateAssumeRolePolicy
                     - kinesis:DescribeLimits
                     - kinesis:CreateStream
                     - kinesis:DeleteStream
@@ -159,31 +160,31 @@ resources:
         Source:
           Type: CODEPIPELINE
         TimeoutInMinutes: 15
-#    DeploymentBuildProd:
-#      Type: 'AWS::CodeBuild::Project'
-#      Properties:
-#        Name: '${self:service}-codebuild'
-#        Description: The CodeBuild project responsible for unit testing and deploying
-#        DependsOn: DeploymentBuildRole
-#        ServiceRole: !GetAtt DeploymentBuildRole.Arn
-#        Artifacts:
-#          Type: CODEPIPELINE
-#        Environment:
-#          Type: LINUX_CONTAINER
-#          ComputeType: BUILD_GENERAL1_SMALL
-#          Image: aws/codebuild/nodejs:4.3.2
-#          EnvironmentVariables:
-#          - Name: STAGE
-#            Value: prod
-#          - Name: COMPANY
-#            Value: ${self:custom.private.company}
-#          - Name: TEAM
-#            Value: ${self:custom.private.team}
-#          - Name: REGION
-#            Value: ${self:provider.region}
-#        Source:
-#          Type: CODEPIPELINE
-#        TimeoutInMinutes: 15
+    DeploymentBuildProd:
+      Type: 'AWS::CodeBuild::Project'
+      Properties:
+        Name: '${self:service}-codebuild'
+        Description: The CodeBuild project responsible for unit testing and deploying
+        DependsOn: DeploymentBuildRole
+        ServiceRole: !GetAtt DeploymentBuildRole.Arn
+        Artifacts:
+          Type: CODEPIPELINE
+        Environment:
+          Type: LINUX_CONTAINER
+          ComputeType: BUILD_GENERAL1_SMALL
+          Image: aws/codebuild/nodejs:4.3.2
+          EnvironmentVariables:
+          - Name: STAGE
+            Value: prod
+          - Name: COMPANY
+            Value: ${self:custom.private.company}
+          - Name: TEAM
+            Value: ${self:custom.private.team}
+          - Name: REGION
+            Value: ${self:provider.region}
+        Source:
+          Type: CODEPIPELINE
+        TimeoutInMinutes: 15
     # Deployment Pipeline
     DeploymentPipelineRole:
       Type: AWS::IAM::Role
@@ -285,18 +286,18 @@ resources:
 #              - Name: RunAcceptanceTestsAction
 #              - Name: RunIntegrationTestsAction
 #              - Name: RunPerformanceTestsAction
-#          # TODO once we have acceptance, integration, and performance tests, lets deploy to PROD
-#          - Name: RunUnitTestsLintAndDeployProd
-#            Actions:
-#              - Name: RunUnitTestsLintAndDeployAction
-#                ActionTypeId:
-#                  Category: Build
-#                  Owner: AWS
-#                  Provider: AWS CodeBuild
-#                  Version: 1
-#                InputArtifacts:
-#                  - Name: SourceOutput
-#                Configuration:
-#                  ProjectName: !Ref DeploymentBuildProd
-#                RoleArn: !GetAtt DeploymentBuildRole.Arn
-#                RunOrder: 2
+          # TODO once we have acceptance, integration, and performance tests, lets deploy to PROD
+          - Name: RunUnitTestsLintAndDeployProd
+            Actions:
+              - Name: RunUnitTestsLintAndDeployAction
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Provider: AWS CodeBuild
+                  Version: 1
+                InputArtifacts:
+                  - Name: SourceOutput
+                Configuration:
+                  ProjectName: !Ref DeploymentBuildProd
+                RoleArn: !GetAtt DeploymentBuildRole.Arn
+                RunOrder: 2

@@ -1,10 +1,5 @@
 version: 0.1
 
-#environment_variables:
-#  plaintext:
-#    key: "value"
-#    key: "value"
-
 phases:
   install:
     commands:
@@ -36,5 +31,3 @@ phases:
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Retail Stream"              $CODEBUILD_SRC_DIR/retail-stream
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"     $CODEBUILD_SRC_DIR/products/lambda
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"  $CODEBUILD_SRC_DIR/product-catalog
-#  post_build:
-#    commands:
