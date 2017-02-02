@@ -3,8 +3,12 @@
 const KinesisEventWriter = require('./scrape-products/kinesis-event-writer.js')
 
 class ProductEvents {
-  static sendCreateEvent(product) {
-    ProductEvents.kinesisEventWriter.writeKinesisEvent(
+  constructor(kinesis) {
+    this.kinesisEventWriter = new KinesisEventWriter(kinesis)
+  }
+
+  sendCreateEvent(product) {
+    this.kinesisEventWriter.writeKinesisEvent(
       {
         schema: 'com.nordstrom/product/create/1-0-0',
         id: product.id.toString(),
@@ -17,7 +21,5 @@ class ProductEvents {
     )
   }
 }
-
-ProductEvents.kinesisEventWriter = new KinesisEventWriter()
 
 module.exports = ProductEvents
