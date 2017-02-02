@@ -186,8 +186,8 @@ resources:
                         - Ref: ProductCategory
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamo:GetItem'
-                     - 'dynamo:BatchGetItem'
+                     - 'dynamodb:GetItem'
+                     - 'dynamodb:BatchGetItem'
                    Resource:
                     'Fn::Join':
                       - '/'
@@ -195,7 +195,7 @@ resources:
                         - Ref: ProductCatalog
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamo:Query'
+                     - 'dynamodb:Query'
                    Resource:
                     'Fn::Join':
                       - '/'

@@ -36,12 +36,12 @@ exports.handler = (event, context, callback) => {
             scraped.Title,
             scraped.Brand.Label,
             scraped.category,
-            `PAGE:${scraped.ProductPageUrl}`,
+            `PAGE:${scraped.ProductPageUrl}`
           )
           productEvents.sendCreateEvent(product)
         })
       },
-      event.productFrequency,
+      event.productFrequency
     )
 
     setTimeout(
@@ -49,7 +49,7 @@ exports.handler = (event, context, callback) => {
         clearInterval(oneProductInterval)
         callback(null, 'product scraping complete')
       },
-      event.lambdaTimeout,
+      event.lambdaTimeout
     )
   }
 }
