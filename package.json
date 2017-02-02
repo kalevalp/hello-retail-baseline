@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
-    "lint": "./node_modules/.bin/eslint ./**/",
-    "sim:scrape": "node ./products/test/scrape-products-exec.js"
+    "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
+    "sim:scrape": "node ./products/test/scrape-products-exec.js",
+    "web:build": "./node_modules/.bin/webpack --config ./web/webpack.config.js",
+    "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --hot --inline --progress --colors --watch --display-error-details --display-cached --content-base ./web/"
   },
   "repository": {
     "type": "git",
@@ -29,21 +31,35 @@
     "test",
     "lint"
   ],
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "ajv": "^4.10.4",
-    "aws-sdk": "^2.7.16",
-    "chai": "^3.5.0",
-    "eslint": "^3.14.0",
-    "eslint-config-airbnb": "^14.0.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^3.0.2",
-    "eslint-plugin-react": "^6.9.0",
-    "https-proxy-agent": "^1.0.0",
-    "js-yaml": "^3.7.0",
-    "mocha": "^3.0.2",
-    "pre-commit": "^1.1.3",
-    "serverless": "^1.4.0"
+  "ajv": "^4.11.2",
+  "aws-sdk": "^2.7.16",
+  "babel-core": "^6.6.4",
+  "babel-eslint": "^7.1.1",
+  "babel-loader": "^6.2.10",
+  "babel-preset-airbnb": "^1.1.1",
+  "babel-preset-es2015": "^6.6.0",
+  "babel-preset-react": "^6.5.0",
+  "babel-preset-stage-0": "^6.22.0",
+  "babel-register": "^6.22.0",
+  "chai": "^3.5.0",
+  "enzyme": "^2.7.0",
+  "eslint": "^3.14.0",
+  "eslint-config-airbnb": "^14.0.0",
+  "https-proxy-agent": "^1.0.0",
+  "js-yaml": "^3.7.0",
+  "jsdom": "^9.9.1",
+  "json-loader": "^0.5.4",
+  "loadjs": "^3.3.1",
+  "mocha": "^3.0.2",
+  "pre-commit": "^1.1.3",
+  "react": "^15",
+  "react-addons-test-utils": "^15.4.2",
+  "react-dom": "^15",
+  "react-router": "^3.0.2",
+  "serverless": "^1.4.0",
+  "webpack": "^1.14.0",
+  "webpack-dev-server": "^1.16.2"
   }
 }

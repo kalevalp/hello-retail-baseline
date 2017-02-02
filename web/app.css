@@ -1,0 +1,45 @@
+.app {
+  font-size: 120%;
+  max-width: 20em;
+  text-align: center;
+}
+
+label {
+  font-weight: bold;
+}
+
+.registerRadio {
+  margin: auto
+}
+
+.prodcutCard {
+  text-align:center;
+  max-width: 18em;
+}
+
+.productName {
+  text-align:left;
+  font-size: x-large;
+}
+
+.productBrand {
+  text-align:left;
+  font-size: large;
+}
+
+.productDesc {
+  text-align:left;
+}
+
+.categoryList {
+  background-color: cornflowerblue;
+}
+
+.categoryLink {
+  text-align: left;
+}
+
+.categoryCount {
+  text-align: right;
+  display: none;
+}
