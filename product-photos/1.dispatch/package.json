@@ -1,0 +1,18 @@
+{
+  "name": "hello-retail-product-photos-dispatch",
+  "version": "0.0.1",
+  "description": "A stream processor that watches for new products and aquires a photo for each one",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: tests executed by root hello-retail package.json\" && exit 1"
+  },
+  "author": "Nordstrom",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Nordstrom/hello-retail/issues"
+  },
+  "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
+  "dependencies": {
+    "ajv": "^4.10.4"
+  }
+}

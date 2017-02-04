@@ -1,0 +1,121 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+plugins:
+  - serverless-step-functions
+
+service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-assign
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  assign:
+    role:
+      'Fn::GetAtt': [ AssignRole, Arn ]
+    handler: assign.checkAssignment
+    environment:
+      STAGE: ${self:custom.stage}
+# TODO
+#      TABLE_PHOTOGRAPHERS_NAME:
+#        # TODO Get a real source
+#        'Fn::ImportValue': 'PHOTOGRAPHERS-TABLE-NAME-TODO'
+      TABLE_PHOTO_ASSIGNMENTS_NAME:
+        'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
+
+stepFunctions:
+  stateMachines:
+    aquirePhoto:
+      Comment: Aquire a photograph of the given product from one of the registered photographers
+      StartAt: CheckAssignment
+      States:
+        CheckAssignment:
+          Type: Task
+          Resource: assign
+          Next: AssignmentResult
+        AssignmentResult:
+          Type: Choice
+          Choices:
+            - Variable: '$.next'
+              StringEquals: 'assigned'
+              Next: WaitForPhoto
+            - Variable: '$.next'
+              StringEquals: 'image'
+              Next: Complete
+        WaitForPhoto:
+          Type: Wait
+          Seconds: 420
+          Next: CheckAssignment
+        Complete:
+          Type: Succeed
+
+resources:
+  Resources:
+    # Log Groups
+    AssignLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-assign'
+        RetentionInDays: 7
+    # Role
+    AssignRole: # role for the assignments dispatching lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosAssign${self:custom.productPhotos.photoAssignmentsVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ AssignLogGroup, Arn ]
+                        - '*'
+          - ${custom.productPhotos.getPhotoAssignment}
+          - ${custom.productPhotos.updatePhotoAssignment}
+# TODO
+#          - PolicyName: ReadRegisteredPhotographers
+#            PolicyDocument:
+#              Version: '2012-10-17'
+#              Statement:
+#                -  Effect: 'Allow'
+#                   Action:
+#                     - 'dynamodb:Query'
+#                     - 'dynamodb:Scan'
+#                   Resource:
+#                    # TODO
+#                    'Fn::ImportValue': 'RegisteredPhotographersTableName'
+  Outputs:
+    PhotoAssignmentsStepFunctionName:
+      Description: The Name of the Photo Assignments Table
+      Value:
+        Ref: aquirePhoto # TODO
+      Export:
+        Name: '${self:service}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
+# arn:aws:states:region:account-id:activity:activityName
+# arn:aws:states:region:account-id:stateMachine:stateMachineName
+# arn:aws:states:region:account-id:execution:stateMachineName:executionName

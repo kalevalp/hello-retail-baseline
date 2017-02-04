@@ -1,0 +1,23 @@
+name: product-photos
+photoAssignmentsVersion: 1
+# Policies
+getPhotoAssignment:
+  PolicyName: GetPhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:GetItem'
+         Resource:
+          'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}'
+updatePhotoAssignment:
+  PolicyName: UpdatePhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:UpdateItem'
+         Resource:
+          'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}'

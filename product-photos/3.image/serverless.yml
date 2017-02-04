@@ -1,0 +1,77 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-image
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  image:
+    role:
+      'Fn::GetAtt': [ ImageRole, Arn ]
+    handler: image.processImage
+    environment:
+      STAGE: ${self:custom.stage}
+      TABLE_PHOTO_ASSIGNMENTS_NAME:
+        'Fn::ImportValue': 'hello-retail-product-photos:${self:custom.stage}:PhotoAssignments:${self:custom.productPhotos.photoAssignmentsVersion}'
+    events:
+      # from twillio
+
+resources:
+  Resources:
+    # Log Groups
+    ImageLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-image'
+        RetentionInDays: 7
+    # Role
+    AssignRole: # role for the assignments dispatching lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosImage{self:custom.productPhotos.photoAssignmentsVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ ImageLogGroup, Arn ]
+                        - '*'
+          - ${custom.productPhotos.updatePhotoAssignment}
+          - PolicyName: StopAssignmentExecution
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'states:StopExecution'
+                  Resource:
+                    # TODO
+                    - 'Fn:ImportValue': 'TODO'

@@ -1,0 +1,85 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-dispatch
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  dispatch:
+    role:
+      'Fn::GetAtt': [ DispatchRole, Arn ]
+    handler: dispatch.processKinesisEvent
+    environment:
+      STAGE: ${self:custom.stage}
+      STREAM_ARN:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+      STREAM_ROLE_ARN:
+        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+      TABLE_PHOTO_ASSIGNMENTS_NAME:
+        'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
+    events:
+      - stream:
+          arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
+#            'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+          enabled: true
+          startingPosition: 'TRIM_HORIZON'
+
+resources:
+  Resources:
+    # Log Group
+    DispatchLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-dispatch'
+        RetentionInDays: 7
+    # Role
+    DispatchRole: # role for the assignments dispatching lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosDispatch${self:custom.productPhotos.photoAssignmentsVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ DispatchLogGroup, Arn ]
+                        - '*'
+          - ${custom.productPhotos.updatePhotoAssignment}
+          - PolicyName: StartAssignmentExecution
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'states:StartExecution'
+                  Resource:
+                    # TODO
+                    - 'Fn:ImportValue': 'TODO'
