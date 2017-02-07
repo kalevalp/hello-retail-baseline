@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-image
+service: ${self:custom.productPhotos.imageName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -10,7 +10,7 @@ custom:
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}

@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-dispatch
+service: ${self:custom.productPhotos.dispatchName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -10,7 +10,7 @@ custom:
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
@@ -27,7 +27,9 @@ functions:
       STREAM_ROLE_ARN:
         'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
       TABLE_PHOTO_ASSIGNMENTS_NAME:
-        'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
+        'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      STEP_FUNCTION_ASSIGN_ARN:
+        'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
@@ -81,5 +83,4 @@ resources:
                   Action:
                     - 'states:StartExecution'
                   Resource:
-                    # TODO
-                    - 'Fn:ImportValue': 'TODO'
+                    'Fn:ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}

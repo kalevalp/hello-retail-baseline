@@ -1,22 +1,39 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data
+service: ${self:custom.productPhotos.dataName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../private.yml)}
-  helloRetail: ${file(../helloRetail.yml)}
-  productPhotos: ${file(./productPhotos.yml)}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}}
+  productPhotos: ${file(productPhotos.yml)}
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
 
 resources:
   Resources:
+#    Photographers:
+#      Type: 'AWS::DynamoDB::Table'
+#      Properties:
+#        AttributeDefinitions:
+#          - AttributeName: id
+#            AttributeType: S
+#          - AttributeName: assignments
+#            AttributeType: N
+#        KeySchema:
+#          - AttributeName: id
+#            KeyType: HASH
+#          - AttributeName: assignments
+#            KeyType: RANGE
+#        ProvisionedThroughput:
+#          ReadCapacityUnits: 1
+#          WriteCapacityUnits: 1
+#        TableName: ${self:custom.stage}-${self:service}-Photographers-${self:custom.productPhotos.photoAssignmentsVersion}
     PhotoAssignments:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -29,15 +46,15 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: '${self:custom.stage}-PhotoAssignments-${self:custom.productPhotos.photoAssignmentsVersion}'
+        TableName: ${self:custom.stage}-${self:service}-PhotoAssignments-${self:custom.productPhotos.photoAssignmentsVersion}
   Outputs:
     PhotoAssignmentsTableName:
       Description: The Name of the Photo Assignments Table
       Value:
         Ref: PhotoAssignments
       Export:
-        Name: '${self:service}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
-    ProductCategoryTableArn:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+    PhotoAssignmentsTableArn:
       Description: The ARN for the Photo Assignments Table
       Value:
         'Fn::Join':
@@ -45,4 +62,4 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: PhotoAssignments
       Export:
-        Name: '${self:service}:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}'
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}

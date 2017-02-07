@@ -1,5 +1,14 @@
 name: product-photos
 photoAssignmentsVersion: 1
+dataName: ${self:custom.productPhotos.name}-data
+dispatchName: ${self:custom.productPhotos.name}-dispatch
+assignName: ${self:custom.productPhotos.name}-assign
+imageName: ${self:custom.productPhotos.name}-image
+# Exports
+exportPhotoAssignmentsTableName: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}
+exportPhotoAssignmentsTableArn: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}
+exportPhotoAssignmentsStepFunctionName: ${self:custom.productPhotos.assignName}:${self:custom.stage}:PhotoAssignmentsStepFunctionName:${self:custom.productPhotos.photoAssignmentsVersion}
+exportPhotoAssignmentsStepFunctionArn: ${self:custom.productPhotos.assignName}:${self:custom.stage}:PhotoAssignmentsStepFunctionArn:${self:custom.productPhotos.photoAssignmentsVersion}
 # Policies
 getPhotoAssignment:
   PolicyName: GetPhotoAssignment
@@ -10,7 +19,7 @@ getPhotoAssignment:
          Action:
            - 'dynamodb:GetItem'
          Resource:
-          'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}'
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}
 updatePhotoAssignment:
   PolicyName: UpdatePhotoAssignment
   PolicyDocument:
@@ -20,4 +29,4 @@ updatePhotoAssignment:
          Action:
            - 'dynamodb:UpdateItem'
          Resource:
-          'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.photoAssignmentsVersion}'
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}

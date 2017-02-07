@@ -3,7 +3,7 @@ frameworkVersion: '>=1.0.0 <2.0.0'
 plugins:
   - serverless-step-functions
 
-service: ${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-assign
+service: ${self:custom.productPhotos.assignName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -13,7 +13,7 @@ custom:
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
@@ -30,7 +30,7 @@ functions:
 #        # TODO Get a real source
 #        'Fn::ImportValue': 'PHOTOGRAPHERS-TABLE-NAME-TODO'
       TABLE_PHOTO_ASSIGNMENTS_NAME:
-        'Fn::ImportValue': '${self:custom.helloRetail.name}-${self:custom.productPhotos.name}-data:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
+        'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 stepFunctions:
   stateMachines:
@@ -111,11 +111,16 @@ resources:
 #                    'Fn::ImportValue': 'RegisteredPhotographersTableName'
   Outputs:
     PhotoAssignmentsStepFunctionName:
-      Description: The Name of the Photo Assignments Table
+      Description: The Name of the Photo Assignments Step Function
       Value:
-        Ref: aquirePhoto # TODO
+        # TODO this won't work, do something clever-er?
+        Ref: aquirePhoto
       Export:
-        Name: '${self:service}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.photoAssignmentsVersion}'
-# arn:aws:states:region:account-id:activity:activityName
-# arn:aws:states:region:account-id:stateMachine:stateMachineName
-# arn:aws:states:region:account-id:execution:stateMachineName:executionName
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionName}
+    PhotoAssignmentsStepFunctionArn:
+      Description: The ARN of the Photo Assignments Step Function
+      Value:
+        # TODO if this doesn't work... 'arn:aws:states:${region}:${account-id}:stateMachine:${stateMachineName}'
+        'Fn::GetAtt': [ aquirePhoto, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}

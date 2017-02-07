@@ -18,6 +18,7 @@ ajv.addSchema(eventSchema, eventSchemaId)
 ajv.addSchema(productCreateSchema, productCreateSchemaId)
 
 const dynamo = new aws.DynamoDB.DocumentClient()
+const stepfunctions = new aws.StepFunctions()
 
 const constants = {
   // self
@@ -30,6 +31,7 @@ const constants = {
   BAD_MSG: 'bad msg:',
   // resources
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
+  STEP_FUNCTION_ASSIGN_ARN: process.env.STEP_FUNCTION_ASSIGN_ARN,
 }
 
 const impl = {
@@ -65,7 +67,6 @@ const impl = {
         '#cb=if_not_exists(#cb,:cb),',
         '#u=:u,',
         '#ub=:ub,',
-        // TODO supply intended attributes
         '#as=:as,',
         '#sup=:sup,',
       ].join(' '),
@@ -89,12 +90,31 @@ const impl = {
       ReturnConsumedCapacity: 'NONE',
       ReturnItemCollectionMetrics: 'NONE',
     }
-    dynamo.update(dbParamsProduct, (err, res) => {
-      if (err) {
-        // TODO handle error
+    dynamo.update(dbParamsProduct, (dErr) => {
+      if (dErr) {
+        if (dErr.code && dErr.code === 'ConditionalCheckFailedException') { // handle "already exists" differently, be idempotent
+          complete(null, 'Succeeding: attempted assignment creation but an assignment already exists.')
+        } else {
+          complete(`${constants.METHOD_CREATE_ASSIGNMENT} - error updating DynamoDb: ${dErr}`)
+        }
       } else {
-        // TODO start execution on the step function to obtain the photo
-        complete(res)
+        const params = {
+          stateMachineArn: constants.STEP_FUNCTION_ASSIGN_ARN,
+          input: JSON.stringify(event),
+          name: event.data.id,
+        }
+        stepfunctions.startExecution(params, (sfErr) => {
+          if (sfErr) {
+            complete([
+              `${constants.METHOD_CREATE_ASSIGNMENT} - error starting execution on step function:\n`,
+              `step function: ${constants.STEP_FUNCTION_ASSIGN_ARN}\n`,
+              `sent: ${JSON.stringify(event)}`,
+              `error: ${sfErr}`,
+            ].join())
+          } else {
+            complete()
+          }
+        })
       }
     })
   },
