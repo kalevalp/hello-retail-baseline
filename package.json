@@ -4,10 +4,11 @@
   "description": "An introduction to the event stream processing model for the purpose of implementing a retail system backbone",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
     "sim:scrape": "node ./products/test/scrape-products-exec.js",
+    "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
     "web:build": "./node_modules/.bin/webpack --config ./web/webpack.config.js",
+    "web:deploy:test": "pushd ./web/ && sls deploy -s test && ./deploy.sh test ; popd",
     "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --hot --inline --progress --colors --watch --display-error-details --display-cached --content-base ./web/"
   },
   "repository": {

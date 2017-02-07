@@ -1,0 +1,184 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: hello-retail-website
+
+plugins:
+  - deploy-web-app-plugin
+
+custom:
+  dnsHostName:
+    Fn::If:
+      - ProductionStage
+      - hello-retail.biz
+      - ${self:custom.stage}.hello-retail.biz
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../private.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+resources:
+  Conditions:
+     ProductionStage:
+       Fn::Equals:
+         - ${self:custom.stage}
+         - prod
+  Resources:
+    # ===================== S3 =====================
+
+    HelloRetailWebBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName:
+          Fn::If:
+            - ProductionStage
+            - hello-retail.biz
+            - ${self:custom.stage}.hello-retail.biz
+        CorsConfiguration:
+          CorsRules:
+          - AllowedHeaders: [Authorization]
+            AllowedMethods: [GET]
+            AllowedOrigins: [amazon.com]
+            MaxAge: 3000
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: 404.html
+
+    HelloRetailWebBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: HelloRetailWebBucket
+        PolicyDocument:
+          Statement:
+            -
+              Action:
+                - s3:GetObject
+              Effect: Allow
+              Resource:
+                Fn::Join:
+                  - ''
+                  -
+                    - 'arn:aws:s3:::'
+                    -
+                      Ref: HelloRetailWebBucket
+                    - '/*'
+              Principal: '*'
+      DependsOn:
+        - HelloRetailWebBucket
+
+    # ================ CloudFront ==================
+
+    HelloRetailWebDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - Id:
+                Fn::Join:
+                - ''
+                -
+                  - 'S3-'
+                  - Fn::If:
+                    - ProductionStage
+                    - hello-retail.biz
+                    - ${self:custom.stage}.hello-retail.biz
+              DomainName:
+                Fn::Join:
+                - ''
+                -
+                  - Fn::If:
+                    - ProductionStage
+                    - hello-retail.biz
+                    - ${self:custom.stage}.hello-retail.biz
+                  - '.s3.amazonaws.com'
+              S3OriginConfig:
+                OriginAccessIdentity: ''
+          Enabled: true
+          DefaultRootObject: index.html
+          Aliases:
+          - Fn::If:
+            - ProductionStage
+            - hello-retail.biz
+            - ${self:custom.stage}.hello-retail.biz
+          DefaultCacheBehavior:
+            AllowedMethods:
+            - GET
+            - HEAD
+            TargetOriginId:
+              Fn::Join:
+                - ''
+                -
+                  - 'S3-'
+                  - Fn::If:
+                    - ProductionStage
+                    - hello-retail.biz
+                    - ${self:custom.stage}.hello-retail.biz
+            ForwardedValues:
+              QueryString: 'false'
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+          ViewerCertificate:
+            SslSupportMethod: sni-only
+            AcmCertificateArn: ${self:custom.private.websiteSSLCert}
+      DependsOn:
+        - HelloRetailWebBucket
+
+    #  ---  Route 53  ----
+    myDNS:
+      Type: AWS::Route53::RecordSetGroup
+      Properties:
+        HostedZoneName: ${self:custom.private.domainName}
+        Comment: The hello-retail app hosted at ${self:custom.private.domainName}.
+        RecordSets:
+        -
+          Name: ${self:custom.private.domainName}
+          Type: A
+          AliasTarget:
+            HostedZoneId: !FindInMap [ RegionMap, !Ref 'AWS::Region', S3hostedzoneID]
+            DNSName: !FindInMap [ RegionMap, !Ref 'AWS::Region', websiteendpoint]
+#        -
+#          Name: !Sub
+#              - www.${Domain}
+#              - Domain: !Ref RootDomainName
+#          Type: CNAME
+#          TTL: 900
+#          ResourceRecords:
+#          - !GetAtt WWWBucket.DomainName
+#
+#    HelloRetailWebZone:
+#      Type: "AWS::Route53::HostedZone"
+#      Properties: {}
+#    HelloRetailWebRecordSetGroup:
+#      Type: "AWS::Route53::RecordSetGroup"
+#      Properties:
+#        HostedZoneId:
+#          Ref: "HelloRetailWebZone"
+#    HelloRetailWebARecord:
+#      Type: "AWS::Route53::RecordSet"
+#      Properties:
+#        HostedZoneId:
+#          Ref: "HelloRetailWebZone"
+#      DependsOn:
+#        - "HelloRetailWebRecordSetGroup"
+#        - "HelloRetailWebDistribution"
+#    HelloRetailWebsiteAAAARecord:
+#      Type: "AWS::Route53::RecordSet"
+#      Properties:
+#        HostedZoneId:
+#          Ref: "HelloRetailWebZone"
+#      DependsOn:
+#        - "HelloRetailWebRecordSetGroup"
+#        - "HelloRetailWebDistribution"
+#
+#  Outputs:
+#    WebsiteURL:
+#      Value: !GetAtt RootBucket.WebsiteURL
+#      Description: URL for website hosted on S3
+#
+#
+#
