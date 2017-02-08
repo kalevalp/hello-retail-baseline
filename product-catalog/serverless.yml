@@ -1,15 +1,28 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: hello-retail-product-catalog
+service: ${self:custom.helloRetail.name}-product-catalog
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../private.yml)}
-  productCatalogVersion: 1
+  helloRetail: ${file(../helloRetail.yml)}
+  retailStream: ${file(../retail-stream/serverless.yml)}
+  retailStreamVersion: 1
+  # Product Catalog Versions & Exports
+  # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogVersion, custom.productCatalog) in its serverless.yml:
+  productCatalogVersion: 1 # The version of this service to depend upon
+  productCatalog: ${self:} # externally, use `${file(~/product-catalog/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
+  # Exports
+  exportProductCategoryTableName: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCategoryTableName:${self:custom.productCatalogVersion}
+  exportProductCategoryTableArn: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCategoryTableArn:${self:custom.productCatalogVersion}
+  exportProductCatalogTableName: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogVersion}
+  exportProductCatalogTableArn: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCatalogTableArn:${self:custom.productCatalogVersion}
+  exportProductCatalogTableCategoryIndexArn: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn:${self:custom.productCatalogVersion}
+  exportProductCatalogReaderArn: ${self:custom.productCatalog.service}:${self:custom.stage}:ProductCatalogReaderArn:${self:custom.productCatalogVersion}
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
@@ -22,9 +35,9 @@ functions:
     environment:
       STAGE: ${self:custom.stage}
       STREAM_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
       STREAM_ROLE_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
       TABLE_PRODUCT_CATEGORY_NAME:
         Ref: ProductCategory
       TABLE_PRODUCT_CATALOG_NAME:
@@ -32,7 +45,7 @@ functions:
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
-#            'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+#            'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
           startingPosition: 'TRIM_HORIZON'
 
@@ -135,7 +148,7 @@ resources:
                     - 'kinesis:DescribeStream'
                     - 'kinesis:ListStreams'
                   Resource:
-                    'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+                    'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: WriteToCatalog
             PolicyDocument:
               Version: '2012-10-17'
@@ -209,7 +222,7 @@ resources:
       Value:
         Ref: ProductCategory
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableName'
+        Name: ${self:custom.exportProductCategoryTableName}
     ProductCategoryTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
@@ -218,13 +231,13 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCategory
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableArn'
+        Name: ${self:custom.exportProductCategoryTableArn}
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableName'
+        Name: ${self:custom.exportProductCatalogTableName}
     ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
@@ -233,7 +246,7 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableArn'
+        Name: ${self:custom.exportProductCatalogTableArn}
     ProductCatalogTableCategoryIndexArn:
       Description: The ARN for the Product Catalog Table's Category Index
       Value:
@@ -244,10 +257,10 @@ resources:
             - index
             - Category
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn'
+        Name: ${self:custom.exportProductCatalogTableCategoryIndexArn}
     ProductCatalogReaderArn:
       Description: The Role ARN for a Product Catalog Reader
       Value:
         'Fn::GetAtt': [ ProductCatalogReader, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogReaderArn'
+        Name: ${self:custom.exportProductCatalogReaderArn}

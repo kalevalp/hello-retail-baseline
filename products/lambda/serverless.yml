@@ -1,28 +1,30 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: new-product-simulator
+service: new-product-simulator # change to ${self:custom.helloRetail.name}-product-creation ???
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStreamVersion: 1
+  retailStream: ${file(../../retail-stream/serverless.yml)}
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
-  environment:
-    STAGE: ${self:custom.stage}
 
 functions:
   scrapeProducts:
     handler: 'scrape-products/scrape-products.handler'
     environment:
+      STAGE: ${self:custom.stage}
       STREAM_WRITER_ROLE:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamWriterArn'
+        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamName'
+        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamName}
     role:
       Fn::GetAtt:
         - ProductStreamProducer
