@@ -30,14 +30,14 @@ provider:
 functions:
   catalog:
     role:
-      'Fn::GetAtt': [ ProductCatalogReaderWriter, Arn ]
+      Fn::GetAtt: [ ProductCatalogReaderWriter, Arn ]
     handler: catalog.processKinesisEvent
     environment:
       STAGE: ${self:custom.stage}
       STREAM_ARN:
-        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
       STREAM_ROLE_ARN:
-        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
       TABLE_PRODUCT_CATEGORY_NAME:
         Ref: ProductCategory
       TABLE_PRODUCT_CATALOG_NAME:
@@ -45,7 +45,7 @@ functions:
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
-#            'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
+#            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
           startingPosition: 'TRIM_HORIZON'
 
@@ -133,9 +133,9 @@ resources:
                     - 'logs:CreateLogStream'
                     - 'logs:PutLogEvents'
                   Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - ':'
-                      - - 'Fn::GetAtt': [ CatalogLogGroup, Arn ]
+                      - - Fn::GetAtt: [ CatalogLogGroup, Arn ]
                         - '*'
           - PolicyName: ReadFromKinesis
             PolicyDocument:
@@ -148,7 +148,7 @@ resources:
                     - 'kinesis:DescribeStream'
                     - 'kinesis:ListStreams'
                   Resource:
-                    'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
+                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: WriteToCatalog
             PolicyDocument:
               Version: '2012-10-17'
@@ -157,7 +157,7 @@ resources:
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
@@ -165,7 +165,7 @@ resources:
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -193,7 +193,7 @@ resources:
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
@@ -202,7 +202,7 @@ resources:
                      - 'dynamodb:GetItem'
                      - 'dynamodb:BatchGetItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -210,7 +210,7 @@ resources:
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -226,7 +226,7 @@ resources:
     ProductCategoryTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCategory
@@ -241,7 +241,7 @@ resources:
     ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
@@ -250,7 +250,7 @@ resources:
     ProductCatalogTableCategoryIndexArn:
       Description: The ARN for the Product Catalog Table's Category Index
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
@@ -261,6 +261,6 @@ resources:
     ProductCatalogReaderArn:
       Description: The Role ARN for a Product Catalog Reader
       Value:
-        'Fn::GetAtt': [ ProductCatalogReader, Arn ]
+        Fn::GetAtt: [ ProductCatalogReader, Arn ]
       Export:
         Name: ${self:custom.exportProductCatalogReaderArn}

@@ -1,4 +1,4 @@
-# Projects must include this file as follows:
+# Services must include this file as follows:
 # ```
 # custom:
 #   helloRetail: ${file(../helloRetail.yml)}}

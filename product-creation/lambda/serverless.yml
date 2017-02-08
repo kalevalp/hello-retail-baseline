@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: new-product-simulator # change to ${self:custom.helloRetail.name}-product-creation ???
+service: ${self:custom.helloRetail.name}-product-creation
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -22,9 +22,9 @@ functions:
     environment:
       STAGE: ${self:custom.stage}
       STREAM_WRITER_ROLE:
-        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
-        'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamName}
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
     role:
       Fn::GetAtt:
         - ProductStreamProducer

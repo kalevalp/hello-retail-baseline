@@ -60,7 +60,7 @@ resources:
                      - 'kinesis:PutRecord'
                      - 'kinesis:PutRecords'
                    Resource:
-                     'Fn::GetAtt': [ RetailStream, Arn ]
+                     Fn::GetAtt: [ RetailStream, Arn ]
     RetailStreamReader: # role for consumers
       Type: AWS::IAM::Role
       Properties:
@@ -88,7 +88,7 @@ resources:
                      - 'kinesis:GetShardIterator'
                      - 'kinesis:ListStreams'
                    Resource:
-                     'Fn::GetAtt': [ RetailStream, Arn ]
+                     Fn::GetAtt: [ RetailStream, Arn ]
   Outputs:
     RetailStreamName:
       Description: The Name of the Retail Stream
@@ -99,18 +99,18 @@ resources:
     RetailStreamArn:
       Description: The ARN for the Retail Stream
       Value:
-        'Fn::GetAtt': [ RetailStream, Arn ]
+        Fn::GetAtt: [ RetailStream, Arn ]
       Export:
         Name: ${self:custom.exportRetailStreamArn}
     RetailStreamWriterArn:
       Description: The ARN for the defined Role that can write events to the RetailStream
       Value:
-        'Fn::GetAtt': [ RetailStreamWriter, Arn ]
+        Fn::GetAtt: [ RetailStreamWriter, Arn ]
       Export:
         Name: ${self:custom.exportRetailStreamWriterArn}
     RetailStreamReaderArn:
       Description: The ARN for the defined Role that can read events from the RetailStream
       Value:
-        'Fn::GetAtt': [ RetailStreamReader, Arn ]
+        Fn::GetAtt: [ RetailStreamReader, Arn ]
       Export:
         Name: ${self:custom.exportRetailStreamReaderArn}
