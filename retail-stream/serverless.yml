@@ -7,7 +7,7 @@ custom:
   private: ${file(../private.yml)}
   helloRetail: ${file(../helloRetail.yml)}
   # Retail Stream Versions & Exports
-  # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogVersion, custom.productCatalog) in its serverless.yml:
+  # WARNING: each project that uses these will have to define the following two attributes (custom.retailStreamVersion, custom.retailStream) in its serverless.yml:
   retailStreamVersion: 1 # The version of this service to depend upon
   retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
   # Exports
