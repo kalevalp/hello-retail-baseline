@@ -120,14 +120,16 @@ resources:
         RecordSets:
         - Name: ${self:custom.dnsHostName}
           Type: A
+          HostedZoneName: ${self:custom.domainName}.
           AliasTarget:
             DNSName: ${self:custom.originDomainName}
-            HostedZoneName: ${self:custom.domainName}.
+            HostedZoneId: ${self:custom.hostedZoneId}
         - Name: ${self:custom.dnsHostName}
           Type: AAAA
+          HostedZoneName: ${self:custom.domainName}.
           AliasTarget:
             DNSName: ${self:custom.originDomainName}
-            HostedZoneName: ${self:custom.domainName}.
+            HostedZoneId: ${self:custom.hostedZoneId}
       DependsOn:
         - HelloRetailWebDistribution
 
