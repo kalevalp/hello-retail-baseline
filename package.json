@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
+    "web:test": "./node_modules/.bin/mocha -w ./web/test/helpers/browser.js --recursive -R min ./web/**/*.spec.js",
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
     "sim:scrape": "node ./product-creation/test/scrape-products-exec.js",
     "web:build": "./node_modules/.bin/webpack --config ./web/webpack.config.js",
