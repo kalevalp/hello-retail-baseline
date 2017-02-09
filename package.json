@@ -8,7 +8,9 @@
     "sim:scrape": "node ./products/test/scrape-products-exec.js",
     "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
     "web:build": "./node_modules/.bin/webpack --config ./web/webpack.config.js",
-    "web:deploy:test": "pushd ./web/ && sls deploy -s test && ./deploy.sh test ; popd",
+    "web:deploy:test": "pushd ./web/ && sls deploy -s test && ./deploy.sh test && popd",
+    "web:deploy:prod": "pushd ./web/ && sls deploy -s prod && ./deploy.sh prod && popd",
+    "web:deploy:testAny": "pushd ./web/ && sls deploy -s $STAGE && ./deploy.sh $STAGE && popd",
     "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --hot --inline --progress --colors --watch --display-error-details --display-cached --content-base ./web/"
   },
   "repository": {

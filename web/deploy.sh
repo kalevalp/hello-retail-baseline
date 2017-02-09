@@ -17,9 +17,9 @@ else
 
   echo Copying app files to S3 bucket $BUCKET_NAME...
 
-  aws s3 cp ./app.css s3://$BUCKET_NAME/
-  aws s3 cp ./bundle.js s3://$BUCKET_NAME/
-  aws s3 cp ./index.html s3://$BUCKET_NAME/
+  aws s3 cp ./app/app.css s3://$BUCKET_NAME/
+  aws s3 cp ./app/bundle.js s3://$BUCKET_NAME/
+  aws s3 cp ./app/index.html s3://$BUCKET_NAME/
 
   echo Bucket $BUCKET_NAME deployment complete.
 fi
