@@ -3,30 +3,57 @@ frameworkVersion: '>=1.0.0 <2.0.0'
 service: hello-retail-website
 
 custom:
+  # AWS ARN for the S3 bucket used to host the site.
   bucketArn:
     Fn::Join: # e.g. arn:aws:s3:::stage.hello-retail.biz/*
       - ''
       - - 'arn:aws:s3:::'
         - Ref: HelloRetailWebBucket
         - '/*'
+
+  # Domain name for CloudFront distribution.
+  cloudFrontDomainName:
+    Fn::GetAtt:
+      - HelloRetailWebDistribution
+      - DomainName
+
+  # Hosted Zone ID for all of CloudFormation.
+  cloudFrontHostedZoneId: Z2FDTNDATAQYW2
+
+  # Public domain for the site e.g. hello-retail.biz
   domainName: ${self:custom.private.domainName}
+
+  # Fully Qualified Domain Name for the hosted website.
   dnsHostName:
     Fn::If: # e.g. hello-retail.biz or stage.hello-retail.biz
       - ProductionStage
       - ${self:custom.domainName}
       - ${self:custom.stage}.${self:custom.domainName}
+
+  # Hosted Zone ID for website DNS.
   hostedZoneId: ${self:custom.private.hostedZoneId}
+
+  # FQDN for direct access to S3 bucket website.
   originDomainName:
     Fn::Join: # e.g. hello-retail.biz.s3.amazonaws.com
       - ''
       - - ${self:custom.dnsHostName}
         - '.s3.amazonaws.com'
+
+  # Identifier used for the S3 origin in CloudFront.
   originId:
     Fn::Join: # e.g. S3-hello-retail.biz or S3-stage.hello-retail.biz
       - ''
       - - 'S3-'
         - ${self:custom.dnsHostName}
+
+  # Import secrets.
   private: ${file(../private.yml)}
+
+  # SSL Certificate to use for Cloud Front.
+  sslCert: ${self:custom.private.websiteSSLCert}
+
+  # Stage name for deployment. Use 'prod' to deploy to production.
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
 
 provider:
@@ -50,13 +77,6 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.dnsHostName}
-        # Really needed?
-        CorsConfiguration:
-          CorsRules:
-          - AllowedHeaders: [Authorization]
-            AllowedMethods: [GET]
-            AllowedOrigins: [amazon.com]
-            MaxAge: 3000
         WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: 404.html
@@ -89,25 +109,24 @@ resources:
                 OriginAccessIdentity: ''
           Enabled: true
           DefaultRootObject: index.html
-          # Really needed?
           Aliases:
-          - Fn::If:
-            - ProductionStage
-            - hello-retail.biz
-            - ${self:custom.stage}.hello-retail.biz
+          - ${self:custom.dnsHostName}
           DefaultCacheBehavior:
             AllowedMethods:
             - GET
             - HEAD
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
             TargetOriginId: ${self:custom.originId}
             ForwardedValues:
-              QueryString: 'false'
+              QueryString: false
               Cookies:
                 Forward: none
             ViewerProtocolPolicy: redirect-to-https
           ViewerCertificate:
             SslSupportMethod: sni-only
-            AcmCertificateArn: ${self:custom.private.websiteSSLCert}
+            AcmCertificateArn: ${self:custom.sslCert}
       DependsOn:
         - HelloRetailWebBucket
 
@@ -116,32 +135,17 @@ resources:
     HelloRetailWebRecordSetGroup:
       Type: AWS::Route53::RecordSetGroup
       Properties:
-        HostedZoneId: ${self:custom.hostedZoneId}
+        HostedZoneName: ${self:custom.domainName}.
         RecordSets:
         - Name: ${self:custom.dnsHostName}
           Type: A
           AliasTarget:
-            DNSName: ${self:custom.originDomainName}
-            HostedZoneId: ${self:custom.hostedZoneId}
+            DNSName: ${self:custom.cloudFrontDomainName}
+            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
         - Name: ${self:custom.dnsHostName}
           Type: AAAA
           AliasTarget:
-            DNSName: ${self:custom.originDomainName}
-            HostedZoneId: ${self:custom.hostedZoneId}
+            DNSName: ${self:custom.cloudFrontDomainName}
+            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
       DependsOn:
         - HelloRetailWebDistribution
-
-
-#myDNS:
-#  Type: AWS::Route53::RecordSetGroup
-#  Properties:
-#    HostedZoneId:
-#      Ref: myHostedZoneID
-#    RecordSets:
-#    - Name:
-#        Ref: myRecordSetDomainName
-#      Type: A
-#      AliasTarget:
-#        HostedZoneId: Z2FDTNDATAQYW2
-#        DNSName:
-#          Ref: myCloudFrontDistributionDomainName
