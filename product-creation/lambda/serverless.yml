@@ -36,7 +36,7 @@ resources:
     ProductServiceLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-newProductSimulator"
+        LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-scrapeProducts"
     ProductStreamProducer: # role for producing test products
       Type: AWS::IAM::Role
       Properties:

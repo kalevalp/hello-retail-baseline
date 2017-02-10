@@ -16,11 +16,23 @@ const targetHandler = require('./../lambda/scrape-products/scrape-products.js').
 const PROXY_SERVER = secrets.proxyServer
 const AWS_REGION = secrets.region
 const AWS_PROFILE = secrets.profile
+const SLS_STAGE = secrets.stage
+
+process.env.proxy = secrets.proxyServer
+process.env.AWS_PROFILE = secrets.profile
+process.env.AWS_PROFILE = secrets.region
 
 aws0.config.region = AWS_REGION
 aws0.config.credentials = new aws0.SharedIniFileCredentials({ profile: AWS_PROFILE })
+
 if (PROXY_SERVER) {
-  aws0.config.httpOptions.agent = new HttpsProxyAgent(url.parse(PROXY_SERVER))
+  const proxyOptions = url.parse(PROXY_SERVER)
+  proxyOptions.secureEndpoint = true
+  aws0.config.httpOptions.agent = new HttpsProxyAgent(proxyOptions)
+}
+
+if (SLS_STAGE) {
+  process.argv = [null, null, '-s', SLS_STAGE];
 }
 
 const serverless = new Serverless({
