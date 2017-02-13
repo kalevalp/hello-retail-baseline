@@ -6,7 +6,7 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
-    "sim:scrape": "node ./products/test/scrape-products-exec.js",
+    "sim:scrape": "node ./product-creation/test/scrape-products-exec.js",
     "web:build": "./node_modules/.bin/webpack --config ./web/webpack.config.js",
     "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --hot --inline --progress --colors --watch --display-error-details --display-cached --content-base ./web/"
   },

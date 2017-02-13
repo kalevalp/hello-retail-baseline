@@ -7,7 +7,8 @@ phases:
       - echo
       - node --version
       - npm --version
-      - npm install -g serverless
+      #- npm install -g serverless
+      - npm install -g git+https://github.com/erikerikson/serverless.git#allow-self-reference
 
       - sls --version
       - echo
@@ -20,8 +21,10 @@ phases:
     commands:
       - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
       - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Top-Level Project Dependencies"           $CODEBUILD_SRC_DIR
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies"       $CODEBUILD_SRC_DIR/products/lambda
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog Dependencies"             $CODEBUILD_SRC_DIR/product-catalog
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies"       $CODEBUILD_SRC_DIR/product-creation/lambda
+      # Product Catalog
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog Dependencies"             $CODEBUILD_SRC_DIR/product-catalog/builder
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog API"                      $CODEBUILD_SRC_DIR/product-catalog/api
       # Product Photos
       - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Dispatch Dependencies"   $CODEBUILD_SRC_DIR/product-photos/1.dispatch
   build:
@@ -32,9 +35,10 @@ phases:
       # Core Stream
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Retail Stream"                $CODEBUILD_SRC_DIR/retail-stream
       # Product Creation
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"       $CODEBUILD_SRC_DIR/products/lambda
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"       $CODEBUILD_SRC_DIR/product-creation/lambda
       # Product Catalog
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"    $CODEBUILD_SRC_DIR/product-catalog
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"    $CODEBUILD_SRC_DIR/product-catalog/builder
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog API"          $CODEBUILD_SRC_DIR/product-catalog/api
       # Product Photos
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Data"        $CODEBUILD_SRC_DIR/product-photos/0.data
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Assign"      $CODEBUILD_SRC_DIR/product-photos/2.assign -step # deploy the step function that 1 starts and 3 stops (and thus depend on the exported arn of)
