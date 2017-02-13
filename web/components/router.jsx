@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom' // eslint-disable-line import/no-extraneous-dep
 import { Router, Route, IndexRoute, browserHistory } from 'react-router' // eslint-disable-line import/no-extraneous-dependencies
 import App from './app'
 import CategoryPage from './category/category-page'
-import ProductCategoryPage from './products/product-category-page'
+import ProductCategoryPage from './products/product-by-category-page'
 
 ReactDOM.render(
   (<Router history={browserHistory}>
