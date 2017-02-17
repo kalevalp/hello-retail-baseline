@@ -1,15 +1,28 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: hello-retail-product-catalog
+service: ${self:custom.helloRetail.name}-product-catalog-builder
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../private.yml)}
-  productCatalogVersion: 1
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+  retailStreamVersion: 1
+  # Product Catalog Versions & Exports
+  # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogBuilderVersion, custom.productCatalogBuilder) in its serverless.yml:
+  productCatalogBuilderVersion: 1 # The version of this service to depend upon
+  productCatalogBuilder: ${self:} # externally, use `${file(~/product-catalog/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
+  # Exports
+  exportProductCategoryTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCategoryTableName:${self:custom.productCatalogBuilderVersion}
+  exportProductCategoryTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCategoryTableArn:${self:custom.productCatalogBuilderVersion}
+  exportProductCatalogTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
+  exportProductCatalogTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableArn:${self:custom.productCatalogBuilderVersion}
+  exportProductCatalogTableCategoryIndexArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn:${self:custom.productCatalogBuilderVersion}
+  exportProductCatalogReaderArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogReaderArn:${self:custom.productCatalogBuilderVersion}
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
@@ -17,14 +30,14 @@ provider:
 functions:
   catalog:
     role:
-      'Fn::GetAtt': [ ProductCatalogReaderWriter, Arn ]
+      Fn::GetAtt: [ ProductCatalogReaderWriter, Arn ]
     handler: catalog.processKinesisEvent
     environment:
       STAGE: ${self:custom.stage}
       STREAM_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
       STREAM_ROLE_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
       TABLE_PRODUCT_CATEGORY_NAME:
         Ref: ProductCategory
       TABLE_PRODUCT_CATALOG_NAME:
@@ -32,7 +45,7 @@ functions:
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
-#            'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+#            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
           startingPosition: 'TRIM_HORIZON'
 
@@ -57,7 +70,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: '${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}'
+        TableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogBuilderVersion}
     ProductCatalog:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -74,7 +87,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: '${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}'
+        TableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogBuilderVersion}
         GlobalSecondaryIndexes:
           - IndexName: Category
             KeySchema:
@@ -118,11 +131,16 @@ resources:
                 - Effect: 'Allow'
                   Action:
                     - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::Join:
+                      Fn::GetAtt: [ CatalogLogGroup, Arn ]
+                - Effect: 'Allow'
+                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - ':'
-                      - - 'Fn::GetAtt': [ CatalogLogGroup, Arn ]
+                      - - Fn::GetAtt: [ CatalogLogGroup, Arn ]
                         - '*'
           - PolicyName: ReadFromKinesis
             PolicyDocument:
@@ -135,7 +153,7 @@ resources:
                     - 'kinesis:DescribeStream'
                     - 'kinesis:ListStreams'
                   Resource:
-                    'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: WriteToCatalog
             PolicyDocument:
               Version: '2012-10-17'
@@ -144,7 +162,7 @@ resources:
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
@@ -152,7 +170,7 @@ resources:
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -160,15 +178,15 @@ resources:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCatalogReader
+        RoleName: ${self:custom.stage}ProductCatalogReader${self:custom.productCatalogBuilderVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
+              Action: sts:AssumeRole
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-              Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -180,7 +198,7 @@ resources:
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
@@ -189,7 +207,7 @@ resources:
                      - 'dynamodb:GetItem'
                      - 'dynamodb:BatchGetItem'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -197,7 +215,7 @@ resources:
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    'Fn::Join':
+                    Fn::Join:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
@@ -205,49 +223,49 @@ resources:
                         - Category
   Outputs:
     ProductCategoryTableName:
-      Description: The Name of the Product Catalog Table
+      Description: The Name of the Product Category Table
       Value:
         Ref: ProductCategory
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableName'
+        Name: ${self:custom.exportProductCategoryTableName}
     ProductCategoryTableArn:
-      Description: The ARN for the Product Catalog Table
+      Description: The ARN for the Product Category Table
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCategory
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCategoryTableArn'
+        Name: ${self:custom.exportProductCategoryTableArn}
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableName'
+        Name: ${self:custom.exportProductCatalogTableName}
     ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableArn'
+        Name: ${self:custom.exportProductCatalogTableArn}
     ProductCatalogTableCategoryIndexArn:
       Description: The ARN for the Product Catalog Table's Category Index
       Value:
-        'Fn::Join':
+        Fn::Join:
           - '/'
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
             - index
             - Category
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn'
+        Name: ${self:custom.exportProductCatalogTableCategoryIndexArn}
     ProductCatalogReaderArn:
       Description: The Role ARN for a Product Catalog Reader
       Value:
-        'Fn::GetAtt': [ ProductCatalogReader, Arn ]
+        Fn::GetAtt: [ ProductCatalogReader, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:ProductCatalogReaderArn'
+        Name: ${self:custom.exportProductCatalogReaderArn}

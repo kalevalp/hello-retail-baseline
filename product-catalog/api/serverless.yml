@@ -1,0 +1,202 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.helloRetail.name}-product-catalog-api
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStreamVersion: 1
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+  productCatalogBuilderVersion: 1
+  productCatalogBuilder: ${file(../builder/serverless.yml)}
+  # Product Catalog Versions & Exports
+  # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogApiVersion, custom.productCatalogApi) in its serverless.yml:
+  productCatalogApiVersion: 1 # The version of this service to depend upon
+  productCatalogApi: ${self:} # externally, use `${file(~/product-catalog/api/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
+  # Exports
+  exportProductCatalogApiClient: ${self:custom.productCatalogApi.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  categories:
+    role:
+      Fn::GetAtt: [ ProductCatalogApiCategoriesReader, Arn ]
+    handler: catalogApi.categories
+    environment:
+      STAGE: ${self:custom.stage}
+      TABLE_PRODUCT_CATEGORY_NAME:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
+    events:
+      - http:
+          path: categories
+          method: get
+          cors: true
+  products:
+    role:
+      Fn::GetAtt: [ ProductCatalogApiProductsReader, Arn ]
+    handler: catalogApi.products
+    environment:
+      STAGE: ${self:custom.stage}
+      TABLE_PRODUCT_CATALOG_NAME:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
+    events:
+      - http:
+          path: products
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    # Log Group
+    CategoriesLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-categories'
+        RetentionInDays: 7
+    ProductsLogGroup:
+      Type: 'AWS::Logs::LogGroup'
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-products'
+        RetentionInDays: 7
+    # Product Catalog Roles
+    ProductCatalogApiCategoriesReader: # role for Categories Lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductCatalogApiCategoriesReader
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to read from the Product Catalog
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ CategoriesLogGroup, Arn ]
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ CategoriesLogGroup, Arn ]
+                        - '*'
+          - PolicyName: ReadFromCategories
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamodb:Scan'
+                   Resource:
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
+    ProductCatalogApiProductsReader: # role for Products Lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductCatalogApiProductsReader
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to read from the Product Catalog
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ ProductsLogGroup, Arn ]
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ ProductsLogGroup, Arn ]
+                        - '*'
+          - PolicyName: ReadFromProducts
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+# TODO enable once we are getting single items.
+#                -  Effect: 'Allow'
+#                   Action:
+#                     - 'dynamodb:GetItem'
+#                   Resource:
+#                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamodb:Query'
+                   Resource:
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
+    ApiClient: # role for consumers of the Product Catalog API
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductCatalogApiClient${self:custom.productCatalogApiVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to read from the Product Catalog
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: ReadFromApi
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'execute-api:Invoke'
+                  Resource:
+                    Fn::Join:
+                      - ''
+                      - - 'arn:aws:execute-api:${self:provider.region}:${self:custom.private.accountId}:'
+                        - Ref: ApiGatewayRestApi
+                        - '/${self:custom.stage}/*/*'
+  Outputs:
+    ProductCatalogApiClient:
+      Description: A role for clients of the Product Catalog API
+      Value:
+        Ref: ApiClient
+      Export:
+        Name: ${self:custom.exportProductCatalogApiClient}
