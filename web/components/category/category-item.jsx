@@ -1,5 +1,5 @@
-import React, { Component, PropTypes } from 'react' // eslint-disable-line import/no-extraneous-dependencies
-import { Link } from 'react-router' // eslint-disable-line import/no-extraneous-dependencies
+import React, { Component, PropTypes } from 'react'
+import { Link } from 'react-router'
 
 class CategoryItem extends Component {
   static propTypes = {
@@ -14,7 +14,10 @@ class CategoryItem extends Component {
   render() {
     return (
       <div>
-        <Link className="categoryLink" to={`/products/category/${encodeURIComponent(this.props.categoryName)}`}>
+        <Link
+          className="categoryLink"
+          to={`/category/${encodeURIComponent(this.props.categoryName)}`}
+        >
           {this.props.categoryName}
         </Link>
       </div>

@@ -1,16 +1,19 @@
-import React, { Component, PropTypes } from 'react' // eslint-disable-line import/no-extraneous-dependencies
+import React, { Component, PropTypes } from 'react'
+import { Link } from 'react-router'
 
 class ProductCard extends Component {
   static propTypes = {
-    name: PropTypes.string,
     brand: PropTypes.string,
     description: PropTypes.string,
+    id: PropTypes.number,
+    name: PropTypes.string,
   }
 
   static defaultProps = {
-    name: '',
     brand: '',
     description: '',
+    id: 0,
+    name: '',
   }
 
   constructor(props) {
@@ -21,7 +24,14 @@ class ProductCard extends Component {
   render() {
     return (
       <div>
-        <div className="productName">{this.props.name}</div>
+        <div className="productName">
+          <Link
+            className="categoryLink"
+            to={`/product/${encodeURIComponent(this.props.id)}`}
+          >
+            {this.props.name}
+          </Link>
+        </div>
         <div className="productBrand">{this.props.brand}</div>
         <div className="productDesc">{this.props.description}</div>
         <br />

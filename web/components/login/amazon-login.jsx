@@ -1,42 +1,90 @@
-import React, {Component, PropTypes} from 'react'; // eslint-disable-line import/no-extraneous-dependencies
-import loadjs from 'loadjs' // eslint-disable-line import/no-extraneous-dependencies
+/* global amazon window */
+import AWS from 'aws-sdk'
+import React, { Component, PropTypes } from 'react'
+import loadjs from 'loadjs'
+import config from '../../config'
 
 class AmazonLogin extends Component {
   static propTypes = {
-    dynamoDbReady: PropTypes.func.isRequired,
+    awsLogin: PropTypes.func.isRequired,
   }
 
   constructor(props) {
-    super(props);
+    super(props)
 
-    this.state = {
-      // TODO: Derive this information from configuration at build-time, including stage-dependent ones
-      // TODO: And don't need to use state
-      catalogReaderRole: 'arn:aws:iam::515126931066:role/demoProductCatalogReader',
-      clientId: 'amzn1.application-oa2-client.d38cc5e49f9343b5b7a718f9d21fc93a',
-      dynamoDbRegion: 'us-west-2',
-      sessionName: 'hello-retail-web-app',
-      webAppRole: 'arn:aws:iam::515126931066:role/demoHelloRetailWebIdentity',
-    };
+    this.loginConfig = {
+      // TODO: Sign requests like: https://github.com/Nordstrom/artillery-plugin-aws-sigv4/blob/master/lib/aws-sigv4.js
+      catalogReaderRole: config.CatalogReaderRole,
+      clientId: config.AuthClientId,
+      awsRegion: config.AWSRegion,
+      sessionName: config.SessionName,
+      webAppRole: config.WebAppRole,
+    }
 
-    this.componentWillMount = this.componentWillMount.bind(this)
+    console.log(this.loginConfig)
+
+    // Amazon auth options passed to authorize()
+    this.authOptions = {
+      scope: 'profile',
+    }
+
     this.assumeWebAppIdentityWithToken = this.assumeWebAppIdentityWithToken.bind(this)
     this.authAmazonLogin = this.authAmazonLogin.bind(this)
     this.assumeProductCatalogReaderRole = this.assumeProductCatalogReaderRole.bind(this)
     this.componentWillMount = this.componentWillMount.bind(this)
+    this.loginClicked = this.loginClicked.bind(this)
+
+    this.state = {
+      amazonLoginReady: false,
+    }
   }
 
-  assumeWebAppIdentityWithToken(sts, token) {
+  componentWillMount() {
+    const awsLogin = this
+    window.onAmazonLoginReady = () => {
+      awsLogin.setState({
+        amazonLoginReady: true,
+      })
+    }
+
+    loadjs('https://api-cdn.amazon.com/sdk/login1.js')
+  }
+
+  loginClicked() {
+    this.sts = new AWS.STS()
+
+    this.authAmazonLogin()
+      .then(loginResponse => this.assumeWebAppIdentityWithToken(loginResponse.access_token))
+      .then(identity => this.assumeProductCatalogReaderRole(identity.Credentials))
+      .then((role) => {
+        AWS.config.credentials = {
+          accessKeyId: role.Credentials.AccessKeyId,
+          secretAccessKey: role.Credentials.SecretAccessKey,
+          sessionToken: role.Credentials.SessionToken,
+        }
+
+        AWS.config.region = this.loginConfig.awsRegion
+
+        this.props.awsLogin(AWS)
+      })
+  }
+
+  assumeWebAppIdentityWithToken(token) {
+    const awsLogin = this
+
     const params = {
       DurationSeconds: 3600,
       ProviderId: 'www.amazon.com',
-      RoleArn: this.state.webAppRole,
-      RoleSessionName: this.state.sessionName,
+      RoleArn: this.loginConfig.webAppRole,
+      RoleSessionName: this.loginConfig.sessionName,
       WebIdentityToken: token,
     }
 
+    console.log(params)
+
+
     return new Promise((resolve, reject) => {
-      sts.assumeRoleWithWebIdentity(params, (err, data) => {
+      awsLogin.sts.assumeRoleWithWebIdentity(params, (err, data) => {
         if (err) { reject(err) }
         resolve(data)
       })
@@ -44,66 +92,49 @@ class AmazonLogin extends Component {
   }
 
   authAmazonLogin() {
+    const awsLogin = this
+
+    // TODO: Request user identity
+
     return new Promise((resolve, reject) => {
-      amazon.Login.setClientId(this.state.clientId)
-      const options = { scope: 'profile' }
-      amazon.Login.authorize(options, (response) => {
+      window.amazon.Login.setClientId(awsLogin.loginConfig.clientId)
+      window.amazon.Login.authorize(awsLogin.authOptions, (response) => {
         if (response.error) { reject(response.error) }
+        console.log(response)
         resolve(response)
       })
     })
   }
 
-  assumeProductCatalogReaderRole(sts, creds) {
+  assumeProductCatalogReaderRole(creds) {
+    const awsLogin = this
+
     const params = {
-      RoleArn: this.state.catalogReaderRole,
-      RoleSessionName: this.state.sessionName,
+      RoleArn: this.loginConfig.catalogReaderRole,
+      RoleSessionName: this.loginConfig.sessionName,
     }
 
-    sts.config.credentials = {  // eslint-disable-line no-param-reassign
+    awsLogin.sts.config.credentials = {  // eslint-disable-line no-param-reassign
       accessKeyId: creds.AccessKeyId,
       secretAccessKey: creds.SecretAccessKey,
       sessionToken: creds.SessionToken,
     }
 
     return new Promise((resolve, reject) => {
-      sts.assumeRole(params, (err, data) => {
+      awsLogin.sts.assumeRole(params, (err, data) => {
         if (err) { reject(err) }
         resolve(data)
       })
     })
   }
 
-
-  componentWillMount() {
-    const amazonLogin = this;
-    window.onAmazonLoginReady = () => {
-      const sts = new AWS.STS()
-
-      this.authAmazonLogin()
-        .then(loginResponse => this.assumeWebAppIdentityWithToekn(sts, loginResponse.access_token))
-        .then(identity => this.assumeProductCatalogReaderRole(sts, identity.Credentials))
-        .then((role) => {
-          AWS.config.credentials = {
-            accessKeyId: role.Credentials.AccessKeyId,
-            secretAccessKey: role.Credentials.SecretAccessKey,
-            sessionToken: role.Credentials.SessionToken,
-          }
-
-          AWS.config.region = this.state.dynamoDbRegion
-
-          amazonLogin.props.dynamoDbReady(new AWS.DynamoDB())
-        })
-    }
-
-    loadjs('https://api-cdn.amazon.com/sdk/login1.js')
-  }
-
   render() {
     return (
-      <div />
-    );
+      <div id="amazon-root">
+        <button onClick={this.loginClicked} disabled={!this.state.amazonLoginReady}>Amazon Login</button>
+      </div>
+    )
   }
 }
 
-export default AmazonLogin;
+export default AmazonLogin

@@ -2,7 +2,7 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { expect } from 'chai';
 
-import CategoryItem from './category-item';
+import CategoryItem from '../category-item';
 
 describe('<CategoryItem/>', function () {
   it('should have an image to display the gravatar', function () {

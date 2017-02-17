@@ -17,7 +17,7 @@ class ProductEvents {
         description: product.description,
         category: product.category,
       },
-      product.id
+      product.id.toString()
     )
   }
 }

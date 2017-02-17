@@ -57,6 +57,7 @@ resources:
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-catalog'
         RetentionInDays: 7
+
     # Product Catalog Tables
     ProductCategory:
       Type: 'AWS::DynamoDB::Table'
@@ -71,6 +72,7 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: '${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}'
+
     ProductCatalog:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -103,6 +105,7 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
+
     # Product Catalog Roles
     ProductCatalogReaderWriter: # role for the Catalog (Maintaining) Lambda
       Type: AWS::IAM::Role
@@ -169,6 +172,7 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
+
     ProductCatalogReader: # role for consumers of the catalog
       Type: AWS::IAM::Role
       Properties:
@@ -181,6 +185,7 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -192,6 +197,7 @@ resources:
                 -  Effect: 'Allow'
                    Action:
                      - 'dynamodb:Query'
+                     - 'dynamodb:Scan'
                    Resource:
                     Fn::Join:
                       - '/'
@@ -216,6 +222,7 @@ resources:
                         - Ref: ProductCatalog
                         - index
                         - Category
+
   Outputs:
     ProductCategoryTableName:
       Description: The Name of the Product Catalog Table
@@ -223,6 +230,7 @@ resources:
         Ref: ProductCategory
       Export:
         Name: ${self:custom.exportProductCategoryTableName}
+
     ProductCategoryTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
@@ -232,12 +240,14 @@ resources:
             - Ref: ProductCategory
       Export:
         Name: ${self:custom.exportProductCategoryTableArn}
+
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
         Name: ${self:custom.exportProductCatalogTableName}
+
     ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
@@ -247,6 +257,7 @@ resources:
             - Ref: ProductCatalog
       Export:
         Name: ${self:custom.exportProductCatalogTableArn}
+
     ProductCatalogTableCategoryIndexArn:
       Description: The ARN for the Product Catalog Table's Category Index
       Value:
@@ -258,6 +269,7 @@ resources:
             - Category
       Export:
         Name: ${self:custom.exportProductCatalogTableCategoryIndexArn}
+
     ProductCatalogReaderArn:
       Description: The Role ARN for a Product Catalog Reader
       Value:

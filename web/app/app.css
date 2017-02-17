@@ -43,3 +43,10 @@ label {
   text-align: right;
   display: none;
 }
+
+.stageLabel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding-right: 1em;
+}

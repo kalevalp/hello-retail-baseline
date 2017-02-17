@@ -30,6 +30,24 @@ functions:
         - ProductStreamProducer
         - Arn
 
+  createProduct:
+    handler: 'scrape-products/scrape-products.handlerPostEvent'
+    environment:
+      STAGE: ${self:custom.stage}
+      STREAM_WRITER_ROLE:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      STREAM_NAME:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
+    role:
+      Fn::GetAtt:
+        - ProductStreamProducer
+        - Arn
+    events:
+      - http:
+          path: products/create
+          method: post
+
+
 # you can add CloudFormation resource templates here
 resources:
   Resources:
@@ -37,6 +55,7 @@ resources:
       Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-newProductSimulator"
+
     ProductStreamProducer: # role for producing test products
       Type: AWS::IAM::Role
       Properties:
@@ -49,6 +68,12 @@ resources:
             Principal:
               Service:
               - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              AWS:
+              - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}RetailStreamWriter'
             Action:
             - sts:AssumeRole
         ManagedPolicyArns:

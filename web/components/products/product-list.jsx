@@ -1,13 +1,15 @@
-import React, { Component, PropTypes } from 'react' // eslint-disable-line import/no-extraneous-dependencies
+import React, { Component, PropTypes } from 'react'
 import ProductCard from './product-card'
 
 class ProductList extends Component {
   static propTypes = {
     products: PropTypes.arrayOf(PropTypes.object),
+    category: PropTypes.string,  // TODO: Remove when product ID is introduced
   }
 
   static defaultProps = {
     products: [],
+    category: '', // TODO: Remove when product ID is introduced
   }
 
   constructor(props) {
@@ -17,17 +19,22 @@ class ProductList extends Component {
 
   render() {
     if (!this.props.products) {
-      return (<div />)
+      return null
     }
 
+    // TODO: Fix using an ID for key of product.
     return (
       <div>{
-              this.props.products.map(product => (
+              /* eslint react/no-array-index-key: "off" */
+              this.props.products.map((product, i) => (
                 <ProductCard
                   className="productCard"
                   name={product.name}
+                  key={i}
                   brand={product.brand}
                   description={product.description}
+                  index={i}
+                  category={this.props.category}
                 />
               ))
             }</div>

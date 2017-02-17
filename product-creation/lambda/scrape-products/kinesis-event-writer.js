@@ -23,12 +23,15 @@ class KinesisEventWriter {
       StreamName: process.env.STREAM_NAME,
     }
 
+    console.log('PUTTING EVENT')
+
     this.kinesis.putRecord(newProductCreatedEvent, (err, ack) => {
       if (ack) {
         console.log(`K-PUT: ${JSON.stringify(ack)}`)
       }
 
       if (err) {
+        console.log(JSON.stringify(err,null,2))
         throw new Error(err)
       }
     })
