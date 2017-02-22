@@ -56,27 +56,20 @@ module.exports = {
   /*
 
   {
-    "product": {
-        "id": 1000000,
-        "name": "Test Product Name",
-        "brand": "Test Product Brand",
-        "category": "Test Category",
-        "description": "Another fine product!"
-    }
+    "body": "{       \"product\": {           \"id\": 1000000,           \"name\": \"Test Product Name\",           \"brand\": \"Test Product Brand\",           \"category\": \"Test Category\",           \"description\": \"Another fine product!\"       } }"
   }
    */
 
   handlerPostEvent: (event, context, callback) => {
 
+    const productInfo = JSON.parse(event.body).product
     const product = new Product(
-      event.product.id,
-      event.product.name,
-      event.product.brand,
-      event.product.category,
-      event.product.description
+      productInfo.id,
+      productInfo.name,
+      productInfo.brand,
+      productInfo.category,
+      productInfo.description
     )
-
-    console.log(product)
 
     const kinesis = new AWS.Kinesis()
 
@@ -86,13 +79,20 @@ module.exports = {
 
     const productEvents = new ProductEvents(kinesis)
 
-    try {
-      productEvents.sendCreateEvent(product)
-    } catch(error) {
-      console.log(JSON.stringify(error))
-    }
+    productEvents.sendCreateEvent(product)
+      .then((sequence) => {
+        const message = `Added product id:${product.id}, sequence:${sequence}`
 
-    callback(null, "Done.")
+        context.succeed({
+           'statusCode ': 200,
+           'headers ': {  },
+           'body ':  message
+        })
 
+        callback(null,  message)
+      })
+      .catch((error) => {
+        console.log(JSON.stringify(error))
+      })
   }
 }

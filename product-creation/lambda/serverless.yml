@@ -8,6 +8,8 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
+  productCreate: ${self:}
+#  exportCreateProductApiId: ${self:custom.productCreate.service}:${self:custom.stage}:ApiGatewayCreateProductArn
 
 provider:
   name: aws
@@ -47,14 +49,19 @@ functions:
           path: products/create
           method: post
 
-
+# hello-retail-product-creation-demo-createProduct
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    ProductServiceLogGroup:
+    ProductServiceScrapeProductsLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: "/aws/lambda/${self:custom.stage}-${self:service}-newProductSimulator"
+        LogGroupName: "/aws/lambda/${self:service}-${self:custom.stage}-scrapeProducts"
+
+    ProductServiceCreateProductLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: "/aws/lambda/${self:service}-${self:custom.stage}-createProduct"
 
     ProductStreamProducer: # role for producing test products
       Type: AWS::IAM::Role
@@ -88,7 +95,7 @@ resources:
                     - logs:CreateLogStream
                   Resource:
                     - Fn::GetAtt:
-                      - ProductServiceLogGroup
+                      - ProductServiceScrapeProductsLogGroup
                       - Arn
                 - Effect: Allow
                   Action:
@@ -97,6 +104,37 @@ resources:
                     - Fn::Join:
                       - ":"
                       - - Fn::GetAtt:
-                          - ProductServiceLogGroup
+                          - ProductServiceScrapeProductsLogGroup
                           - Arn
                         - "*"
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                  Resource:
+                    - Fn::GetAtt:
+                      - ProductServiceCreateProductLogGroup
+                      - Arn
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - Fn::Join:
+                      - ":"
+                      - - Fn::GetAtt:
+                          - ProductServiceCreateProductLogGroup
+                          - Arn
+                        - "*"
+
+
+    # NOTE: This named gleaned from SLS generated CF template
+    ApiGatewayMethodProductsCreatePost:
+      Properties:
+        AuthorizationType: AWS_IAM
+
+  Outputs:
+    CreateProductApiId:
+      Description: ID of the Create Product Rest API
+      Value:
+        Ref: ApiGatewayRestApi
+      Export:
+        Name: RestApiId

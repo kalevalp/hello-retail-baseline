@@ -12,9 +12,11 @@ const impl = {
 class KinesisEventWriter {
   constructor(kinesis) {
     this.kinesis = kinesis
+    this.writeKinesisEvent = this.writeKinesisEvent.bind(this)
   }
 
   writeKinesisEvent(data, partitionKey) {
+    const writer = this
     const envelopeEvent = impl.createEnvelopeEvent(data)
 
     const newProductCreatedEvent = {
@@ -25,16 +27,27 @@ class KinesisEventWriter {
 
     console.log('PUTTING EVENT')
 
-    this.kinesis.putRecord(newProductCreatedEvent, (err, ack) => {
-      if (ack) {
-        console.log(`K-PUT: ${JSON.stringify(ack)}`)
-      }
+    let promise = new Promise(function(resolve, reject) {
+      console.log('PROMISE CALLED')
 
-      if (err) {
-        console.log(JSON.stringify(err,null,2))
-        throw new Error(err)
-      }
+      writer.kinesis.putRecord(newProductCreatedEvent, (err, ack) => {
+        console.log('PUT RECORD RETURNED')
+
+        if (ack) {
+          console.log(`K-PUT: ${JSON.stringify(ack)}`)
+          resolve(ack)
+        }
+
+        if (err) {
+          console.log(JSON.stringify(err,null,2))
+          reject(err)
+        }
+      })
     })
+
+    console.log(promise)
+
+    return promise;
   }
 }
 

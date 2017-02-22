@@ -18,10 +18,10 @@ class ProductDetailPage extends Component {
   constructor(props) {
     super(props)
     this.state = {}
-    this.productLoaded = this.productLoaded.bind(this)
+    this.productsLoaded = this.productsLoaded.bind(this)
   }
 
-  productLoaded(products) {
+  productsLoaded(products) {
     const p = products[0]
     this.setState({
       name: p.name,

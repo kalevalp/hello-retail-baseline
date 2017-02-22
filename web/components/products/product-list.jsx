@@ -26,14 +26,14 @@ class ProductList extends Component {
     return (
       <div>{
               /* eslint react/no-array-index-key: "off" */
-              this.props.products.map((product, i) => (
+              this.props.products.map(product => (
                 <ProductCard
                   className="productCard"
                   name={product.name}
-                  key={i}
+                  key={product.id}
                   brand={product.brand}
                   description={product.description}
-                  index={i}
+                  id={product.id}
                   category={this.props.category}
                 />
               ))

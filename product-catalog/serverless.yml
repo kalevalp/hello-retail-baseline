@@ -185,6 +185,10 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+              Action: sts:AssumeRole
+            - Effect: Allow
+              Principal:
+                AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
               Action: sts:AssumeRole
         ManagedPolicyArns:

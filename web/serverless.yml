@@ -15,6 +15,7 @@ custom:
         - '/*'
 
   oAuthClientId: amzn1.application-oa2-client.d38cc5e49f9343b5b7a718f9d21fc93a
+  oAuthAppId: amzn1.application.0bfd7ce688a440a1ad215923053e1ec6
 
   # Domain name for CloudFront distribution.
   cloudFrontDomainName:
@@ -129,7 +130,7 @@ resources:
               Action: sts:AssumeRoleWithWebIdentity
               Condition:
                 StringEquals:
-                  www.amazon.com:app_id: ${self:custom.oAuthClientId}
+                  www.amazon.com:app_id: ${self:custom.oAuthAppId}
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -140,6 +141,16 @@ resources:
                 - Effect: Allow
                   Action:
                     - sts:AssumeRole
+                  Resource:
+                    # TODO: use imported values
+                    - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
+          - PolicyName: AllowInvokeOfProductCreate
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - execute-api:Invoke
                   Resource:
                     # TODO: use imported values
                     - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader

@@ -45,9 +45,7 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  #- '${self:custom.private.productProvider}'
-                  #TODO: Properly reference
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}-${self:custom.helloRetail.name}-product-creation-newProductSimulator'
+                  - 'arn:aws:iam::515126931066:role/demo-hello-retail-product-creation-newProductSimulator'
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

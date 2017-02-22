@@ -5,7 +5,7 @@ class ProductCard extends Component {
   static propTypes = {
     brand: PropTypes.string,
     description: PropTypes.string,
-    id: PropTypes.number,
+    id: PropTypes.string,
     name: PropTypes.string,
   }
 
@@ -18,6 +18,9 @@ class ProductCard extends Component {
 
   constructor(props) {
     super(props)
+
+    console.log(props)
+
     this.state = {}
   }
 

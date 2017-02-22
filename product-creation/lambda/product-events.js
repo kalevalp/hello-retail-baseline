@@ -8,7 +8,7 @@ class ProductEvents {
   }
 
   sendCreateEvent(product) {
-    this.kinesisEventWriter.writeKinesisEvent(
+    return this.kinesisEventWriter.writeKinesisEvent(
       {
         schema: 'com.nordstrom/product/create/1-0-0',
         id: product.id.toString(),

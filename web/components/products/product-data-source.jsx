@@ -45,8 +45,8 @@ class ProductDataSource extends Component {
       ],
       TableName: config.ProductCatalogTableName,
       Key: {
-        ':id': {
-          S: id,
+        id: {
+          S: id.toString(),
         },
       },
     }
@@ -59,17 +59,15 @@ class ProductDataSource extends Component {
     })
   }
 
-  getProductsByIdAsync(category) {
-    return this.getProductByIdFromDynamoAsync(category)
+  getProductsByIdAsync(id) {
+    return this.getProductByIdFromDynamoAsync(id)
       .then((data) => {
         const productList = []
-        data.Items.forEach((item) => {
-          productList.push({
-            brand: item.brand.S,
-            description: item.description.S,
-            name: item.name.S,
-            id: item.id.S,
-          })
+        productList.push({
+          brand: data.Item.brand.S,
+          description: data.Item.description.S,
+          name: data.Item.name.S,
+          id: data.Item.id.S,
         })
         return productList
       }, (error) => { throw new Error(error) })
@@ -112,6 +110,7 @@ class ProductDataSource extends Component {
             id: item.id.S,
           })
         })
+        console.log(JSON.stringify(productList))
         return productList
       }, (error) => { throw new Error(error) })
   }
