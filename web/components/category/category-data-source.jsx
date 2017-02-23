@@ -3,22 +3,34 @@ import config from '../../config'
 
 class CategoryDataSource extends Component {
   static propTypes = {
-    AWS: PropTypes.shape({
-      DynamoDB: PropTypes.func,
-    }).isRequired,
+    awsLogin: PropTypes.shape({
+      aws: PropTypes.shape({
+        DynamoDB: PropTypes.func,
+      }),
+      getCredentialsForRole: PropTypes.func,
+    }),
     categoriesLoaded: PropTypes.func.isRequired,
+  }
+
+  static defaultProps = {
+    awsLogin: null,
   }
 
   constructor(props) {
     super(props)
-    this.dynamo = new this.props.AWS.DynamoDB()
     this.getCategoriesAsync = this.getCategoriesAsync.bind(this)
     this.getCategoriesFromDynamoAsync = this.getCategoriesFromDynamoAsync.bind(this)
     this.componentDidMount = this.componentDidMount.bind(this)
   }
 
   componentDidMount() {
-    this.getCategoriesAsync()
+    const that = this
+
+    this.dynamo = new this.props.awsLogin.aws.DynamoDB()
+
+    this.props.awsLogin.getCredentialsForRole(config.CatalogReaderRole)
+      .then(creds => (that.dynamo.config.credentials = creds))
+      .then(() => that.getCategoriesAsync())
       .then(this.props.categoriesLoaded)
   }
 

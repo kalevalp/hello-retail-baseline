@@ -41,6 +41,7 @@
   "devDependencies": {
     "ajv": "^4.11.2",
     "aws-sdk": "^2.7.16",
+    "aws4": "^1.6.0",
     "babel-core": "^6.6.4",
     "babel-eslint": "^7.1.1",
     "babel-loader": "^6.2.10",

@@ -33,6 +33,7 @@ class AmazonLogin extends Component {
     this.assumeProductCatalogReaderRole = this.assumeProductCatalogReaderRole.bind(this)
     this.componentWillMount = this.componentWillMount.bind(this)
     this.loginClicked = this.loginClicked.bind(this)
+    this.retrieveProfile = this.retrieveProfile.bind(this)
 
     this.state = {
       amazonLoginReady: false,
@@ -40,9 +41,9 @@ class AmazonLogin extends Component {
   }
 
   componentWillMount() {
-    const awsLogin = this
+    const that = this
     window.onAmazonLoginReady = () => {
-      awsLogin.setState({
+      that.setState({
         amazonLoginReady: true,
       })
     }
@@ -50,27 +51,49 @@ class AmazonLogin extends Component {
     loadjs('https://api-cdn.amazon.com/sdk/login1.js')
   }
 
-  loginClicked() {
-    this.sts = new AWS.STS()
+  getCredentialsForRole(roleArn) {
+    const that = this
 
-    this.authAmazonLogin()
-      .then(loginResponse => this.assumeWebAppIdentityWithToken(loginResponse.access_token))
-      .then(identity => this.assumeProductCatalogReaderRole(identity.Credentials))
-      .then((role) => {
-        AWS.config.credentials = {
-          accessKeyId: role.Credentials.AccessKeyId,
-          secretAccessKey: role.Credentials.SecretAccessKey,
-          sessionToken: role.Credentials.SessionToken,
+    const params = {
+      RoleArn: roleArn,
+      RoleSessionName: this.loginConfig.sessionName,
+    }
+
+    // TODO: don't rely on current webApp creds to be unexpired -- alter assumeWebAppIdentityWithToken to cache and update if needed
+    // TODO: implement caching for all role credentials
+
+    that.sts.config.credentials = that.webApplicationIdentityCredentials
+
+    return new Promise((resolve, reject) => {
+      that.sts.assumeRole(params, (err, data) => {
+        if (err) {
+          reject(`Failed to assume role ${roleArn}: ${err}`)
+        } else {
+          resolve({
+            accessKeyId: data.Credentials.AccessKeyId,
+            secretAccessKey: data.Credentials.SecretAccessKey,
+            sessionToken: data.Credentials.SessionToken,
+          })
         }
-
-        AWS.config.region = this.loginConfig.awsRegion
-
-        this.props.awsLogin(AWS)
       })
+    })
+  }
+
+  authAmazonLogin() {
+    const that = this
+
+    return new Promise((resolve, reject) => {
+      window.amazon.Login.setClientId(that.loginConfig.clientId)
+      window.amazon.Login.authorize(that.authOptions, (response) => {
+        if (response.error) { reject(response.error) }
+        console.log(response)
+        resolve(response)
+      })
+    })
   }
 
   assumeWebAppIdentityWithToken(token) {
-    const awsLogin = this
+    const that = this
 
     const params = {
       DurationSeconds: 3600,
@@ -82,48 +105,84 @@ class AmazonLogin extends Component {
 
     console.log(params)
 
-
     return new Promise((resolve, reject) => {
-      awsLogin.sts.assumeRoleWithWebIdentity(params, (err, data) => {
+      that.sts.assumeRoleWithWebIdentity(params, (err, data) => {
         if (err) { reject(err) }
         resolve(data)
       })
     })
   }
 
-  authAmazonLogin() {
-    const awsLogin = this
+  loginClicked() {
+    const that = this
+    this.sts = new AWS.STS()
 
-    // TODO: Request user identity
+    this.authAmazonLogin()
+      .then((loginResponse) => {
+        that.accessToken = loginResponse.access_token
+        return that.assumeWebAppIdentityWithToken(loginResponse.access_token)
+      })
+      .then((identity) => {
+        console.log('identity')
+        console.log(identity)
 
+        that.webApplicationIdentityCredentials = {
+          accessKeyId: identity.Credentials.AccessKeyId,
+          secretAccessKey: identity.Credentials.SecretAccessKey,
+          sessionToken: identity.Credentials.SessionToken,
+        }
+
+        return that.retrieveProfile()
+      })
+      .then((profile) => {
+        that.setState({
+          profile: {
+            id: profile.CustomerId,
+            email: profile.PrimaryEmail,
+            name: profile.Name,
+          },
+        })
+
+        that.aws = AWS
+        AWS.config.credentials = that.webApplicationIdentityCredentials
+        AWS.config.region = that.loginConfig.awsRegion
+
+        that.props.awsLogin(that) // TODO: change to this instance
+      })
+  }
+
+  retrieveProfile() {
     return new Promise((resolve, reject) => {
-      window.amazon.Login.setClientId(awsLogin.loginConfig.clientId)
-      window.amazon.Login.authorize(awsLogin.authOptions, (response) => {
-        if (response.error) { reject(response.error) }
-        console.log(response)
-        resolve(response)
+      window.amazon.Login.retrieveProfile(this.accessToken, (response) => {
+        if (!response.success) {
+          reject('Failed to get Amazon Login profile')
+        } else {
+          resolve(response.profile)
+        }
       })
     })
   }
 
-  assumeProductCatalogReaderRole(creds) {
-    const awsLogin = this
+  assumeProductCatalogReaderRole() {
+    const that = this
 
     const params = {
       RoleArn: this.loginConfig.catalogReaderRole,
       RoleSessionName: this.loginConfig.sessionName,
     }
 
-    awsLogin.sts.config.credentials = {  // eslint-disable-line no-param-reassign
-      accessKeyId: creds.AccessKeyId,
-      secretAccessKey: creds.SecretAccessKey,
-      sessionToken: creds.SessionToken,
-    }
+    console.log('that.webApplicationIdentityCredentials')
+    console.log(that.webApplicationIdentityCredentials)
+    that.sts.config.credentials = that.webApplicationIdentityCredentials
 
     return new Promise((resolve, reject) => {
-      awsLogin.sts.assumeRole(params, (err, data) => {
-        if (err) { reject(err) }
-        resolve(data)
+      that.sts.assumeRole(params, (err, data) => {
+        if (err) {
+          console.error(`Failed to assume ProductCatalogReader role: ${err}`)
+          reject(err)
+        } else {
+          resolve(data)
+        }
       })
     })
   }

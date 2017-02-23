@@ -3,15 +3,19 @@ import config from '../../config'
 
 class ProductDataSource extends Component {
   static propTypes = {
-    AWS: PropTypes.shape({
-      DynamoDB: PropTypes.func,
-    }).isRequired,
+    awsLogin: PropTypes.shape({
+      aws: PropTypes.shape({
+        DynamoDB: PropTypes.func,
+      }),
+      getCredentialsForRole: PropTypes.func,
+    }),
     category: PropTypes.string,
     productId: PropTypes.string,
     productsLoaded: PropTypes.func.isRequired,
   }
 
   static defaultProps = {
+    awsLogin: null,
     category: null,
     productId: null,
   }
@@ -19,20 +23,27 @@ class ProductDataSource extends Component {
   constructor(props) {
     super(props)
     this.state = {}
-    this.dynamo = new this.props.AWS.DynamoDB()
     this.getProductsByCategoryAsync.bind(this)
     this.getProductsByCategoryFromDynamoAsync.bind(this)
     this.componentDidMount = this.componentDidMount.bind(this)
   }
 
   componentDidMount() {
-    if (this.props.category) {
-      this.getProductsByCategoryAsync(this.props.category)
-        .then(this.props.productsLoaded)
-    } else if (this.props.productId) {
-      this.getProductsByIdAsync(this.props.productId)
-        .then(this.props.productsLoaded)
-    }
+    this.dynamo = new this.props.awsLogin.aws.DynamoDB()
+
+    this.props.awsLogin.getCredentialsForRole(config.CatalogReaderRole)
+      .then((creds) => {
+        this.dynamo.config.credentials = creds
+      })
+      .then(() => {
+        if (this.props.category) {
+          this.getProductsByCategoryAsync(this.props.category)
+            .then(this.props.productsLoaded)
+        } else if (this.props.productId) {
+          this.getProductsByIdAsync(this.props.productId)
+            .then(this.props.productsLoaded)
+        }
+      })
   }
 
   getProductByIdFromDynamoAsync(id) {

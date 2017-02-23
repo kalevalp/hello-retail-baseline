@@ -62,7 +62,7 @@ custom:
   retailStreamVersion: 1
   retailStream: ${file(../retail-stream/serverless.yml)}
   productCatalogVersion: 1
-  productCatalog: ${file(../product-catalog/serverless.yml)}
+  productCatalog: ${file(../product-catalog/builder/serverless.yml)}
 
   s3Bucket:
     Fn::Join: # e.g. s3://stage.hello-retail.biz/

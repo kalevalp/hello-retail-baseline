@@ -8,13 +8,13 @@ class App extends Component {
     this.state = {
       loggedIn: false,
     }
-    this.awsLogin = this.awsLogin.bind(this)
+    this.awsLoginHandler = this.awsLoginHandler.bind(this)
   }
 
-  awsLogin(aws) {
+  awsLoginHandler(awsLogin) {
     this.setState({
       loggedIn: true,
-      AWS: aws,
+      awsLogin,
     })
   }
 
@@ -23,17 +23,19 @@ class App extends Component {
     let children = null
 
     if (!this.state.loggedIn) {
-      children = (<AmazonLogin awsLogin={this.awsLogin} />)
+      children = (<AmazonLogin awsLogin={this.awsLoginHandler} />)
     } else {
       // Maps properties to child components dynamically, allowing those properties to be bound once available.
       children = React.Children.map(this.props.children, child => React.cloneElement(child, { // eslint-disable-line react/prop-types
         AWS: app.state.AWS,
+        awsLogin: app.state.awsLogin,
       }))
     }
 
     return (
       <div className="app text-center container" >
         <h2>{config.WebAppName}</h2>
+        { this.state.loggedIn ? (<em>Welcome {app.state.awsLogin.state.profile.name}</em>) : null }
         <div className="content">
           {children}
         </div>

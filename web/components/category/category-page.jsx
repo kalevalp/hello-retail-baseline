@@ -4,13 +4,15 @@ import CategoryDataSource from './category-data-source'
 
 class CategoryPage extends Component {
   static propTypes = {
-    AWS: PropTypes.shape({
-      DynamoDB: PropTypes.func,
+    awsLogin: PropTypes.shape({
+      AWS: PropTypes.shape({
+        DynamoDB: PropTypes.func,
+      }),
     }),
   }
 
   static defaultProps = {
-    AWS: null,
+    awsLogin: null,
   }
 
   constructor(props) {
@@ -30,7 +32,7 @@ class CategoryPage extends Component {
       <div>
         <h4><em>Categories</em></h4>
         <CategoryList className="categoryList" categories={this.state.categoryList} />
-        <CategoryDataSource AWS={this.props.AWS} categoriesLoaded={this.categoriesLoaded} />
+        <CategoryDataSource awsLogin={this.props.awsLogin} categoriesLoaded={this.categoriesLoaded} />
       </div>
     )
   }

@@ -6,8 +6,11 @@ import ProductDataSource from './product-data-source'
 
 class ProductCategoryPage extends Component {
   static propTypes = {
-    AWS: PropTypes.shape({
-      DynamoDB: PropTypes.func,
+    awsLogin: PropTypes.shape({
+      aws: PropTypes.shape({
+        DynamoDB: PropTypes.func,
+      }),
+      getCredentialsForRole: PropTypes.func,
     }),
     params: PropTypes.shape({
       category: PropTypes.string.isRequired,
@@ -15,7 +18,7 @@ class ProductCategoryPage extends Component {
   }
 
   static defaultProps = {
-    AWS: null,
+    awsLogin: null,
   }
 
   constructor(props) {
@@ -37,7 +40,7 @@ class ProductCategoryPage extends Component {
       <div>
         <h4>{this.state.category}</h4>
         <ProductList products={this.state.productsList} category={this.state.category} />
-        <ProductDataSource AWS={this.props.AWS} category={this.state.category} productsLoaded={this.productsLoaded} />
+        <ProductDataSource awsLogin={this.props.awsLogin} category={this.state.category} productsLoaded={this.productsLoaded} />
       </div>
     )
   }
