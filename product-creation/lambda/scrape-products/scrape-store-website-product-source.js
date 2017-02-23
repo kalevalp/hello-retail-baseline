@@ -1,21 +1,7 @@
 'use strict'
 
+const aws = require('aws-sdk') // eslint-disable-line import/no-extraneous-dependencies, global-require
 const http = require('http')
-const url = require('url')
-
-let agent
-if (process.env.proxy) {
-  try {
-    const HttpsProxyAgent = require('https-proxy-agent') // eslint-disable-line import/no-extraneous-dependencies, global-require
-    const proxyOptions = url.parse(process.env.proxy)
-    proxyOptions.secureEndpoint = true
-    agent = new HttpsProxyAgent(proxyOptions)
-  } catch (ex) {
-    console.log('##################################################')
-    console.log(`ERROR establishing Proxy Agent: ${ex}`)
-    console.log('##################################################')
-  }
-}
 
 module.exports = function ProductSource() {
   const nordstromStoreHost = 'shop.nordstrom.com'
@@ -31,8 +17,8 @@ module.exports = function ProductSource() {
       host,
       path,
     }
-    if (agent) {
-      opts.agent = agent
+    if (aws.config.httpOptions.agent) {
+      opts.agent = aws.config.httpOptions.agent
     }
     http.get(opts, (response) => {
       let body = ''

@@ -3,6 +3,9 @@
 const AJV = require('ajv')
 const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
+/**
+ * AJV
+ */
 // TODO Get these from a better place later
 const eventSchema = require('./retail-stream-schema-ingress.json')
 const productCreateSchema = require('./product-create-schema.json')
@@ -17,26 +20,29 @@ const ajv = new AJV()
 ajv.addSchema(eventSchema, eventSchemaId)
 ajv.addSchema(productCreateSchema, productCreateSchemaId)
 
-const dynamo = new aws.DynamoDB.DocumentClient()
+/**
+ * AWS
+ */
 const stepfunctions = new aws.StepFunctions()
 
 const constants = {
   // self
-  MODULE: 'product-photos/1.dispatch/dispatch.js',
+  MODULE: 'product-photos/0.execute/execute.js',
   // methods
-  METHOD_CREATE_ASSIGNMENT: 'createAssignment',
+  METHOD_START_EXECUTION: 'startExecution',
   METHOD_PROCESS_EVENT: 'processEvent',
   METHOD_PROCESS_KINESIS_EVENT: 'processKinesisEvent',
   // errors
   BAD_MSG: 'bad msg:',
   // resources
-  TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
-  STEP_FUNCTION_ASSIGN_ARN: process.env.STEP_FUNCTION_ASSIGN_ARN,
+  STEP_FUNCTION: process.env.STEP_FUNCTION,
 }
 
 const impl = {
   /**
-   * Create a photo assignment for the given product.  Example event:
+   * Start and execution corresponding to the given event.  Swallow errors that result from attempting to
+   * create the execution beyond the first time.
+   * @param event The event to validate and process with the appropriate logic.  Example event:
    * {
    *   "schema": "com.nordstrom/retail-stream/1-0-0",
    *   "origin": "hello-retail/product-producer-automation",
@@ -50,77 +56,30 @@ const impl = {
    *     "category": "Socks for Men"
    *   }
    * }
-   * @param event The product to put in the catalog.
-   * @param complete The callback to inform of completion, with optional error parameter.
+   * @param complete The callback with which to report any errors
    */
-  createAssignment: (event, complete) => {
-    const updated = Date.now()
-    const dbParamsProduct = {
-      TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
-      Key: {
-        product: event.data.id,
-      },
-      ConditionExpression: 'attribute_not_exists(product)',
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),',
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#as=:as,',
-        '#sup=:sup,',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#as': 'assigned',
-        '#sup': 'supplied',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-        ':as': '',
-        ':sup': '',
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
+  startExecution: (event, complete) => {
+    // TODO record uniquely in dynamo (so we don't duplicate the photo acquisition action)
+    const params = {
+      stateMachineArn: constants.STEP_FUNCTION,
+      name: `${event.origin}/${event.data.id}/${event.timeOrigin}`,
+      input: JSON.stringify(event),
     }
-    dynamo.update(dbParamsProduct, (dErr) => {
-      if (dErr) {
-        if (dErr.code && dErr.code === 'ConditionalCheckFailedException') { // handle "already exists" differently, be idempotent
-          complete(null, 'Succeeding: attempted assignment creation but an assignment already exists.')
+    stepfunctions.startExecution(params, (err) => {
+      if (err) {
+        if (err.code && err.code === 'ExecutionAlreadyExists') {
+          complete()
         } else {
-          complete(`${constants.METHOD_CREATE_ASSIGNMENT} - error updating DynamoDb: ${dErr}`)
+          complete(err)
         }
       } else {
-        const params = {
-          stateMachineArn: constants.STEP_FUNCTION_ASSIGN_ARN,
-          input: JSON.stringify(event),
-          name: event.data.id,
-        }
-        stepfunctions.startExecution(params, (sfErr) => {
-          if (sfErr) {
-            complete([
-              `${constants.METHOD_CREATE_ASSIGNMENT} - error starting execution on step function:\n`,
-              `step function: ${constants.STEP_FUNCTION_ASSIGN_ARN}\n`,
-              `sent: ${JSON.stringify(event)}`,
-              `error: ${sfErr}`,
-            ].join())
-          } else {
-            complete()
-          }
-        })
+        complete()
       }
     })
   },
   /**
-   * Process the given event, reporting failure or success to the given callback
-   * @param event The event to validate and process with the appropriate logic
+   * Process the given event, reporting failure or success to the given callback.
+   * @param event The event to validate and process with the appropriate logic.
    * @param complete The callback with which to report any errors
    */
   processEvent: (event, complete) => {
@@ -134,7 +93,7 @@ const impl = {
       if (!ajv.validate(productCreateSchemaId, event.data)) {
         complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchema}' schema. Errors: ${ajv.errorsText()}`)
       } else {
-        impl.createAssignment(event, complete)
+        impl.startExecution(event, complete)
       }
     } else {
       // TODO remove console.log and pass the above message once we are only receiving subscribed events

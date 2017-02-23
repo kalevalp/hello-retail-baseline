@@ -26,7 +26,12 @@ phases:
       - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog Dependencies"             $CODEBUILD_SRC_DIR/product-catalog/builder
       - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog API"                      $CODEBUILD_SRC_DIR/product-catalog/api
       # Product Photos
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Dispatch Dependencies"   $CODEBUILD_SRC_DIR/product-photos/1.dispatch
+      # TODO Update these accordingly with changes
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Execute Dependencies"    $CODEBUILD_SRC_DIR/product-photos/0.execute
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Message Dependencies"    $CODEBUILD_SRC_DIR/product-photos/2.message
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Receive Dependencies"    $CODEBUILD_SRC_DIR/product-photos/3.receive
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Unmessage Dependencies"  $CODEBUILD_SRC_DIR/product-photos/5.unmessage
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Photos - Report Dependencies"     $CODEBUILD_SRC_DIR/product-photos/6.report
   build:
     commands:
       - npm run test
@@ -40,7 +45,14 @@ phases:
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"    $CODEBUILD_SRC_DIR/product-catalog/builder
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog API"          $CODEBUILD_SRC_DIR/product-catalog/api
       # Product Photos
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Data"        $CODEBUILD_SRC_DIR/product-photos/0.data
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Assign"      $CODEBUILD_SRC_DIR/product-photos/2.assign -step # deploy the step function that 1 starts and 3 stops (and thus depend on the exported arn of)
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Dispatch"    $CODEBUILD_SRC_DIR/product-photos/1.dispatch
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Image"       $CODEBUILD_SRC_DIR/product-photos/3.image
+      # TODO Update these accordingly with changes
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Data"        $CODEBUILD_SRC_DIR/product-photos/data
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 1.Assign"    $CODEBUILD_SRC_DIR/product-photos/1.assign
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 2.Message"   $CODEBUILD_SRC_DIR/product-photos/2.message
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 2.Record"    $CODEBUILD_SRC_DIR/product-photos/2.record
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 3.Receive"   $CODEBUILD_SRC_DIR/product-photos/3.receive
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 4.Fail"      $CODEBUILD_SRC_DIR/product-photos/4.fail
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 5.Unmessage" $CODEBUILD_SRC_DIR/product-photos/5.unmessage
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 6.Report"    $CODEBUILD_SRC_DIR/product-photos/6.report
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - Process"     $CODEBUILD_SRC_DIR/product-photos/process -step # deploy the StepFunction that depends on Lambdas 1-6
+      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Photos - 0.Execute"   $CODEBUILD_SRC_DIR/product-photos/0.execute     # deploy the Lambda that listens to the stream and executes the StepFunction

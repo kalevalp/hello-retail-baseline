@@ -5,8 +5,8 @@ service: ${self:custom.productPhotos.dataName}
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../../private.yml)}
-  helloRetail: ${file(../helloRetail.yml)}}
-  productPhotos: ${file(productPhotos.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
 
 provider:
   name: aws
@@ -17,36 +17,19 @@ provider:
 
 resources:
   Resources:
-#    Photographers:
-#      Type: 'AWS::DynamoDB::Table'
-#      Properties:
-#        AttributeDefinitions:
-#          - AttributeName: id
-#            AttributeType: S
-#          - AttributeName: assignments
-#            AttributeType: N
-#        KeySchema:
-#          - AttributeName: id
-#            KeyType: HASH
-#          - AttributeName: assignments
-#            KeyType: RANGE
-#        ProvisionedThroughput:
-#          ReadCapacityUnits: 1
-#          WriteCapacityUnits: 1
-#        TableName: ${self:custom.stage}-${self:service}-Photographers-${self:custom.productPhotos.photoAssignmentsVersion}
     PhotoAssignments:
       Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
-          - AttributeName: product
+          - AttributeName: number
             AttributeType: S
         KeySchema:
-          - AttributeName: product
+          - AttributeName: number
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:custom.stage}-${self:service}-PhotoAssignments-${self:custom.productPhotos.photoAssignmentsVersion}
+        TableName: ${self:custom.stage}-${self:service}-PhotoAssignments-${self:custom.productPhotos.productPhotosVersion}
   Outputs:
     PhotoAssignmentsTableName:
       Description: The Name of the Photo Assignments Table

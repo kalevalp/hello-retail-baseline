@@ -1,11 +1,13 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.productPhotos.dispatchName}
+service: ${self:custom.productPhotos.executeName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../../private.yml)}
-  helloRetail: ${file(../helloRetail.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+  retailStreamVersion: 1
   productPhotos: ${file(../productPhotos.yml)}
 
 provider:
@@ -16,41 +18,35 @@ provider:
   region: ${self:custom.private.region}
 
 functions:
-  dispatch:
+  execute:
     role:
-      'Fn::GetAtt': [ DispatchRole, Arn ]
-    handler: dispatch.processKinesisEvent
+      'Fn::GetAtt': [ ExecuteRole, Arn ]
+    handler: execute.processKinesisEvent
     environment:
       STAGE: ${self:custom.stage}
-      STREAM_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
-      STREAM_ROLE_ARN:
-        'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamReaderArn'
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
-      STEP_FUNCTION_ASSIGN_ARN:
+      STEP_FUNCTION:
         'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
-#            'Fn::ImportValue': 'hello-retail-stream:${self:custom.stage}:RetailStreamArn'
+#            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
           startingPosition: 'TRIM_HORIZON'
 
 resources:
   Resources:
     # Log Group
-    DispatchLogGroup:
+    ExecuteLogGroup:
       Type: 'AWS::Logs::LogGroup'
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-dispatch'
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-execute'
         RetentionInDays: 7
     # Role
-    DispatchRole: # role for the assignments dispatching lambda
+    ExecuteRole: # role for the photo assignment step function execution kick-off lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPhotosDispatch${self:custom.productPhotos.photoAssignmentsVersion}
+        RoleName: ${self:custom.stage}ProductPhotosExecute${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -68,14 +64,29 @@ resources:
                 - Effect: 'Allow'
                   Action:
                     - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ ExecuteLogGroup, Arn ]
+                - Effect: 'Allow'
+                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     'Fn::Join':
                       - ':'
-                      - - 'Fn::GetAtt': [ DispatchLogGroup, Arn ]
+                      - - 'Fn::GetAtt': [ ExecuteLogGroup, Arn ]
                         - '*'
-          - ${custom.productPhotos.updatePhotoAssignment}
-          - PolicyName: StartAssignmentExecution
+          - PolicyName: ReadFromKinesis
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'kinesis:GetRecords'
+                    - 'kinesis:GetShardIterator'
+                    - 'kinesis:DescribeStream'
+                    - 'kinesis:ListStreams'
+                  Resource:
+                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
+          - PolicyName: ExecuteStepFunction
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
@@ -83,4 +94,4 @@ resources:
                   Action:
                     - 'states:StartExecution'
                   Resource:
-                    'Fn:ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
+                    'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}

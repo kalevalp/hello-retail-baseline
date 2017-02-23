@@ -1,0 +1,140 @@
+# State Machine (AWS StepFunction for Aquiring an Image from a registered Photographer)
+Comment: Aquire a photograph of the given product from one of the registered photographers
+StartAt: AssignPhotographer
+States:
+  AssignPhotographer:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.assignName}-${self:custom.stage}-assign
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: AssignPhotographerError
+    Next: SendAssignmentNotice
+  AssignPhotographerError:
+    Type: Fail
+    Cause: Repeated Failure Assigning Photographer
+    Error: RepeatedFailure
+  SendAssignmentNotice:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.messageName}-${self:custom.stage}-message
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: SendAssignmentNoticeError
+    Next: WaitForPhoto
+  SendAssignmentNoticeError:
+    Type: Fail
+    Cause: Repeated Failure Sending Assignment Notice to Photographer
+    Error: RepeatedFailure
+  WaitForPhoto:
+    Type: Parallel
+    Branches:
+    - StartAt: AwaitPhoto
+      States:
+        AwaitPhoto:
+          Type: Task
+          Resource: ${self:custom.productPhotos.receiveActivityArn}
+          TimeoutSeconds: 600
+          Catch:
+            - ErrorEquals:
+                - States.Timeout
+              Next: FailAssignment
+          End: true
+        FailAssignment:
+          Type: Task
+          Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.failName}-${self:custom.stage}-fail
+          Retry:
+          - ErrorEquals:
+            - States.ALL
+            IntervalSeconds: 1
+            MaxAttempts: 2
+            BackoffRate: 2
+          Catch:
+          - ErrorEquals:
+            - States.ALL
+            Next: FailAssignmentError
+          End: true
+        FailAssignmentError:
+          Type: Fail
+          Cause: Repeated Failure Failing Photographer Assignment
+          Error: RepeatedFailure
+    - StartAt: RecordAssignment
+      States:
+        RecordAssignment:
+          Type: Task
+          Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.recordName}-${self:custom.stage}-record
+          Retry:
+          - ErrorEquals:
+            - States.ALL
+            IntervalSeconds: 1
+            MaxAttempts: 2
+            BackoffRate: 2
+          Catch:
+          - ErrorEquals:
+            - States.ALL
+            Next: RecordAssignmentError
+          End: true
+        RecordAssignmentError:
+          Type: Fail
+          Cause: Repeated Failure Recording Photographer Assignment
+          Error: RepeatedFailure
+    Next: RetryOrComplete
+  RetryOrComplete:
+    Type: Choice
+    Choices:
+      - Variable: '$.success'
+        StringEquals: 'true'
+        Next: CompleteAssignment
+      - Variable: '$.success'
+        StringEquals: 'false'
+        Next: SendUnassignmentNotice
+  SendUnassignmentNotice:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.unmessageName}-${self:custom.stage}-unmessage
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: SendUnassignmentNoticeError
+    Next: AssignPhotographer
+  SendUnassignmentNoticeError:
+    Type: Fail
+    Cause: Repeated Failure Sending Photographer Unassignment
+    Error: RepeatedFailure
+  CompleteAssignment:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.reportName}-${self:custom.stage}-report
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: CompleteAssignmentError
+    Next: Finish
+  CompleteAssignmentError:
+    Type: Fail
+    Cause: Repeated Failure Completing Successful Assignment
+    Error: RepeatedFailure
+  Finish:
+    Type: Succeed

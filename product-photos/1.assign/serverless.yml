@@ -1,11 +1,11 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.productPhotos.imageName}
+service: ${self:custom.productPhotos.assignName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../../private.yml)}
-  helloRetail: ${file(../helloRetail.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
   productPhotos: ${file(../productPhotos.yml)}
 
 provider:
@@ -16,31 +16,27 @@ provider:
   region: ${self:custom.private.region}
 
 functions:
-  image:
+  assign:
     role:
-      'Fn::GetAtt': [ ImageRole, Arn ]
-    handler: image.processImage
+      'Fn::GetAtt': [ AssignRole, Arn ]
+    handler: assign.handler
     environment:
       STAGE: ${self:custom.stage}
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        'Fn::ImportValue': 'hello-retail-product-photos:${self:custom.stage}:PhotoAssignments:${self:custom.productPhotos.photoAssignmentsVersion}'
-    events:
-      # from twillio
 
 resources:
   Resources:
-    # Log Groups
-    ImageLogGroup:
+    # Log Group
+    AssignLogGroup:
       Type: 'AWS::Logs::LogGroup'
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-image'
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-assign'
         RetentionInDays: 7
     # Role
-    AssignRole: # role for the assignments dispatching lambda
+    AssignRole: # role for the assignment creation lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPhotosImage{self:custom.productPhotos.photoAssignmentsVersion}
+        RoleName: ${self:custom.stage}ProductPhotosAssign${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -58,20 +54,26 @@ resources:
                 - Effect: 'Allow'
                   Action:
                     - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ AssignLogGroup, Arn ]
+                - Effect: 'Allow'
+                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     'Fn::Join':
                       - ':'
-                      - - 'Fn::GetAtt': [ ImageLogGroup, Arn ]
+                      - - 'Fn::GetAtt': [ AssignLogGroup, Arn ]
                         - '*'
-          - ${custom.productPhotos.updatePhotoAssignment}
-          - PolicyName: StopAssignmentExecution
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'states:StopExecution'
-                  Resource:
-                    # TODO
-                    - 'Fn:ImportValue': 'TODO'
+  Outputs:
+    AssignLambdaName:
+      Description: The Name of the Photo Assignments Assign Lambda
+      Value:
+        Ref: AssignLambdaFunction
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsAssignLambdaName}
+    AssignLambdaArn:
+      Description: The Name of the Photo Assignments Assign Lambda
+      Value:
+        'Fn::GetAtt': [ AssignLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsAssignLambdaArn}
