@@ -132,8 +132,7 @@ resources:
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
-                    Fn::Join:
-                      Fn::GetAtt: [ CatalogLogGroup, Arn ]
+                    Fn::GetAtt: [ CatalogLogGroup, Arn ]
                 - Effect: 'Allow'
                   Action:
                     - 'logs:PutLogEvents'

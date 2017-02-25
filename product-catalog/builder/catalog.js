@@ -6,16 +6,19 @@ const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, impo
 // TODO Get these from a better place later
 const eventSchema = require('./retail-stream-schema-ingress.json')
 const productCreateSchema = require('./product-create-schema.json')
+const productImageSchema = require('./product-image-schema.json')
 
 // TODO generalize this?  it is used by but not specific to this module
 const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`
 
 const eventSchemaId = makeSchemaId(eventSchema)
 const productCreateSchemaId = makeSchemaId(productCreateSchema)
+const productImageSchemaId = makeSchemaId(productImageSchema)
 
 const ajv = new AJV()
 ajv.addSchema(eventSchema, eventSchemaId)
 ajv.addSchema(productCreateSchema, productCreateSchemaId)
+ajv.addSchema(productImageSchema, productImageSchemaId)
 
 const dynamo = new aws.DynamoDB.DocumentClient()
 
@@ -24,6 +27,7 @@ const constants = {
   MODULE: 'product-catalog/catalog.js',
   // methods
   METHOD_PUT_PRODUCT: 'putProduct',
+  METHOD_PUT_IMAGE: 'putImage',
   METHOD_PROCESS_EVENT: 'processEvent',
   METHOD_PROCESS_KINESIS_EVENT: 'processKinesisEvent',
   // errors
@@ -142,6 +146,56 @@ const impl = {
     dynamo.update(dbParamsProduct, updateCallback)
   },
   /**
+   * Put the given image in to the dynamo catalog.  Example event:
+   * {
+   *   "schema": "com.nordstrom/retail-stream/1-0-0",
+   *   "origin": "hello-retail/product-producer-automation",
+   *   "timeOrigin": "2017-01-12T18:29:25.171Z",
+   *   "data": {
+   *     "schema": "com.nordstrom/product/image/1-0-0",
+   *     "id": "4579874",
+   *     "image": "erik.hello-retail.biz/i/p/4579874"
+   *   }
+   * }
+   * @param event The product to put in the catalog.
+   * @param complete The callback to inform of completion, with optional error parameter.
+   */
+  putImage: (event, complete) => {
+    const updated = Date.now()
+    const dbParamsProduct = {
+      TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
+      Key: {
+        id: event.data.id,
+      },
+      UpdateExpression: [
+        'set',
+        '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
+        '#cb=if_not_exists(#cb,:cb),',
+        '#u=:u,',
+        '#ub=:ub,',
+        '#i=:i',
+      ].join(' '),
+      ExpressionAttributeNames: {
+        '#c': 'created',
+        '#cb': 'createdBy',
+        '#u': 'updated',
+        '#ub': 'updatedBy',
+        '#i': 'image',
+      },
+      ExpressionAttributeValues: {
+        ':c': updated,
+        ':cb': event.origin,
+        ':u': updated,
+        ':ub': event.origin,
+        ':i': event.data.image,
+      },
+      ReturnValues: 'NONE',
+      ReturnConsumedCapacity: 'NONE',
+      ReturnItemCollectionMetrics: 'NONE',
+    }
+    dynamo.update(dbParamsProduct, complete)
+  },
+  /**
    * Process the given event, reporting failure or success to the given callback
    * @param event The event to validate and process with the appropriate logic
    * @param complete The callback with which to report any errors
@@ -155,9 +209,15 @@ const impl = {
       complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`)
     } else if (event.data.schema === productCreateSchemaId) {
       if (!ajv.validate(productCreateSchemaId, event.data)) {
-        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchema}' schema. Errors: ${ajv.errorsText()}`)
+        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchemaId}' schema. Errors: ${ajv.errorsText()}`)
       } else {
         impl.putProduct(event, complete)
+      }
+    } else if (event.data.schema === productImageSchemaId) {
+      if (!ajv.validate(productImageSchemaId, event.data)) {
+        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productImageSchemaId}' schema. Errors: ${ajv.errorsText()}`)
+      } else {
+        impl.putImage(event, complete)
       }
     } else {
       // TODO remove console.log and pass the above message once we are only receiving subscribed events
