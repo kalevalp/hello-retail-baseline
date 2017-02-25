@@ -60,7 +60,7 @@ resources:
     StepFunction:
       Type: 'AWS::StepFunctions::StateMachine'
       Properties:
-        DefinitionString: '${file(aquirePhoto.js):shim}'
+        DefinitionString: '${file(acquirePhoto.js):shim}'
         RoleArn:
           'Fn::GetAtt': [ StepFunctionRole, Arn ]
   Outputs:
