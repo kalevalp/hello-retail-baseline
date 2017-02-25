@@ -1,6 +1,6 @@
 #TODO REMOVE AND REPLACE
 bucket: ${self:custom.stage}.hello-retail.biz
-bucketArn: arn:aws:s3:::{self:custom.productPhotos.bucket}
+bucketArn: arn:aws:s3:::${self:custom.productPhotos.bucket}
 
 # Project
 name: ${self:custom.helloRetail.name}-product-photos
@@ -34,6 +34,10 @@ failName: ${self:custom.productPhotos.name}-fail
 exportPhotoAssignmentsFailLambdaName: ${self:custom.productPhotos.failName}:${self:custom.stage}:PhotoAssignmentsFailLambdaName:${self:custom.productPhotos.productPhotosVersion}
 exportPhotoAssignmentsFailLambdaArn: ${self:custom.productPhotos.failName}:${self:custom.stage}:PhotoAssignmentsFailLambdaArn:${self:custom.productPhotos.productPhotosVersion}
 
+successName: ${self:custom.productPhotos.name}-success
+exportPhotoAssignmentsSuccessLambdaName: ${self:custom.productPhotos.successName}:${self:custom.stage}:PhotoAssignmentsSuccessLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsSuccessLambdaArn: ${self:custom.productPhotos.successName}:${self:custom.stage}:PhotoAssignmentsSuccessLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
 unmessageName: ${self:custom.productPhotos.name}-unmessage
 exportPhotoAssignmentsUnmessageLambdaName: ${self:custom.productPhotos.unmessageName}:${self:custom.stage}:PhotoAssignmentsUnmessageLambdaName:${self:custom.productPhotos.productPhotosVersion}
 exportPhotoAssignmentsUnmessageLambdaArn: ${self:custom.productPhotos.unmessageName}:${self:custom.stage}:PhotoAssignmentsUnmessageLambdaArn:${self:custom.productPhotos.productPhotosVersion}
@@ -43,8 +47,8 @@ exportPhotoAssignmentsReportLambdaName: ${self:custom.productPhotos.reportName}:
 exportPhotoAssignmentsReportLambdaArn: ${self:custom.productPhotos.reportName}:${self:custom.stage}:PhotoAssignmentsReportLambdaArn:${self:custom.productPhotos.productPhotosVersion}
 
 # Activities
-receiveActivityName: ${self:custom.productPhotos.name}-receive
-receiveActivityArn: arn:aws:states:${self:custom.private.region}:${self:custom.private.accountId}:activity:${self:custom.stage}-${self:custom.productPhotos.receiveActivityName}
+receiveActivityName: ${self:custom.stage}-${self:custom.productPhotos.name}-receive
+receiveActivityArn: arn:aws:states:${self:custom.private.region}:${self:custom.private.accountId}:activity:${self:custom.productPhotos.receiveActivityName}
 
 # Step Function
 processName: ${self:custom.productPhotos.name}-process
@@ -70,5 +74,15 @@ updatePhotoAssignment:
       -  Effect: 'Allow'
          Action:
            - 'dynamodb:UpdateItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}
+deletePhotoAssignment:
+  PolicyName: DeletePhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:DeleteItem'
          Resource:
           'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}

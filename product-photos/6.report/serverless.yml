@@ -72,7 +72,7 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ ReportLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.updatePhotoAssignment}
+          - ${self:custom.productPhotos.deletePhotoAssignment}
   Outputs:
     ReportLambdaName:
       Description: The Name of the Photo Assignments Report Lambda

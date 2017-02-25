@@ -3,7 +3,7 @@
 const AJV = require('ajv')
 const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 const BbPromise = require('bluebird')
-const https = require('follow-redirects/https')
+const got = require('got')
 const Twilio = require('twilio')
 const url = require('url')
 
@@ -133,7 +133,6 @@ const impl = {
    * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   validateApiGatewayRequest: (event) => {
-    console.log('validateApiGatewayRequest')
     if (!ajv.validate(twilioRequestSchemaId, event)) { // bad request
       return BbPromise.reject(new ClientError(`could not validate request to '${twilioRequestSchemaId}' schema. Errors: '${ajv.errorsText()}' found in event: '${JSON.stringify(event)}'`))
     } else {
@@ -145,7 +144,6 @@ const impl = {
    * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   ensureAuthTokenDecrypted: (event) => {
-    console.log('ensureAuthTokenDecrypted')
     if (!twilio.authToken) {
       return util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED)
         .then((authToken) => {
@@ -161,31 +159,22 @@ const impl = {
    * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   validateTwilioRequest: (event) => {
-    console.log('validateTwilioRequest')
     const body = url.parse(`?${event.body}`, true).query
     if (!Twilio.validateRequest(twilio.authToken, event.headers['X-Twilio-Signature'], constants.ENDPOINT, body)) {
       return BbPromise.reject(new AuthError('Twilio message signature validation failure!'))
+    } else if (body.NumMedia < 1) {
+      return BbPromise.reject(new UserError('Oops!  We were expecting a product image.  Please send one!  :D'))
+    } else if (body.NumMedia < 1) {
+      return BbPromise.reject(new UserError('Oops!  We can only handle one image.  Sorry... can you please try again?  :D'))
+    } else if (!body.MediaContentType0 || !body.MediaContentType0.startsWith('image/')) {
+      return BbPromise.reject(new UserError('Oops!  We can only accept standard images.  We weren\'t very creative...'))
+    } else if (!body.From) {
+      return BbPromise.reject(new ServerError('Request from Twilio did not contain the phone number the image came from.'))
     } else {
-      console.log(JSON.stringify(body, null, 2))
-      if (
-        body.NumMedia !== '1' ||
-        !body.MediaUrl0 ||
-        !body.MediaContentType0 ||
-        !body.MediaContentType0.startsWith('image/')
-      ) {
-        if (body.NumMedia < 1) {
-          return BbPromise.reject(new UserError('Oops!  We were expecting a product image.  Please send one!  :D'))
-        } else {
-          return BbPromise.reject(new UserError('Oops!  We can only handle one image.  Sorry... can you please try again?  :D'))
-        }
-      } else if (!body.From) {
-        return BbPromise.reject(new ServerError('Request from Twilio did not contain the phone number the image came from.'))
-      } else {
-        return BbPromise.resolve({
-          event,
-          body,
-        })
-      }
+      return BbPromise.resolve({
+        event,
+        body,
+      })
     }
   },
   getResources: results => BbPromise.all([
@@ -196,46 +185,30 @@ const impl = {
    * Twilio sends a URI from which a user's image can downloaded.  Download it.
    * @param results The event representing the HTTPS request from Twilio (SMS sent notification)
    */
-  getImageFromTwilio: results => new BbPromise((resolve, reject) => {
-    console.log('getImageFromTwilio')
+  getImageFromTwilio: (results) => {
     const uri = url.parse(results.body.MediaUrl0)
     if (aws.config.httpOptions.agent) {
       uri.agent = aws.config.httpOptions.agent
     }
-    https.get(uri, (res) => {
-      if (res.statusCode !== 200) {
-        res.resume()
-        reject(new ServerError(`Requesting image failed with status code: ${res.statusCode}`))
-      }
-      res.setEncoding('utf8')
-      const image = {
+    return got.get(uri, { encoding: null }).then(
+      res => BbPromise.resolve({
         contentType: results.body.MediaContentType0,
-        data: '',
-      }
-      res.on('data', (chunk) => {
-        image.data += chunk
-      })
-      res.on('end', () => {
-        resolve(image)
-      })
-    }).on('error', (ex) => {
-      reject(new ServerError(`Error issuing GET on '${uri}': ${ex.stack}`))
-    })
-  }),
+        data: res.body,
+      }) // eslint-disable-line comma-dangle
+    )
+  },
   /**
    * The Twilio request doesn't contain any of the original product creation event that caused the assignment.  Obtain the
    * assignment associated with the number that this message/image is being received from.
    * @param results The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   getAssignment: (results) => {
-    console.log('getAssignment')
     const params = {
       Key: {
         number: results.body.From,
       },
       TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
       AttributesToGet: [
-        // 'number',
         'taskToken',
         'taskEvent',
       ],
@@ -248,7 +221,9 @@ const impl = {
           if (!data.Item) {
             return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  Please wait for a request.'))
           } else {
-            return BbPromise.resolve(data.Item)
+            const item = data.Item
+            item.taskEvent = JSON.parse(item.taskEvent)
+            return BbPromise.resolve(item)
           }
         },
         ex => BbPromise.reject(new ServerError(`Failed to retrieve assignment: ${ex}`)) // eslint-disable-line comma-dangle
@@ -262,49 +237,20 @@ const impl = {
    *          results[1] = assignment  // The assignment associated with the given request's phone number
    */
   storeImage: (results) => {
-    console.log('storeImage')
     const image = results[0]
     const assignment = results[1]
-
-    // TODO REMOVE
-    console.log(image)
-    console.log(assignment)
-    // TODO REMOVE
 
     const bucketKey = `i/p/${assignment.taskEvent.data.id}`
 
     const params = {
       Bucket: constants.IMAGE_BUCKET,
       Key: bucketKey,
-    //   ACL: 'private | public-read | public-read-write | authenticated-read | aws-exec-read | bucket-owner-read | bucket-owner-full-control',
-      Body: new Buffer(image.data),
-    //   CacheControl: 'STRING_VALUE',
-    //   ContentDisposition: 'STRING_VALUE',
-    //   ContentEncoding: 'STRING_VALUE',
-    //   ContentLanguage: 'STRING_VALUE',
-    //   ContentLength: 0,
-    //   ContentMD5: 'STRING_VALUE',
-    //   ContentType: 'STRING_VALUE',
-    //   Expires: new Date || 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)' || 123456789,
-    //   GrantFullControl: 'STRING_VALUE',
-    //   GrantRead: 'STRING_VALUE',
-    //   GrantReadACP: 'STRING_VALUE',
-    //   GrantWriteACP: 'STRING_VALUE',
-    //   Metadata: {
-    //     someKey: 'STRING_VALUE',
-    //     /* anotherKey: ... */
-    //   },
-    //   RequestPayer: 'requester',
-    //   SSECustomerAlgorithm: 'STRING_VALUE',
-    //   SSECustomerKey: new Buffer('...') || 'STRING_VALUE',
-    //   SSECustomerKeyMD5: 'STRING_VALUE',
-    //   SSEKMSKeyId: 'STRING_VALUE',
-    //   ServerSideEncryption: 'AES256 | aws:kms',
-    //   StorageClass: 'STANDARD | REDUCED_REDUNDANCY | STANDARD_IA',
-    //   Tagging: 'STRING_VALUE',
-    //   WebsiteRedirectLocation: 'STRING_VALUE'
+      Body: image.data,
+      ContentType: image.contentType,
+      Metadata: {
+        from: assignment.taskEvent.photographer.phone,
+      },
     }
-    console.log(params)
     return s3.putObject(params).promise().then(
       () => BbPromise.resolve({
         assignment,
@@ -318,7 +264,6 @@ const impl = {
    * @param results The results of the placeImage, containing the assignment and new image location
    */
   sendStepSuccess: (results) => {
-    console.log('sendStepSuccess')
     const taskEvent = results.assignment.taskEvent
     taskEvent.image = results.image
     taskEvent.success = 'true'
@@ -327,7 +272,7 @@ const impl = {
       taskToken: results.assignment.taskToken,
     }
     return stepfunctions.sendTaskSuccess(params).promise().then(
-      res => BbPromise.resolve(res),
+      () => BbPromise.resolve(taskEvent),
       err => BbPromise.reject(`Error sending success to Step Function: ${err}`) // eslint-disable-line comma-dangle
     )
   },
@@ -336,10 +281,9 @@ const impl = {
     msg.message(error.message)
     return msg.toString()
   },
-  thankYouForImage: (event) => {
-    console.log('thankYouForImage')
+  thankYouForImage: (taskEvent) => {
     const msg = new Twilio.TwimlResponse()
-    msg.message(`Thanks so much ${event.photographer.name}!`)
+    msg.message(`Thanks so much ${taskEvent.photographer.name}!`)
     return msg.toString()
   },
 }
@@ -348,43 +292,39 @@ const impl = {
  */
 module.exports = {
   handler: (event, context, callback) => {
-    // TODO REMOVE
-    console.log(JSON.stringify(event, null, 2))
-    // TODO REMOVE
     impl.validateApiGatewayRequest(event)
       .then(impl.ensureAuthTokenDecrypted)
       .then(impl.validateTwilioRequest)
       .then(impl.getResources)
       .then(impl.storeImage)
       .then(impl.sendStepSuccess)
-      .then(() => {
-        const response = util.response(200, impl.thankYouForImage(event))
+      .then(impl.thankYouForImage)
+      .then((msg) => {
+        const response = util.response(200, msg)
         response.headers['Content-Type'] = 'text/xml'
         callback(null, response)
       })
-      .catch(ClientError, (error) => {
-        console.log(`${constants.MODULE} - ${error.stack}`)
-        callback(null, util.response(400, `${error.name}: ${error.message}`))
+      .catch(ClientError, (ex) => {
+        console.log(`${constants.MODULE} - ${ex.stack}`)
+        callback(null, util.response(400, `${ex.name}: ${ex.message}`))
       })
-      .catch(AuthError, (error) => {
-        console.log(`${constants.MODULE} - ${error.stack}`)
+      .catch(AuthError, (ex) => {
+        console.log(`${constants.MODULE} - ${ex.stack}`)
         callback(null, util.response(403, constants.ERROR_UNAUTHORIZED))
       })
-      .catch(UserError, (error) => {
-        console.log(`${constants.MODULE} - ${error.stack}`)
-        const response = util.response(200, impl.userErrorResp(error))
+      .catch(UserError, (ex) => {
+        console.log(`${constants.MODULE} - ${ex.stack}`)
+        const response = util.response(200, impl.userErrorResp(ex))
         response.headers['Content-Type'] = 'text/xml'
         callback(null, response)
       })
-      .catch(ServerError, (error) => {
-        console.log(`${constants.MODULE} - ${error.stack}`)
-        // callback(null, util.response(500, error.name))
-        callback(null, util.response(500, `${error.name} - ${error.stack}`))
+      .catch(ServerError, (ex) => {
+        console.log(`${constants.MODULE} - ${ex.stack}`)
+        callback(null, util.response(500, ex.name))
       })
       .catch((ex) => {
         console.log(`${constants.MODULE} - Uncaught exception: ${ex.stack}`)
-        // callback(null, util.response(500, constants.ERROR_SERVER))
-        callback(null, util.response(500, `Uncaught: ${ex.name} - ${ex.stack}`))
+        callback(null, util.response(500, constants.ERROR_SERVER))
       })
   },
 }

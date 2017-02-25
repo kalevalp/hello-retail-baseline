@@ -52,6 +52,7 @@ resources:
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsMessageLambdaArn}
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsReceiveLambdaArn}
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsFailLambdaArn}
+                      - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsSuccessLambdaArn}
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsRecordLambdaArn}
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsUnmessageLambdaArn}
                       - 'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsReportLambdaArn}

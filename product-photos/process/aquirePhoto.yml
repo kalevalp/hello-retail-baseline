@@ -33,64 +33,86 @@ States:
     - ErrorEquals:
       - States.ALL
       Next: SendAssignmentNoticeError
-    Next: WaitForPhoto
+    Next: AwaitPhoto
   SendAssignmentNoticeError:
     Type: Fail
     Cause: Repeated Failure Sending Assignment Notice to Photographer
     Error: RepeatedFailure
-  WaitForPhoto:
-    Type: Parallel
-    Branches:
-    - StartAt: AwaitPhoto
-      States:
-        AwaitPhoto:
-          Type: Task
-          Resource: ${self:custom.productPhotos.receiveActivityArn}
-          TimeoutSeconds: 600
-          Catch:
-            - ErrorEquals:
-                - States.Timeout
-              Next: FailAssignment
-          End: true
-        FailAssignment:
-          Type: Task
-          Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.failName}-${self:custom.stage}-fail
-          Retry:
-          - ErrorEquals:
-            - States.ALL
-            IntervalSeconds: 1
-            MaxAttempts: 2
-            BackoffRate: 2
-          Catch:
-          - ErrorEquals:
-            - States.ALL
-            Next: FailAssignmentError
-          End: true
-        FailAssignmentError:
-          Type: Fail
-          Cause: Repeated Failure Failing Photographer Assignment
-          Error: RepeatedFailure
-    - StartAt: RecordAssignment
-      States:
-        RecordAssignment:
-          Type: Task
-          Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.recordName}-${self:custom.stage}-record
-          Retry:
-          - ErrorEquals:
-            - States.ALL
-            IntervalSeconds: 1
-            MaxAttempts: 2
-            BackoffRate: 2
-          Catch:
-          - ErrorEquals:
-            - States.ALL
-            Next: RecordAssignmentError
-          End: true
-        RecordAssignmentError:
-          Type: Fail
-          Cause: Repeated Failure Recording Photographer Assignment
-          Error: RepeatedFailure
+#  WaitForPhoto:
+#    Type: Parallel
+#    Branches:
+#    - StartAt: AwaitPhoto
+#      States:
+  AwaitPhoto:
+    Type: Task
+    Resource: ${self:custom.productPhotos.receiveActivityArn}
+    TimeoutSeconds: 600
+    Catch:
+      - ErrorEquals:
+          - States.Timeout
+        Next: AwaitPhotoFail
+    Next: AwaitPhotoSuccess
+  AwaitPhotoFail:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.failName}-${self:custom.stage}-fail
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: AwaitPhotoFailError
+    End: true
+  AwaitPhotoFailError:
+    Type: Fail
+    Cause: Repeated Failure Failing Photographer Assignment
+    Error: RepeatedFailure
+  AwaitPhotoSuccess:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.successName}-${self:custom.stage}-success
+    Retry:
+    - ErrorEquals:
+      - States.ALL
+      IntervalSeconds: 1
+      MaxAttempts: 2
+      BackoffRate: 2
+    Catch:
+    - ErrorEquals:
+      - States.ALL
+      Next: AwaitPhotoSuccessError
     Next: RetryOrComplete
+  AwaitPhotoSuccessError:
+    Type: Fail
+    Cause: Repeated Failure Failing Photographer Assignment
+    Error: RepeatedFailure
+#        AwaitPhotoSuccess:
+#          Type: Succeed
+#    - StartAt: RecordAssignment
+#      States:
+#        RecordAssignment:
+#          Type: Task
+#          Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.recordName}-${self:custom.stage}-record
+#          Retry:
+#          - ErrorEquals:
+#            - States.ALL
+#            IntervalSeconds: 1
+#            MaxAttempts: 2
+#            BackoffRate: 2
+#          Catch:
+#          - ErrorEquals:
+#            - States.ALL
+#            Next: RecordAssignmentError
+#          Next: RecordAssignmentSuccess
+#        RecordAssignmentError:
+#          Type: Fail
+#          Cause: Repeated Failure Recording Photographer Assignment
+#          Error: RepeatedFailure
+#        RecordAssignmentSuccess:
+#          Type: Succeed
+#    Next: RetryOrComplete
   RetryOrComplete:
     Type: Choice
     Choices:

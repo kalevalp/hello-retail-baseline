@@ -49,10 +49,11 @@ kinesis.config.credentials = new aws.TemporaryCredentials({
  */
 const impl = {
   writeToStream: (lambdaEvent, callback) => {
+    const origin = `product-photos/Photographer/${lambdaEvent.photographer.phone}/${lambdaEvent.photographer.name}`
     const productId = lambdaEvent.data.id.toString()
     const imageEvent = {
       schema: eventSchemaId,
-      origin: lambdaEvent.origin, // TODO something better?
+      origin,
       timeOrigin: new Date().toISOString(),
       data: {
         schema: productImageSchemaId,
@@ -68,9 +69,9 @@ const impl = {
       const params = {
         Data: JSON.stringify(imageEvent),
         PartitionKey: productId,
-        StreamName: process.env.STREAM_NAME,
+        StreamName: process.env.RETAIL_STREAM_NAME,
       }
-      this.kinesis.putRecord(params, callback)
+      kinesis.putRecord(params, callback)
     }
   },
   deleteAssignment: (event, callback) => {
@@ -116,11 +117,11 @@ module.exports = {
 
     impl.writeToStream(event, (wErr) => {
       if (wErr) {
-        callback(`${constants.MODULE} ${constants.METHOD_WRITE_TO_STREAM} - ${wErr}`)
+        callback(`${constants.MODULE} ${constants.METHOD_WRITE_TO_STREAM} - ${wErr.stack}`)
       } else {
         impl.deleteAssignment(event, (dErr) => {
           if (dErr) {
-            callback(`${constants.MODULE} ${constants.METHOD_DELETE_ASSIGNMENT} - ${dErr}`)
+            callback(`${constants.MODULE} ${constants.METHOD_DELETE_ASSIGNMENT} - ${dErr.stack}`)
           } else {
             const result = event
             result.outcome = 'photo taken'

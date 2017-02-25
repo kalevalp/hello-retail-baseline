@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.productPhotos.recordName}
+service: ${self:custom.productPhotos.successName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
@@ -16,31 +16,29 @@ provider:
   region: ${self:custom.private.region}
 
 functions:
-  record:
+  success:
     role:
-      'Fn::GetAtt': [ RecordRole, Arn ]
-    handler: record.handler
-    timeout: 240
+      'Fn::GetAtt': [ SuccessRole, Arn ]
+    handler: success.handler
     environment:
       STAGE: ${self:custom.stage}
-      ACTIVITY_RECEIVE_ARN: ${self:custom.productPhotos.receiveActivityArn}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 resources:
   Resources:
     # Log Group
-    RecordLogGroup:
+    SuccessLogGroup:
       Type: 'AWS::Logs::LogGroup'
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-record'
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-success'
         RetentionInDays: 7
     # Role
-    RecordRole: # role for the assignment recording lambda
+    SuccessRole: # role for the assignment succeeding lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPhotosRecord${self:custom.productPhotos.productPhotosVersion}
+        RoleName: ${self:custom.stage}ProductPhotosSuccess${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -59,35 +57,26 @@ resources:
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
-                    'Fn::GetAtt': [ RecordLogGroup, Arn ]
+                    'Fn::GetAtt': [ SuccessLogGroup, Arn ]
                 - Effect: 'Allow'
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     'Fn::Join':
                       - ':'
-                      - - 'Fn::GetAtt': [ RecordLogGroup, Arn ]
+                      - - 'Fn::GetAtt': [ SuccessLogGroup, Arn ]
                         - '*'
-          - PolicyName: GetAndFailActivityTask
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'states:GetActivityTask'
-                    - 'states:SendTaskFailure'
-                  Resource: ${self:custom.productPhotos.receiveActivityArn}
           - ${self:custom.productPhotos.updatePhotoAssignment}
   Outputs:
-    RecordLambdaName:
-      Description: The Name of the Photo Assignments Record Lambda
+    SuccessLambdaName:
+      Description: The Name of the Photo Assignments Success Lambda
       Value:
-        Ref: RecordLambdaFunction
+        Ref: SuccessLambdaFunction
       Export:
-        Name: ${self:custom.productPhotos.exportPhotoAssignmentsRecordLambdaName}
-    RecordLambdaArn:
-      Description: The Name of the Photo Assignments Record Lambda
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsSuccessLambdaName}
+    SuccessLambdaArn:
+      Description: The Name of the Photo Assignments Success Lambda
       Value:
-        'Fn::GetAtt': [ RecordLambdaFunction, Arn ]
+        'Fn::GetAtt': [ SuccessLambdaFunction, Arn ]
       Export:
-        Name: ${self:custom.productPhotos.exportPhotoAssignmentsRecordLambdaArn}
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsSuccessLambdaArn}

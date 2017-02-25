@@ -22,7 +22,7 @@ functions:
     handler: receive.handler
     environment:
       STAGE: ${self:custom.stage}
-      BUCKET: ${self:custom.productPhotos.bucket}
+      IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
       ENDPOINT:
         Fn::Join:
           - ''
@@ -92,7 +92,7 @@ resources:
                 - Effect: 'Allow'
                   Action:
                     - 's3:putObject'
-                  Resource: ${self:custom.productPhotos.bucketArn}
+                  Resource: ${self:custom.productPhotos.bucketArn}/i/p/*
           - PolicyName: SucceedActivityTask
             PolicyDocument:
               Version: '2012-10-17'
