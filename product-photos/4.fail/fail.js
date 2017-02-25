@@ -54,7 +54,7 @@ const impl = {
         '#st=:st',
         'remove',
         '#tt,',
-        '#te,',
+        '#te',
       ].join(' '),
       ExpressionAttributeNames: {
         '#u': 'updated',
@@ -94,9 +94,6 @@ const impl = {
           callback(`${constants.MODULE} ${constants.METHOD_UPDATE_ASSIGNMENT} - error updating DynamoDb: ${err}`)
         }
       } else { // successfully marked the assignment as failed
-        delete result.photographer
-        result.success = 'false'
-
         callback(null, result) // succeed this state, indicating the assignment failed (a new assignment will be made)
       }
     })

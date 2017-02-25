@@ -50,6 +50,7 @@ States:
             Catch:
               - ErrorEquals:
                   - States.Timeout
+                ResultPath: $.error
                 Next: AwaitPhotoFail
             Next: AwaitPhotoSucceed
           AwaitPhotoFail:

@@ -45,9 +45,10 @@ const util = {
     console.log(`${constants.MODULE} ${method} - ${constants.ERROR_SERVER}: ${err}`)
     return util.response(500, constants.ERROR_SERVER)
   },
-  decrypt: (field, value) => kms.decrypt({ CiphertextBlob: new Buffer(value, 'base64') }).promise()
-    .then(data => BbPromise.resolve(data.Plaintext.toString('ascii')))
-    .error(error => BbPromise.reject(field, error)),
+  decrypt: (field, value) => kms.decrypt({ CiphertextBlob: new Buffer(value, 'base64') }).promise().then(
+    data => BbPromise.resolve(data.Plaintext.toString('ascii')),
+    error => BbPromise.reject({ field, error }) // eslint-disable-line comma-dangle
+  ),
 }
 
 /**
@@ -69,8 +70,8 @@ const impl = {
         twilio.sdk = Twilio(twilio.accountSid, twilio.authToken)
         twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create)
         return BbPromise.resolve(event)
-      }).error((field, error) =>
-        BbPromise.reject(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${field}': ${error}`) // eslint-disable-line comma-dangle
+      }).catch(err =>
+        BbPromise.reject(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${err.field}': ${err.error}`) // eslint-disable-line comma-dangle
       )
     } else {
       return BbPromise.resolve(event)
@@ -88,8 +89,8 @@ const impl = {
       'You are unassigned.',
       'We will send an assignment soon!',
     ].join('\n'),
-  }).error(
-    err => BbPromise.reject(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${err}`) // eslint-disable-line comma-dangle
+  }).catch(
+    ex => BbPromise.reject(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${ex}`) // eslint-disable-line comma-dangle
   ),
 }
 
@@ -170,7 +171,14 @@ module.exports = {
       .then(impl.sendMessage)
       .then((message) => {
         console.log(`Success: ${JSON.stringify(message, null, 2)}`)
-        callback(null, event)
+        const result = event
+        delete result.photographer
+        if (!result.unassignments) { // keep track of how many times we've unassigned this product photo
+          result.unassignments = 1
+        } else {
+          result.unassignments += 1
+        } // TODO something interesting with unassignments?  Perhaps in StepFunction, exiting after N failures?
+        callback(null, result)
       })
       .error((err) => {
         callback(`${constants.MODULE} ${err}`)
