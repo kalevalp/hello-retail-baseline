@@ -13,7 +13,7 @@ then
     while getopts vf: opt
     do
       case "$opt" in
-        step) sls deploy stepf -s ${STAGE} -v;;
+        # step) sls deploy stepf -s ${STAGE} -v;; # we can use CloudFormation now
         \?) echo "ERROR: Unknown Flag $opt"; exit -1;;
       esac
     done
