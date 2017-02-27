@@ -53,7 +53,7 @@ const impl = {
   }),
   clientError: (schemaId, ajvErrors, event) => impl.response(
     400,
-    `${constants.METHOD_CATEGORIES} ${constants.INVALID_REQUEST} could not validate request to '${schemaId}' schema. Errors: '${ajvErrors}' found in event: '${JSON.stringify(event)}'`
+    `${constants.METHOD_CATEGORIES} ${constants.INVALID_REQUEST} could not validate request to '${schemaId}' schema. Errors: '${ajvErrors}' found in event: '${JSON.stringify(event)}'` // eslint-disable-line comma-dangle
   ),
   dynamoError: (err) => {
     console.log(err)
@@ -94,7 +94,7 @@ const api = {
   // TODO deal with pagination
   products: (event, context, callback) => {
     if (!ajv.validate(productsRequestSchemaId, event)) { // bad request
-      callback(null, impl.clientError(productsRequestSchemaId, ajv.errorsText()), event)
+      callback(null, impl.clientError(productsRequestSchemaId, ajv.errorsText(), event))
     } else {
       const params = {
         TableName: constants.TABLE_PRODUCT_CATALOG_NAME,

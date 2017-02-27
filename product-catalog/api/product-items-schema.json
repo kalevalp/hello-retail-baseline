@@ -13,7 +13,8 @@
       "id":           { "type": "string", "pattern": "^[\\d]+$" },
       "brand":        { "type": "string" },
       "name":         { "type": "string" },
-      "description":  { "type": "string" }
+      "description":  { "type": "string" },
+      "image":        { "type": "string" }
     },
     "required": [
       "id",

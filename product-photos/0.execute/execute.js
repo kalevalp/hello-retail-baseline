@@ -3,43 +3,46 @@
 const AJV = require('ajv')
 const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
+/**
+ * AJV
+ */
 // TODO Get these from a better place later
 const eventSchema = require('./retail-stream-schema-ingress.json')
 const productCreateSchema = require('./product-create-schema.json')
-const productImageSchema = require('./product-image-schema.json')
 
 // TODO generalize this?  it is used by but not specific to this module
 const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`
 
 const eventSchemaId = makeSchemaId(eventSchema)
 const productCreateSchemaId = makeSchemaId(productCreateSchema)
-const productImageSchemaId = makeSchemaId(productImageSchema)
 
 const ajv = new AJV()
 ajv.addSchema(eventSchema, eventSchemaId)
 ajv.addSchema(productCreateSchema, productCreateSchemaId)
-ajv.addSchema(productImageSchema, productImageSchemaId)
 
-const dynamo = new aws.DynamoDB.DocumentClient()
+/**
+ * AWS
+ */
+const stepfunctions = new aws.StepFunctions()
 
 const constants = {
   // self
-  MODULE: 'product-catalog/catalog.js',
+  MODULE: 'product-photos/0.execute/execute.js',
   // methods
-  METHOD_PUT_PRODUCT: 'putProduct',
-  METHOD_PUT_IMAGE: 'putImage',
+  METHOD_START_EXECUTION: 'startExecution',
   METHOD_PROCESS_EVENT: 'processEvent',
   METHOD_PROCESS_KINESIS_EVENT: 'processKinesisEvent',
   // errors
   BAD_MSG: 'bad msg:',
   // resources
-  TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
-  TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
+  STEP_FUNCTION: process.env.STEP_FUNCTION,
 }
 
 const impl = {
   /**
-   * Put the given product in to the dynamo catalog.  Example event:
+   * Start and execution corresponding to the given event.  Swallow errors that result from attempting to
+   * create the execution beyond the first time.
+   * @param event The event to validate and process with the appropriate logic.  Example event:
    * {
    *   "schema": "com.nordstrom/retail-stream/1-0-0",
    *   "origin": "hello-retail/product-producer-automation",
@@ -47,161 +50,36 @@ const impl = {
    *   "data": {
    *     "schema": "com.nordstrom/product/create/1-0-0",
    *     "id": "4579874",
-   *     "merchant": "amzn1.application.0bfd7ce688a440a1ad215923053e1ec6",
    *     "brand": "POLO RALPH LAUREN",
    *     "name": "Polo Ralph Lauren 3-Pack Socks",
    *     "description": "PAGE:/s/polo-ralph-lauren-3-pack-socks/4579874",
    *     "category": "Socks for Men"
    *   }
    * }
-   * @param event The product to put in the catalog.
-   * @param complete The callback to inform of completion, with optional error parameter.
+   * @param complete The callback with which to report any errors
    */
-  putProduct: (event, complete) => {
-    const updated = Date.now()
-    let priorErr
-    const updateCallback = (err) => {
-      if (priorErr === undefined) { // first update result
-        if (err) {
-          priorErr = err
+  startExecution: (event, complete) => {
+    // TODO record uniquely in dynamo (so we don't duplicate the photo acquisition action)
+    const params = {
+      stateMachineArn: constants.STEP_FUNCTION,
+      name: `${event.origin}/${event.data.id}/${event.timeOrigin}`,
+      input: JSON.stringify(event),
+    }
+    stepfunctions.startExecution(params, (err) => {
+      if (err) {
+        if (err.code && err.code === 'ExecutionAlreadyExists') {
+          complete()
         } else {
-          priorErr = false
+          complete(err)
         }
-      } else if (priorErr && err) { // second update result, if an error was previously received and we have a new one
-        complete(`${constants.METHOD_PUT_PRODUCT} - errors updating DynamoDb: ${[priorErr, err]}`)
-      } else if (priorErr || err) {
-        complete(`${constants.METHOD_PUT_PRODUCT} - error updating DynamoDb: ${priorErr || err}`)
-      } else { // second update result if error was not previously seen
+      } else {
         complete()
       }
-    }
-    const dbParamsCategory = {
-      TableName: constants.TABLE_PRODUCT_CATEGORY_NAME,
-      Key: {
-        category: event.data.category,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),',
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsCategory, updateCallback)
-    const dbParamsProduct = {
-      TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
-      Key: {
-        id: event.data.id,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),',
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#b=:b,',
-        '#m=:m,',
-        '#n=:n,',
-        '#d=:d,',
-        '#cat=:cat',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#m': 'merchant',
-        '#b': 'brand',
-        '#n': 'name',
-        '#d': 'description',
-        '#cat': 'category',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-        ':m': event.data.merchant,
-        ':b': event.data.brand,
-        ':n': event.data.name,
-        ':d': event.data.description,
-        ':cat': event.data.category,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsProduct, updateCallback)
+    })
   },
   /**
-   * Put the given image in to the dynamo catalog.  Example event:
-   * {
-   *   "schema": "com.nordstrom/retail-stream/1-0-0",
-   *   "origin": "hello-retail/product-producer-automation",
-   *   "timeOrigin": "2017-01-12T18:29:25.171Z",
-   *   "data": {
-   *     "schema": "com.nordstrom/product/image/1-0-0",
-   *     "id": "4579874",
-   *     "image": "erik.hello-retail.biz/i/p/4579874"
-   *   }
-   * }
-   * @param event The product to put in the catalog.
-   * @param complete The callback to inform of completion, with optional error parameter.
-   */
-  putImage: (event, complete) => {
-    const updated = Date.now()
-    const dbParamsProduct = {
-      TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
-      Key: {
-        id: event.data.id,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#i=:i',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#i': 'image',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-        ':i': event.data.image,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsProduct, complete)
-  },
-  /**
-   * Process the given event, reporting failure or success to the given callback
-   * @param event The event to validate and process with the appropriate logic
+   * Process the given event, reporting failure or success to the given callback.
+   * @param event The event to validate and process with the appropriate logic.
    * @param complete The callback with which to report any errors
    */
   processEvent: (event, complete) => {
@@ -213,15 +91,9 @@ const impl = {
       complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${eventSchemaId}' schema.  Errors: ${ajv.errorsText()}`)
     } else if (event.data.schema === productCreateSchemaId) {
       if (!ajv.validate(productCreateSchemaId, event.data)) {
-        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchemaId}' schema. Errors: ${ajv.errorsText()}`)
+        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productCreateSchema}' schema. Errors: ${ajv.errorsText()}`)
       } else {
-        impl.putProduct(event, complete)
-      }
-    } else if (event.data.schema === productImageSchemaId) {
-      if (!ajv.validate(productImageSchemaId, event.data)) {
-        complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} could not validate event to '${productImageSchemaId}' schema. Errors: ${ajv.errorsText()}`)
-      } else {
-        impl.putImage(event, complete)
+        impl.startExecution(event, complete)
       }
     } else {
       // TODO remove console.log and pass the above message once we are only receiving subscribed events
