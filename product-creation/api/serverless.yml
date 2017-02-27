@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-product-create-api
+service: ${self:custom.helloRetail.name}-product-creation-api
 
 # TODO: Consider enforcing schema versions
 
@@ -13,12 +13,11 @@ custom:
   serviceName: ${self:service}
   userInfoApiVersion: 1
   userInfoApi: ${self:}
-  productCreateApiVersion: 1
-  productCreateApi: ${self:}
+  productCreationApi: ${self:}
   # Exports
-  exportProductCreateClientArn: ${self:custom.productCreateApi.service}:${self:custom.stage}:ProductCreateClientArn
-  exportProductCreateReaderWriterArn: ${self:custom.productCreateApi.service}:${self:custom.stage}:ProductCreateReaderWriterArn
-  exportProductCreateRestAPI: ${self:custom.productCreateApi.service}:${self:custom.stage}:ProductCreateRestAPI
+  exportProductCreationClientArn: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationClientArn
+  exportProductCreationWriterArn: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationReaderWriterArn
+  exportProductCreationRestAPI: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationRestAPI
 
 provider:
   name: aws
@@ -28,49 +27,19 @@ provider:
   region: ${self:custom.private.region}
 
 functions:
-  loginUser:
+  productCreate:
     role:
-      Fn::GetAtt: [ ProductCreateReaderWriter, Arn ]
-    handler: productCreateApi.loginUser
+      Fn::GetAtt: [ ProductCreationWriter, Arn ]
+    handler: productCreationApi.productCreate
     environment:
       STAGE: ${self:custom.stage}
-#      TABLE_USER_INFO_NAME:
-#        Ref: ProductCreateTable
       STREAM_WRITER_ROLE:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
     events:
       - http:
-          path: login-user
-          method: post
-          cors:
-            origins:
-              - '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-
-  createProduct:
-    role:
-      Fn::GetAtt: [ ProductCreateReaderWriter, Arn ]
-    handler: productCreateApi.updatePhone
-    environment:
-      STAGE: ${self:custom.stage}
-#      TABLE_USER_INFO_NAME:
-#        Ref: ProductCreateTable
-      STREAM_WRITER_ROLE:
-        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
-      STREAM_NAME:
-        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
-    events:
-      - http:
-          path: update-phone
+          path: product-create
           method: post
           cors:
             origins:
@@ -87,18 +56,18 @@ functions:
 resources:
   Resources:
     # Log Group
-    CreateProductLogGroup:
+    ProductCreationLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-createProduct
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-productCreate
         RetentionInDays: 7
 
     # User Information Roles
-    ProductCreateClient: # role for consumers of the Product Create API
+    ProductCreationClient: # role for consumers of the Product Create API
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCreateClient
+        RoleName: ${self:custom.stage}ProductCreationClient
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -126,11 +95,11 @@ resources:
                         - '/${self:custom.stage}/*/*'
 
     # TODO: When implementing builder, create new role and transfer Kinesis read and Dynamo write rights to that service's role
-    ProductCreateReaderWriter: # role for the Product Create Lambdas
+    ProductCreationWriter: # role for the Product Create Lambdas
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCreateReaderWriter
+        RoleName: ${self:custom.stage}ProductCreationWriter
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -158,58 +127,17 @@ resources:
                   Resource:
                     - Fn::Join:
                       - ':'
-                      - - Fn::GetAtt: [ LoginUserLogGroup, Arn ]
+                      - - Fn::GetAtt: [ ProductCreationLogGroup, Arn ]
                         - '*'
-                    - Fn::Join:
-                      - ':'
-                      - - Fn::GetAtt: [ UpdatePhoneLogGroup, Arn ]
-                        - '*'
-                    - Fn::Join:
-                      - ':'
-                      - - Fn::GetAtt: [ AddRoleLogGroup, Arn ]
-                        - '*'
-          - PolicyName: ReadFromKinesis
+          - PolicyName: WriteToKinesis
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: 'Allow'
                   Action:
-                    - 'kinesis:GetRecords'
-                    - 'kinesis:GetShardIterator'
-                    - 'kinesis:DescribeStream'
-                    - 'kinesis:ListStreams'
                     - 'kinesis:PutRecord'
                   Resource:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-          - PolicyName: WriteToProductCreate
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                -  Effect: 'Allow'
-                   Action:
-                     - 'dynamodb:UpdateItem'
-                     - 'dynamodb:PutItem'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCreateTable
-
-
-    # Product Create Tables
-    ProductCreateTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: '${self:custom.stage}-ProductCreate-${self:custom.productCreateApiVersion}'
 
 
     # NOTE: This named gleaned from SLS generated CF template
@@ -218,21 +146,21 @@ resources:
 #        AuthorizationType: AWS_IAM
 
   Outputs:
-    ProductCreateClientArn:
+    ProductCreationClientArn:
       Description: Arn for role used by clients of the Product Create API
       Value:
-        Fn::GetAtt: [ ProductCreateClient, Arn ]
+        Fn::GetAtt: [ ProductCreationClient, Arn ]
       Export:
-        Name: ${self:custom.productCreateApi.custom.exportProductCreateClientArn}
-    ProductCreateReaderWriterArn:
+        Name: ${self:custom.productCreationApi.custom.exportProductCreationClientArn}
+    ProductCreationWriterArn:
       Description: A role allowing for reading from kinesis and writing to dynamo
       Value:
-        Fn::GetAtt: [ ProductCreateReaderWriter, Arn ]
+        Fn::GetAtt: [ ProductCreationWriter, Arn ]
       Export:
-        Name: ${self:custom.productCreateApi.custom.exportProductCreateReaderWriterArn}
-    ProductCreateRestAPI:
+        Name: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
+    ProductCreationRestAPI:
       Description: API used to submit product creation events
       Value:
         Ref: ApiGatewayRestApi
       Export:
-        Name: ${self:custom.productCreateApi.custom.exportProductCreateRestAPI}
+        Name: ${self:custom.productCreationApi.custom.exportProductCreationRestAPI}

@@ -4,7 +4,7 @@ const AJV = require('ajv')
 const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 // TODO Get these from a better place later
-const eventSchema = require('../retail-stream/schemas/retail-stream-schema-ingress.json')
+const eventSchema = require('./retail-stream-schema-ingress.json')
 const productCreateSchema = require('./product-create-schema.json')
 
 // TODO generalize this?  it is used by but not specific to this module

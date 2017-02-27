@@ -1,5 +1,5 @@
 {
-  "name": "hello-retail-product-catalog",
+  "name": "hello-retail-product-creation",
   "version": "0.0.1",
   "description": "A stream processor that accumulates a catalog of our latest best knowledge regarding each product",
   "main": "index.js",

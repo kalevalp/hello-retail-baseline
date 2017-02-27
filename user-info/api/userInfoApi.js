@@ -28,6 +28,7 @@ const constants = {
   INTEGRATION_ERROR: 'Kinesis Integration Error',
 }
 
+// TODO: This implementation shares duplicate code with others. DRY them up.
 const impl = {
   response: (statusCode, body) => ({
     statusCode,
@@ -64,7 +65,7 @@ const impl = {
           schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
           origin: 'hello-retail/user-info-api',  // TODO: fix hard-coded app name
           timeOrigin: new Date().toISOString(),
-          data: event.body,
+          data: eventData,
         }),
         PartitionKey: eventData.id,
         StreamName: process.env.STREAM_NAME,

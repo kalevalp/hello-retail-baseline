@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import ValidationErrors from '../validation-errors'
+import config from '../../config'
 
 class PhotographerRegisterPage extends Component {
   // TODO: DRY up all these duplicate propType declarations everywhere
@@ -40,7 +41,7 @@ class PhotographerRegisterPage extends Component {
     })
 
     // Call user-info api with update-phone event
-    this.props.awsLogin.makeApiRequest('POST', '/update-phone/', {
+    this.props.awsLogin.makeApiRequest(config.UserInfoAPI, 'POST', '/update-phone/', {
       schema: 'com.nordstrom/user-info/update-phone/1-0-0',
       id: this.props.awsLogin.state.profile.id,
       phone: phoneNumber,

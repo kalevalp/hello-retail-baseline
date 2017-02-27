@@ -32,8 +32,6 @@ functions:
     handler: userInfoApi.loginUser
     environment:
       STAGE: ${self:custom.stage}
-#      TABLE_USER_INFO_NAME:
-#        Ref: UserInfoTable
       STREAM_WRITER_ROLE:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
@@ -60,8 +58,6 @@ functions:
     handler: userInfoApi.updatePhone
     environment:
       STAGE: ${self:custom.stage}
-#      TABLE_USER_INFO_NAME:
-#        Ref: UserInfoTable
       STREAM_WRITER_ROLE:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
@@ -88,8 +84,6 @@ functions:
     handler: userInfoApi.addRole
     environment:
       STAGE: ${self:custom.stage}
-#      TABLE_USER_INFO_NAME:
-#        Ref: UserInfoTable
       STREAM_WRITER_ROLE:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
@@ -248,8 +242,15 @@ resources:
         TableName: '${self:custom.stage}-UserInfo-${self:custom.userInfoApiVersion}'
 
 
-    # NOTE: This named gleaned from SLS generated CF template
-#    ApiGatewayMethodUserDashinfoPost:
+#    # NOTE: These names gleaned from SLS generated CF template
+#    # MAY BE INCOMPLETE, resulting in inability to auth :(
+#    ApiGatewayMethodLoginDashuserOptions:
+#      Properties:
+#        AuthorizationType: AWS_IAM
+#    ApiGatewayMethodUpdateDashphoneOptions:
+#      Properties:
+#        AuthorizationType: AWS_IAM
+#    ApiGatewayMethodAddDashroleOptions:
 #      Properties:
 #        AuthorizationType: AWS_IAM
 

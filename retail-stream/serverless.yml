@@ -12,6 +12,7 @@ custom:
   retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']  userInfoApiVersion: 1
   userInfoApiVersion: 1
   userInfoApi: ${file(../user-info/api/serverless.yml)}
+  productCreationApi: ${file(../product-creation/api/serverless.yml)}
   # Exports
   exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
   exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
@@ -47,10 +48,8 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  # TODO: Consume exported input from other stack
-                  - 'arn:aws:iam::515126931066:role/${self:custom.stage}-${self:custom.helloRetail.name}-product-creation-newProductSimulator'
-                  # TODO: Consume exported input from other stack
                   - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
+                  - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -94,6 +93,7 @@ resources:
                      - 'kinesis:ListStreams'
                    Resource:
                      Fn::GetAtt: [ RetailStream, Arn ]
+
   Outputs:
     RetailStreamName:
       Description: The Name of the Retail Stream

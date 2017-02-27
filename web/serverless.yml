@@ -62,6 +62,7 @@ custom:
   retailStream: ${file(../retail-stream/serverless.yml)}
   productCatalogVersion: 1
   productCatalog: ${file(../product-catalog/builder/serverless.yml)}
+  productCreationApi: ${file(../product-creation/api/serverless.yml)}
   userInfoVersion: 1
   userInfo: ${file(../user-info/serverless.yml)}
   userInfoApiVersion: 1
@@ -95,9 +96,9 @@ custom:
       ProductCatalogTableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}
       ProductCategoryTableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}
       UserInfoAPI:
-        # TODO: Why did this not work?
         Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
-        #Fn::ImportValue: ${self:custom.helloRetail.name}-user-info:${self:custom.stage}:UserInfoRestAPI
+      ProductCreateAPI:
+        Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationRestAPI}
     webpackPath: ./webpack.config.js
 
   webApp: ${self:} # externally, use `${file(~/web/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']

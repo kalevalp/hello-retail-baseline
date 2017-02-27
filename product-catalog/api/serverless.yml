@@ -8,14 +8,14 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
-  productCatalogBuilderVersion: 1
-  productCatalogBuilder: ${file(../builder/serverless.yml)}
+  productCatalogVersion: 1
+  productCatalog: ${file(../builder/serverless.yml)}
   # Product Catalog Versions & Exports
   # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogApiVersion, custom.productCatalogApi) in its serverless.yml:
   productCatalogApiVersion: 1 # The version of this service to depend upon
   productCatalogApi: ${self:} # externally, use `${file(~/product-catalog/api/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
   # Exports
-  exportProductCatalogApiClient: ${self:custom.productCatalogApi.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
+  exportProductCatalogApiClient: ${self:custom.productCatalogApi.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogVersion}
 
 provider:
   name: aws
@@ -32,7 +32,7 @@ functions:
     environment:
       STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATEGORY_NAME:
-        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
+        Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCategoryTableName}
     events:
       - http:
           path: categories
@@ -45,7 +45,7 @@ functions:
     environment:
       STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATALOG_NAME:
-        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
+        Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableName}
     events:
       - http:
           path: products
@@ -111,7 +111,7 @@ resources:
                    Action:
                      - 'dynamodb:Scan'
                    Resource:
-                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
+                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCategoryTableArn}
     ProductCatalogApiProductsReader: # role for Products Lambda
       Type: AWS::IAM::Role
       Properties:
@@ -158,12 +158,12 @@ resources:
 #                   Action:
 #                     - 'dynamodb:GetItem'
 #                   Resource:
-#                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
+#                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableArn}
                 -  Effect: 'Allow'
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
+                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableCategoryIndexArn}
     ApiClient: # role for consumers of the Product Catalog API
       Type: AWS::IAM::Role
       Properties:

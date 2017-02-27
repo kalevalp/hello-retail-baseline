@@ -169,19 +169,19 @@ class AmazonLogin extends Component {
   }
 
   sendUserLogin() {
-    this.makeApiRequest('POST', '/login-user/', {
+    this.makeApiRequest(config.UserInfoAPI, 'POST', '/login-user/', {
       schema: 'com.nordstrom/user-info/login/1-0-0',
       id: this.state.profile.id,
       name: this.state.profile.name,
     })
   }
 
-  makeApiRequest(verb, path, data) {
+  makeApiRequest(api, verb, path, data) {
     return new Promise((resolve, reject) => {
       // https://{restapi_id}.execute-api.{region}.amazonaws.com/{stage_name}/
       const apiPath = `/${config.Stage}${path}`
       const body = JSON.stringify(data)
-      const hostname = `${config.UserInfoAPI}.execute-api.${config.AWSRegion}.amazonaws.com`
+      const hostname = `${api}.execute-api.${config.AWSRegion}.amazonaws.com`
       const endpoint = new AWS.Endpoint(hostname)
       const request = new AWS.HttpRequest(endpoint)
 

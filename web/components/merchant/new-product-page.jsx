@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import ValidationErrors from '../validation-errors'
+import config from '../../config'
 
 class NewProductPage extends Component {
   // TODO: DRY up all these duplicate propType declarations everywhere
@@ -36,16 +37,14 @@ class NewProductPage extends Component {
       description: '',
     }
 
-    this.state = {
-      product: this.emptyProduct,
-      errors: [],
-    }
+    this.state = this.emptyProduct
+    this.state.errors = []
   }
 
   validateProduct() {
-    const product = this.state.product
+    const product = this.state
     this.setState({
-      // Low bar: need to have at least one alphanumeric in each field
+      // Just need to have at least one alphanumeric in each field
       isProductValid: (
         product.category && product.category.match(/^[\w\d]+/)
         && product.name && product.name.match(/^[\w\d]+/)
@@ -63,16 +62,17 @@ class NewProductPage extends Component {
   }
 
   createProduct() {
-    const product = this.state.product
+    const product = this.state
 
     // Disable "Add Product" button while request is in flight
     this.setState({
       isProductValid: false,
     })
 
-    this.props.awsLogin.makeApiRequest('POST', '/update-phone/', {
+    this.props.awsLogin.makeApiRequest(config.ProductCreateAPI, 'POST', '/product-create/', {
       schema: 'com.nordstrom/product/create/1-0-0',
       id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
+      merchant: this.props.awsLogin.state.profile.id,
       category: product.category,
       name: product.name,
       brand: product.brand,
@@ -90,9 +90,7 @@ class NewProductPage extends Component {
 
   handleProductChange(property, event) {
     this.setState({
-      product: {
-        [property]: event.target.value,
-      },
+      [property]: event.target.value,
     })
     this.validateProduct()
   }
@@ -104,25 +102,25 @@ class NewProductPage extends Component {
         <div>
           <label>
             Category:
-            <input value={this.state.product.category} onChange={this.categoryChange} />
+            <input value={this.state.category} onChange={this.categoryChange} />
           </label>
         </div>
         <div>
           <label>
             Name:
-            <input value={this.state.product.name} onChange={this.nameChange} />
+            <input value={this.state.name} onChange={this.nameChange} />
           </label>
         </div>
         <div>
           <label>
             Brand:
-            <input value={this.state.product.brand} onChange={this.brandChange} />
+            <input value={this.state.brand} onChange={this.brandChange} />
           </label>
         </div>
         <div>
           <label>
             Description:
-            <input value={this.state.product.description} onChange={this.descriptionChange} />
+            <input value={this.state.description} onChange={this.descriptionChange} />
           </label>
         </div>
         <ValidationErrors errors={this.state.errors} />

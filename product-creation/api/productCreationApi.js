@@ -55,7 +55,7 @@ const impl = {
           schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
           origin: 'hello-retail/product-create-api',  // TODO: fix hard-coded app name
           timeOrigin: new Date().toISOString(),
-          data: event.body,
+          data: eventData,
         }),
         PartitionKey: eventData.id,
         StreamName: process.env.STREAM_NAME,
@@ -96,7 +96,5 @@ const api = {
 }
 
 module.exports = {
-  loginUser: api.loginUser,
-  updatePhone: api.updatePhone,
-  addRole: api.addRole,
+  productCreate: api.productCreate,
 }
