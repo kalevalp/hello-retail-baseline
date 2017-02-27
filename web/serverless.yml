@@ -1,6 +1,6 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-web-app
+service: ${self:custom.helloRetail.name}-website
 
 plugins:
   - web-app-build-plugin
@@ -58,11 +58,14 @@ custom:
 
   helloRetail: ${file(../helloRetail.yml)}
 
-  # TODO: Import necessary dependencies
   retailStreamVersion: 1
   retailStream: ${file(../retail-stream/serverless.yml)}
   productCatalogVersion: 1
   productCatalog: ${file(../product-catalog/builder/serverless.yml)}
+  userInfoVersion: 1
+  userInfo: ${file(../user-info/serverless.yml)}
+  userInfoApiVersion: 1
+  userInfoApi: ${file(../user-info/api/serverless.yml)}
 
   s3Bucket:
     Fn::Join: # e.g. s3://stage.hello-retail.biz/
@@ -91,6 +94,10 @@ custom:
       WebAppRole: arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity
       ProductCatalogTableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}
       ProductCategoryTableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}
+      UserInfoAPI:
+        # TODO: Why did this not work?
+        Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
+        #Fn::ImportValue: ${self:custom.helloRetail.name}-user-info:${self:custom.stage}:UserInfoRestAPI
     webpackPath: ./webpack.config.js
 
   webApp: ${self:} # externally, use `${file(~/web/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
@@ -163,7 +170,7 @@ resources:
         BucketName: ${self:custom.dnsHostName}
         WebsiteConfiguration:
           IndexDocument: index.html
-          ErrorDocument: 404.html
+          ErrorDocument: error.html
 
     HelloRetailWebBucketPolicy:
       Type: AWS::S3::BucketPolicy
@@ -199,6 +206,10 @@ resources:
               S3OriginConfig:
                 OriginAccessIdentity: ''
           Enabled: true
+          CustomErrorResponses:
+            - ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: /error.html
           DefaultRootObject: index.html
           Aliases:
           - ${self:custom.dnsHostName}

@@ -1,7 +1,10 @@
 'use strict';
 
 const fs = require('fs')
+const yaml = require('js-yaml')
+const path = require('path')
 const spawnSync = require('child_process').spawnSync
+const secrets = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', '..', 'private.yml'), 'utf8'))
 
 class ServerlessPlugin {
   constructor(serverless, options) {
@@ -96,16 +99,12 @@ class ServerlessPlugin {
                      this.serverless.service.custom.domainName :
                      `${stage}.${this.serverless.service.custom.domainName}`
 
-    console.log(s3Bucket)
-
     const args = [
       's3',
       'sync',
       `${__dirname}/../app/`,
       `s3://${s3Bucket}/`,
     ]
-
-    console.log(args)
 
     const process = spawnSync('aws', args)
     const stdout = process.stdout.toString()
@@ -122,30 +121,82 @@ class ServerlessPlugin {
     this.serverless.cli.log(`Upload to S3 Done.`)
   }
 
+  getImportValue(name, outputName) {
+    return new Promise((resolve, reject) => {
+      const provider = this.serverless.getProvider('aws')
+      const importParts = outputName.split(':')
+
+      if(importParts.length != 3) {
+        reject(`Expected Fn::Import to match pattern: 'service:stage:outputName', but got '${outputName}' instead.`)
+      }
+
+      const stack = `${importParts[0]}-${importParts[1]}`
+      const stage = importParts[1]
+      const outputKey = importParts[2]
+
+      provider.request('CloudFormation', 'describeStacks', { StackName: stack }, stage, secrets.region)
+        .then((result) => {
+          let outputValue = null
+
+          if(result.Stacks.length > 0) {
+            // TODO: How to handle the possibility of multiple results? Filter by status?
+            result.Stacks[0].Outputs.forEach((output) => {
+              if(output.OutputKey === outputKey) {
+                outputValue = output.OutputValue
+              }
+            })
+          }
+
+          resolve({
+            name,
+            value: outputValue,
+          })
+        })
+    })
+  }
+
   configureWebApp() {
     const config = this.getConfig()
     const webConfig = ['module.exports = {']
+    let pendingImports = []
 
     if(!this.validateConfig(config)) {
-      console.log(config)
       return
     }
 
     this.serverless.cli.log('Collecting configuration values ...')
     for(const name of Object.keys(config.configValues)) {
       let value = config.configValues[name]
+
       if(typeof value === 'string') {
         webConfig.push(` '${name}': '${value}',`)
+      } else if(typeof value === 'object' && value['Fn::ImportValue']) {
+        pendingImports.push({
+          name,
+          outputName: value['Fn::ImportValue']
+        })
       } else {
         this.serverless.cli.log(`WARNING: Web App config property ${name} was not a string. Ignoring.`)
       }
     }
 
-    webConfig.push('}')
+    let importPromises = []
+    pendingImports.forEach((imported) => {
+      importPromises.push(this.getImportValue(imported.name, imported.outputName))
+    })
 
-    this.serverless.cli.log(`Writing web config file to ${config.configPath} ...`)
-    fs.writeFileSync(config.configPath, webConfig.join('\n'))
-    this.serverless.cli.log('Done.')
+    return Promise.all(importPromises)
+      .then(outputs => {
+        outputs.forEach((output) => {
+          webConfig.push(` '${output.name}': '${output.value}',`)
+        })
+
+        webConfig.push('}')
+
+        this.serverless.cli.log(`Writing web config file to ${config.configPath} ...`)
+        fs.writeFileSync(config.configPath, webConfig.join('\n'))
+        this.serverless.cli.log('Done.')
+      })
   }
 }
 

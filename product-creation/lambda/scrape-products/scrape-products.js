@@ -54,10 +54,24 @@ module.exports = {
   },
 
   /*
+  Test for Lambda invocation:
 
   {
     "body": "{       \"product\": {           \"id\": 1000000,           \"name\": \"Test Product Name\",           \"brand\": \"Test Product Brand\",           \"category\": \"Test Category\",           \"description\": \"Another fine product!\"       } }"
   }
+
+  Test for API Gateway body:
+
+   {
+     "product": {
+     "id": 1000000,
+     "name": "Test Product Name",
+     "brand": "Test Product Brand",
+     "category": "Test Category",
+     "description": "Another fine product!"
+     }
+   }
+
    */
 
   handlerPostEvent: (event, context, callback) => {
@@ -81,15 +95,13 @@ module.exports = {
 
     productEvents.sendCreateEvent(product)
       .then((sequence) => {
-        const message = `Added product id:${product.id}, sequence:${sequence}`
+        const message = `Added product id:${product.id}, shard:${sequence.ShardId}, sequence:${sequence.SequenceNumber}`
 
-        context.succeed({
-           'statusCode ': 200,
-           'headers ': {  },
-           'body ':  message
+        callback(null,  {
+          statusCode: 200,
+          headers: { 'Content-Type': 'text/plain' },
+          body: message
         })
-
-        callback(null,  message)
       })
       .catch((error) => {
         console.log(JSON.stringify(error))

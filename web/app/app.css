@@ -50,3 +50,7 @@ label {
   bottom: 0;
   padding-right: 1em;
 }
+
+.errorMessage {
+  color: red;
+}

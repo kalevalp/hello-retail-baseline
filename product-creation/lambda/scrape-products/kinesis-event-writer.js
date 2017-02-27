@@ -25,21 +25,15 @@ class KinesisEventWriter {
       StreamName: process.env.STREAM_NAME,
     }
 
-    console.log('PUTTING EVENT')
-
     let promise = new Promise(function(resolve, reject) {
-      console.log('PROMISE CALLED')
-
       writer.kinesis.putRecord(newProductCreatedEvent, (err, ack) => {
-        console.log('PUT RECORD RETURNED')
-
         if (ack) {
           console.log(`K-PUT: ${JSON.stringify(ack)}`)
           resolve(ack)
         }
 
         if (err) {
-          console.log(JSON.stringify(err,null,2))
+          console.error(JSON.stringify(err,null,2))
           reject(err)
         }
       })

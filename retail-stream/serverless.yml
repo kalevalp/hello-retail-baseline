@@ -9,7 +9,9 @@ custom:
   # Retail Stream Versions & Exports
   # WARNING: each project that uses these will have to define the following two attributes (custom.retailStreamVersion, custom.retailStream) in its serverless.yml:
   retailStreamVersion: 1 # The version of this service to depend upon
-  retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
+  retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']  userInfoApiVersion: 1
+  userInfoApiVersion: 1
+  userInfoApi: ${file(../user-info/api/serverless.yml)}
   # Exports
   exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
   exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
@@ -45,7 +47,10 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - 'arn:aws:iam::515126931066:role/demo-hello-retail-product-creation-newProductSimulator'
+                  # TODO: Consume exported input from other stack
+                  - 'arn:aws:iam::515126931066:role/${self:custom.stage}-${self:custom.helloRetail.name}-product-creation-newProductSimulator'
+                  # TODO: Consume exported input from other stack
+                  - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -71,7 +76,7 @@ resources:
           Statement:
             - Effect: Allow
               Principal:
-                AWS: # role ARNs that are allowed to write to the Retail stream
+                AWS: # role ARNs that are allowed to read from the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
               Action: sts:AssumeRole
         ManagedPolicyArns:

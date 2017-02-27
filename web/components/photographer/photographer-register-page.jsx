@@ -1,21 +1,97 @@
-import React, { Component } from 'react'
+import React, { Component, PropTypes } from 'react'
+import ValidationErrors from '../validation-errors'
 
 class PhotographerRegisterPage extends Component {
+  // TODO: DRY up all these duplicate propType declarations everywhere
+  static propTypes = {
+    awsLogin: PropTypes.shape({
+      state: PropTypes.shape({
+        profile: PropTypes.shape({
+          id: PropTypes.string,
+        }),
+      }),
+      makeApiRequest: PropTypes.func,
+    }),
+  }
+
+  static defaultProps = {
+    awsLogin: null,
+  }
+
   constructor(props) {
     super(props)
-    this.state = {}
+    this.state = {
+      registered: false,
+      phoneNumber: '',
+      validPhoneNumber: false,
+      errors: [],
+    }
+    this.registerPhotographer = this.registerPhotographer.bind(this)
+    this.phoneNumberChange = this.phoneNumberChange.bind(this)
+    this.render = this.render.bind(this)
+  }
+
+  registerPhotographer() {
+    const phoneNumber = this.state.phoneNumber
+
+    // Disable the submit button while request is in flight
+    this.setState({
+      validPhoneNumber: false,
+    })
+
+    // Call user-info api with update-phone event
+    this.props.awsLogin.makeApiRequest('POST', '/update-phone/', {
+      schema: 'com.nordstrom/user-info/update-phone/1-0-0',
+      id: this.props.awsLogin.state.profile.id,
+      phone: phoneNumber,
+    })
+    .then(() => {
+      this.setState({
+        registered: true,
+      })
+    })
+    .catch((error) => {
+      // Show error message and re-enable submit button so user can try again.
+      this.setState({
+        validPhoneNumber: true,
+        errors: [error],
+      })
+    })
+  }
+
+  phoneNumberChange(event) {
+    // Regardless of formatting valid numbers are 10 digits
+    const phoneNumber = event.target.value.replace(/\D/g, '').substr(0, 10)
+    const isPhoneNumberValid = (phoneNumber.match(/^\d{10}$/) !== null)
+
+    this.setState({
+      phoneNumber,
+      isPhoneNumberValid,
+    })
   }
 
   render() {
+    if (this.state.registered) {
+      return (
+        <div>
+          <h4>Thanks for registering!</h4>
+          <p>You will get text messages to inform you of products that need their pictures taken.</p>
+        </div>
+      )
+    }
+
     return (
       <div>
         <h4><em>Photographer Registration</em></h4>
         <div>
-          <label htmlFor="phone">Phone Number:</label>
+          <label>
+            Phone Number:
+            <input value={this.state.phoneNumber} onChange={this.phoneNumberChange} />
+          </label>
           <br />
-          <input id="phone" />
+          <ValidationErrors errors={this.state.errors} />
+          <button disabled={!this.state.isPhoneNumberValid} onClick={this.registerPhotographer}>Register</button>
         </div>
-        <button>Register</button>
       </div>
     )
   }

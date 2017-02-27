@@ -4,7 +4,7 @@ const AJV = require('ajv')
 const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 // TODO Get these from a better place later
-const eventSchema = require('./retail-stream-schema-ingress.json')
+const eventSchema = require('../retail-stream/schemas/retail-stream-schema-ingress.json')
 const productCreateSchema = require('./product-create-schema.json')
 
 // TODO generalize this?  it is used by but not specific to this module
@@ -43,6 +43,7 @@ const impl = {
    *   "data": {
    *     "schema": "com.nordstrom/product/create/1-0-0",
    *     "id": "4579874",
+   *     "merchant": "amzn1.application.0bfd7ce688a440a1ad215923053e1ec6",
    *     "brand": "POLO RALPH LAUREN",
    *     "name": "Polo Ralph Lauren 3-Pack Socks",
    *     "description": "PAGE:/s/polo-ralph-lauren-3-pack-socks/4579874",
@@ -111,6 +112,7 @@ const impl = {
         '#u=:u,',
         '#ub=:ub,',
         '#b=:b,',
+        '#m=:m,',
         '#n=:n,',
         '#d=:d,',
         '#cat=:cat',
@@ -120,6 +122,7 @@ const impl = {
         '#cb': 'createdBy',
         '#u': 'updated',
         '#ub': 'updatedBy',
+        '#m': 'merchant',
         '#b': 'brand',
         '#n': 'name',
         '#d': 'description',
@@ -130,6 +133,7 @@ const impl = {
         ':cb': event.origin,
         ':u': updated,
         ':ub': event.origin,
+        ':m': event.data.merchant,
         ':b': event.data.brand,
         ':n': event.data.name,
         ':d': event.data.description,

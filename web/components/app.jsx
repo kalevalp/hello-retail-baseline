@@ -23,7 +23,7 @@ class App extends Component {
     let children = null
 
     if (!this.state.loggedIn) {
-      children = (<AmazonLogin awsLogin={this.awsLoginHandler} />)
+      children = (<AmazonLogin awsLoginComplete={this.awsLoginHandler} />)
     } else {
       // Maps properties to child components dynamically, allowing those properties to be bound once available.
       children = React.Children.map(this.props.children, child => React.cloneElement(child, { // eslint-disable-line react/prop-types
@@ -39,7 +39,7 @@ class App extends Component {
         <div className="content">
           {children}
         </div>
-        <h6 className="stageLabel">{config.Stage}</h6>
+        {config.Stage !== 'prod' ? (<h6 className="stageLabel">{config.Stage}</h6>) : null }
       </div>
     )
   }

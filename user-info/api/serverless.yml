@@ -1,0 +1,274 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.helloRetail.name}-user-info-api
+
+# TODO: Consider enforcing schema versions
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStreamVersion: 1
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+  serviceName: ${self:service}
+  userInfoApiVersion: 1
+  userInfoApi: ${self:}
+  # Exports
+  exportUserInfoClientArn: ${self:custom.userInfoApi.service}:${self:custom.stage}:UserInfoClientArn
+  exportUserInfoReaderWriterArn: ${self:custom.userInfoApi.service}:${self:custom.stage}:UserInfoReaderWriterArn
+  exportUserInfoRestAPI: ${self:custom.userInfoApi.service}:${self:custom.stage}:UserInfoRestAPI
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  loginUser:
+    role:
+      Fn::GetAtt: [ UserInfoReaderWriter, Arn ]
+    handler: userInfoApi.loginUser
+    environment:
+      STAGE: ${self:custom.stage}
+#      TABLE_USER_INFO_NAME:
+#        Ref: UserInfoTable
+      STREAM_WRITER_ROLE:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      STREAM_NAME:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
+    events:
+      - http:
+          path: login-user
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  updatePhone:
+    role:
+      Fn::GetAtt: [ UserInfoReaderWriter, Arn ]
+    handler: userInfoApi.updatePhone
+    environment:
+      STAGE: ${self:custom.stage}
+#      TABLE_USER_INFO_NAME:
+#        Ref: UserInfoTable
+      STREAM_WRITER_ROLE:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      STREAM_NAME:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
+    events:
+      - http:
+          path: update-phone
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+  addRole:
+    role:
+      Fn::GetAtt: [ UserInfoReaderWriter, Arn ]
+    handler: userInfoApi.addRole
+    environment:
+      STAGE: ${self:custom.stage}
+#      TABLE_USER_INFO_NAME:
+#        Ref: UserInfoTable
+      STREAM_WRITER_ROLE:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      STREAM_NAME:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
+    events:
+      - http:
+          path: add-role
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+
+resources:
+  Resources:
+    # Log Group
+    LoginUserLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-loginUser
+        RetentionInDays: 7
+    UpdatePhoneLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-updatePhone
+        RetentionInDays: 7
+    AddRoleLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-addRole
+        RetentionInDays: 7
+
+    # User Information Roles
+    UserInfoClient: # role for consumers of the User Information API
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}UserInfoClient
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to call the User Info API
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: ReadFromApi
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'execute-api:Invoke'
+                  Resource:
+                    Fn::Join:
+                      - ''
+                      - - 'arn:aws:execute-api:${self:provider.region}:${self:custom.private.accountId}:'
+                        - Ref: ApiGatewayRestApi
+                        - '/${self:custom.stage}/*/*'
+
+    # TODO: When implementing builder, create new role and transfer Kinesis read and Dynamo write rights to that service's role
+    UserInfoReaderWriter: # role for the User Info Lambdas
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}UserInfoReaderWriter
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS: # role ARNs that are allowed to call the User Info API
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}RetailStreamWriter'
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: 'lambda.amazonaws.com'
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'logs:CreateLogStream'
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    - Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ LoginUserLogGroup, Arn ]
+                        - '*'
+                    - Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ UpdatePhoneLogGroup, Arn ]
+                        - '*'
+                    - Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ AddRoleLogGroup, Arn ]
+                        - '*'
+          - PolicyName: ReadFromKinesis
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'kinesis:GetRecords'
+                    - 'kinesis:GetShardIterator'
+                    - 'kinesis:DescribeStream'
+                    - 'kinesis:ListStreams'
+                    - 'kinesis:PutRecord'
+                  Resource:
+                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
+          - PolicyName: WriteToUserInfo
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: 'Allow'
+                   Action:
+                     - 'dynamodb:UpdateItem'
+                     - 'dynamodb:PutItem'
+                   Resource:
+                    Fn::Join:
+                      - '/'
+                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
+                        - Ref: UserInfoTable
+
+
+    # User Info Tables
+    UserInfoTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: '${self:custom.stage}-UserInfo-${self:custom.userInfoApiVersion}'
+
+
+    # NOTE: This named gleaned from SLS generated CF template
+#    ApiGatewayMethodUserDashinfoPost:
+#      Properties:
+#        AuthorizationType: AWS_IAM
+
+  Outputs:
+    UserInfoClientArn:
+      Description: Arn for role used by clients of the User Info API
+      Value:
+        Fn::GetAtt: [ UserInfoClient, Arn ]
+      Export:
+        Name: ${self:custom.userInfoApi.custom.exportUserInfoClientArn}
+    UserInfoReaderWriterArn:
+      Description: A role allowing for reading from kinesis and writing to dynamo
+      Value:
+        Fn::GetAtt: [ UserInfoReaderWriter, Arn ]
+      Export:
+        Name: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
+    UserInfoRestAPI:
+      Description: API used to submit user information
+      Value:
+        Ref: ApiGatewayRestApi
+      Export:
+        Name: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}

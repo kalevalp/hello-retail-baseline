@@ -1,12 +1,13 @@
 /* global amazon window */
 import AWS from 'aws-sdk'
-import React, { Component, PropTypes } from 'react'
+import https from 'https'
 import loadjs from 'loadjs'
+import React, { Component, PropTypes } from 'react'
 import config from '../../config'
 
 class AmazonLogin extends Component {
   static propTypes = {
-    awsLogin: PropTypes.func.isRequired,
+    awsLoginComplete: PropTypes.func.isRequired,
   }
 
   constructor(props) {
@@ -34,6 +35,7 @@ class AmazonLogin extends Component {
     this.componentWillMount = this.componentWillMount.bind(this)
     this.loginClicked = this.loginClicked.bind(this)
     this.retrieveProfile = this.retrieveProfile.bind(this)
+    this.sendUserLogin = this.sendUserLogin.bind(this)
 
     this.state = {
       amazonLoginReady: false,
@@ -147,7 +149,10 @@ class AmazonLogin extends Component {
         AWS.config.credentials = that.webApplicationIdentityCredentials
         AWS.config.region = that.loginConfig.awsRegion
 
-        that.props.awsLogin(that) // TODO: change to this instance
+        return that.sendUserLogin()
+      })
+      .then(() => {
+        that.props.awsLoginComplete(that)
       })
   }
 
@@ -160,6 +165,45 @@ class AmazonLogin extends Component {
           resolve(response.profile)
         }
       })
+    })
+  }
+
+  sendUserLogin() {
+    this.makeApiRequest('POST', '/login-user/', {
+      schema: 'com.nordstrom/user-info/login/1-0-0',
+      id: this.state.profile.id,
+      name: this.state.profile.name,
+    })
+  }
+
+  makeApiRequest(verb, path, data) {
+    return new Promise((resolve, reject) => {
+      // https://{restapi_id}.execute-api.{region}.amazonaws.com/{stage_name}/
+      const apiPath = `/${config.Stage}${path}`
+      const body = JSON.stringify(data)
+      const hostname = `${config.UserInfoAPI}.execute-api.${config.AWSRegion}.amazonaws.com`
+      const endpoint = new AWS.Endpoint(hostname)
+      const request = new AWS.HttpRequest(endpoint)
+
+      request.method = verb
+      request.path = apiPath
+      request.region = config.AWSRegion
+      request.host = endpoint.host
+      request.body = body
+      request.headers.Host = endpoint.host
+
+      const signer = new AWS.Signers.V4(request, 'execute-api')
+      signer.addAuthorization(this.webApplicationIdentityCredentials, new Date())
+
+      const postRequest = https.request(request, (response) => {
+        let result = ''
+        response.on('data', d => (result += d))
+        response.on('end', () => resolve(result))
+        response.on('error', error => reject(error))
+      })
+
+      postRequest.write(body)
+      postRequest.end()
     })
   }
 
