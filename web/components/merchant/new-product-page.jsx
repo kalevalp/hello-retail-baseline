@@ -8,7 +8,8 @@ class NewProductPage extends Component {
     awsLogin: PropTypes.shape({
       state: PropTypes.shape({
         profile: PropTypes.shape({
-          id: PropTypes.string,
+          email: PropTypes.string,
+          name: PropTypes.string,
         }),
       }),
       makeApiRequest: PropTypes.func,
@@ -72,7 +73,7 @@ class NewProductPage extends Component {
     this.props.awsLogin.makeApiRequest(config.ProductCreateAPI, 'POST', '/product-create/', {
       schema: 'com.nordstrom/product/create/1-0-0',
       id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
-      merchant: this.props.awsLogin.state.profile.id,
+      origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
       category: product.category,
       name: product.name,
       brand: product.brand,

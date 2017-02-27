@@ -10,7 +10,7 @@
   "properties": {
     "schema":  { "type": "string", "format": "url" },
     "id": { "type": "string" },
-    "merchant": { "type": "string" },
+    "origin": { "type": "string" },
     "brand":  { "type": "string" },
     "name":  { "type": "string" },
     "description": { "type": "string" },
@@ -19,7 +19,7 @@
   "required": [
     "schema",
     "id",
-    "merchant",
+    "origin",
     "brand",
     "name",
     "description",

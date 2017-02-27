@@ -44,6 +44,8 @@ const impl = {
   validateAndWriteKinesisEventFromApiEndpoint(methodName, schema, schemaId, event, callback) {
     console.log(JSON.stringify(event))
     const eventData = JSON.parse(event.body)
+    const origin = eventData.origin
+    delete eventData.origin
 
     if (!ajv.validate(schema, eventData)) { // bad request
       console.log(ajv.errorsText())
@@ -53,7 +55,7 @@ const impl = {
       const newEvent = {
         Data: JSON.stringify({
           schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
-          origin: 'hello-retail/product-create-api',  // TODO: fix hard-coded app name
+          origin: origin,
           timeOrigin: new Date().toISOString(),
           data: eventData,
         }),
