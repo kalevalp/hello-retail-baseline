@@ -6,6 +6,7 @@ export SLS_DEBUG=*
 
 echo
 echo $1 in $2
+OWD = `pwd`
 if cd $2
 then
   if sls deploy -s ${STAGE} -v
@@ -17,8 +18,10 @@ then
         \?) echo "ERROR: Unknown Flag $opt"; exit -1;;
       esac
     done
+    cd $OWD
     exit $?
   else
+    cd $OWD
     exit $?
   fi
 else
