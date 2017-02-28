@@ -186,6 +186,7 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - '${self:custom.private.websiteRole}'
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -195,7 +196,7 @@ resources:
               Statement:
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamodb:Query'
+                     - 'dynamodb:Scan'
                    Resource:
                     Fn::Join:
                       - '/'
