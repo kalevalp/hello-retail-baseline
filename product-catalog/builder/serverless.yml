@@ -274,4 +274,4 @@ resources:
       Value:
         Fn::GetAtt: [ ProductCatalogReader, Arn ]
       Export:
-        Name: ${self:custom.exportProductCatalogReaderArn}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
