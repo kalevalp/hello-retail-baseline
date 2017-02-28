@@ -44,7 +44,9 @@ const impl = {
   validateAndWriteKinesisEventFromApiEndpoint(methodName, schema, schemaId, event, callback) {
     console.log(JSON.stringify(event))
     const eventData = JSON.parse(event.body)
+    console.log(eventData)
     const origin = eventData.origin
+    console.log(origin)
     delete eventData.origin
 
     if (!ajv.validate(schema, eventData)) { // bad request
