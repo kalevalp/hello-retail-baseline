@@ -62,7 +62,7 @@ const impl = {
     // TODO record uniquely in dynamo (so we don't duplicate the photo acquisition action)
     const params = {
       stateMachineArn: constants.STEP_FUNCTION,
-      name: `${event.origin}/${event.data.id}/${event.timeOrigin}`,
+      name: event.data.id,
       input: JSON.stringify(event),
     }
     stepfunctions.startExecution(params, (err) => {
@@ -157,11 +157,12 @@ module.exports = {
         let successes = 0
         const complete = (err) => {
           if (err) {
+            console.log(err)
             // TODO uncomment following
             // throw new Error(`${constants.MODULE} ${err}`);
             // TODO remove rest of block to use above.
             const msg = `${constants.MODULE} ${err}`
-            if (err.indexOf(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG}`) !== -1) {
+            if (msg.indexOf(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG}`) !== -1) {
               console.log('######################################################################################')
               console.log(msg)
               console.log('######################################################################################')

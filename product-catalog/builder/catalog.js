@@ -285,7 +285,7 @@ module.exports = {
             // throw new Error(`${constants.MODULE} ${err}`);
             // TODO remove rest of block to use above.
             const msg = `${constants.MODULE} ${err}`
-            if (err.indexOf(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG}`) !== -1) {
+            if (msg.indexOf(`${constants.MODULE} ${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG}`) !== -1) {
               console.log('######################################################################################')
               console.log(msg)
               console.log('######################################################################################')
