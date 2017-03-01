@@ -60,8 +60,8 @@ custom:
 
   retailStreamVersion: 1
   retailStream: ${file(../retail-stream/serverless.yml)}
-  productCatalogVersion: 1
-  productCatalog: ${file(../product-catalog/builder/serverless.yml)}
+  productCatalogBuilderVersion: 1
+  productCatalogBuilder: ${file(../product-catalog/builder/serverless.yml)}
   productCreationApi: ${file(../product-creation/api/serverless.yml)}
   userInfoVersion: 1
   userInfo: ${file(../user-info/serverless.yml)}
@@ -87,14 +87,14 @@ custom:
     configValues:
       WebAppName: Hello Retail
       Stage: ${self:custom.stage}
-      CatalogReaderRole: arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
+      CatalogReaderRole: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
       AuthClientId: ${self:custom.oAuthClientId}
       AWSRegion: ${self:custom.private.region}
       SessionName: ${self:custom.helloRetail.name}-web-app-${self:custom.stage}
       # TODO: Create this role as part of this stack
       WebAppRole: arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity
-      ProductCatalogTableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogVersion}
-      ProductCategoryTableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogVersion}
+      ProductCatalogTableName: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
+      ProductCategoryTableName: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
       UserInfoAPI:
         Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
       ProductCreateAPI:
@@ -150,8 +150,7 @@ resources:
                   Action:
                     - sts:AssumeRole
                   Resource:
-                    # TODO: use imported values
-                    - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
+                    - Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
           - PolicyName: AllowInvokeOfProductCreate
             PolicyDocument:
               Version: '2012-10-17'
@@ -160,6 +159,7 @@ resources:
                   Action:
                     - execute-api:Invoke
                   Resource:
+                    # TODO: ERIK: What is this intended to do?  One cannot invoke roles.
                     # TODO: use imported values
                     - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
 
