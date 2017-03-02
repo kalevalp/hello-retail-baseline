@@ -48,10 +48,10 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
-                  - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
-                  - '${self:custom.private.productProvider}'
-                  - '${self:custom.private.productImageProvider}'
+#                  - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
+#                  - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
+#                  - '${self:custom.private.productProvider}'
+#                  - '${self:custom.private.productImageProvider}'
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

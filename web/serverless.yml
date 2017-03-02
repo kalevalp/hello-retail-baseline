@@ -87,14 +87,15 @@ custom:
     configValues:
       WebAppName: Hello Retail
       Stage: ${self:custom.stage}
-      CatalogReaderRole: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
+      CatalogReaderRole:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
       AuthClientId: ${self:custom.oAuthClientId}
       AWSRegion: ${self:custom.private.region}
       SessionName: ${self:custom.helloRetail.name}-web-app-${self:custom.stage}
       # TODO: Create this role as part of this stack
       WebAppRole: arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity
-      ProductCatalogTableName: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
-      ProductCategoryTableName: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
+      ProductCatalogTableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogBuilderVersion}
+      ProductCategoryTableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogBuilderVersion}
       UserInfoAPI:
         Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
       ProductCreateAPI:
@@ -150,16 +151,6 @@ resources:
                   Action:
                     - sts:AssumeRole
                   Resource:
-                    - Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
-          - PolicyName: AllowInvokeOfProductCreate
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - execute-api:Invoke
-                  Resource:
-                    # TODO: ERIK: What is this intended to do?  One cannot invoke roles.
                     # TODO: use imported values
                     - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
 

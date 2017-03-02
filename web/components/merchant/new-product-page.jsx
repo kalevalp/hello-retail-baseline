@@ -30,6 +30,7 @@ class NewProductPage extends Component {
     this.validateProduct = this.validateProduct.bind(this)
     this.resetProduct = this.resetProduct.bind(this)
     this.createProduct = this.createProduct.bind(this)
+    this.ackCreateProduct = this.ackCreateProduct.bind(this)
 
     this.emptyProduct = {
       category: '',
@@ -39,6 +40,7 @@ class NewProductPage extends Component {
     }
 
     this.state = this.emptyProduct
+    this.state.submittedProduct = false
     this.state.errors = []
   }
 
@@ -58,7 +60,7 @@ class NewProductPage extends Component {
 
   resetProduct() {
     this.setState({
-      product: this.emptyProduct,
+      submittedProduct: true,
     })
   }
 
@@ -89,6 +91,13 @@ class NewProductPage extends Component {
     })
   }
 
+  ackCreateProduct() {
+    this.setState(this.emptyProduct)
+    this.setState({
+      submittedProduct: false,
+    })
+  }
+
   handleProductChange(property, event) {
     this.setState({
       [property]: event.target.value,
@@ -97,6 +106,16 @@ class NewProductPage extends Component {
   }
 
   render() {
+    if (this.state.submittedProduct) {
+      return (
+        <div>
+          <h4>Product {this.state.name} has been created!</h4>
+          <p>Press OK to add another product.</p>
+          <button onClick={this.ackCreateProduct}>OK</button>
+        </div>
+      )
+    }
+
     return (
       <div>
         <h4><em>Create New Product</em></h4>

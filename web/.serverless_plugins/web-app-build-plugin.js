@@ -126,7 +126,7 @@ class ServerlessPlugin {
       const provider = this.serverless.getProvider('aws')
       const importParts = outputName.split(':')
 
-      if(importParts.length != 3) {
+      if(importParts.length < 3) {
         reject(`Expected Fn::Import to match pattern: 'service:stage:outputName', but got '${outputName}' instead.`)
       }
 
