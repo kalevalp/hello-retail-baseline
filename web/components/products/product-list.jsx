@@ -34,6 +34,7 @@ class ProductList extends Component {
                   brand={product.brand}
                   description={product.description}
                   id={product.id}
+                  image={product.image}
                   category={this.props.category}
                 />
               ))

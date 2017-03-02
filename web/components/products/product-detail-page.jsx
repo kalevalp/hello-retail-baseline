@@ -31,17 +31,20 @@ class ProductDetailPage extends Component {
       brand: p.brand,
       description: p.description,
       id: p.id,
+      image: p.image,
     })
   }
 
   render() {
     // TODO: Add query for single product by id
-    // TODO: Add image
     return (
       <div>
         <h3>{this.state.brand}</h3>
         <h4>{this.state.name}</h4>
         <div>{this.state.description}</div>
+        <div className="productImage">
+          <img src={this.state.image} alt="" />
+        </div>
         <br />
         <button>Buy</button>
         <ProductDataSource awsLogin={this.props.awsLogin} productId={this.props.params.id} productsLoaded={this.productsLoaded} />
