@@ -13,6 +13,7 @@ custom:
   userInfoApiVersion: 1
   userInfoApi: ${file(../user-info/api/serverless.yml)}
   productCreationApi: ${file(../product-creation/api/serverless.yml)}
+  productPurchaseApi: ${file(../product-purchase/api/serverless.yml)}
   # Exports
   exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
   exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
@@ -48,10 +49,14 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - '${self:custom.private.productImageProvider}'
                   - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
                   - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
-                  - '${self:custom.private.productProvider}'
-                  - '${self:custom.private.productImageProvider}'
+#                  - Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseWriterArn}
+#                 # Above was supposed to be for cross-account services to access the retail stream writer role, but
+#                 # current set-up only works for same-account stream and purchase service.  TODO check if this is also the case for UserInfo & Product Creation.
+#                  - '${self:custom.private.productProvider}'
+#                 # Above was for the scraper, which is now not part of the project, as page layout changed.
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

@@ -190,6 +190,8 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
+                  # TODO why is this statement hard-coded as 'arn:aws:sts::515126931066:assumed-role/testHelloRetailWebIdentity/hello-retail-website-test'
+                  # in the console for this role's trust relationships?
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

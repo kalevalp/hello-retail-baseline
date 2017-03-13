@@ -63,6 +63,7 @@ custom:
   productCatalogBuilderVersion: 1
   productCatalogBuilder: ${file(../product-catalog/builder/serverless.yml)}
   productCreationApi: ${file(../product-creation/api/serverless.yml)}
+  productPurchaseApi: ${file(../product-purchase/api/serverless.yml)}
   userInfoVersion: 1
   userInfo: ${file(../user-info/serverless.yml)}
   userInfoApiVersion: 1
@@ -87,18 +88,23 @@ custom:
     configValues:
       WebAppName: Hello Retail
       Stage: ${self:custom.stage}
-      CatalogReaderRole: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
+      CatalogReaderRole:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
       AuthClientId: ${self:custom.oAuthClientId}
       AWSRegion: ${self:custom.private.region}
-      SessionName: ${self:custom.helloRetail.name}-web-app-${self:custom.stage}
+      SessionName: ${self:custom.helloRetail.name}-website-${self:custom.stage}
       # TODO: Create this role as part of this stack
       WebAppRole: arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity
-      ProductCatalogTableName: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
-      ProductCategoryTableName: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
+      ProductCatalogTableName:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
+      ProductCategoryTableName:
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
       UserInfoAPI:
         Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
       ProductCreateAPI:
         Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationRestAPI}
+      ProductPurchaseAPI:
+        Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestAPI}
     webpackPath: ./webpack.config.js
 
   webApp: ${self:} # externally, use `${file(~/web/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
@@ -151,17 +157,6 @@ resources:
                     - sts:AssumeRole
                   Resource:
                     - Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
-          - PolicyName: AllowInvokeOfProductCreate
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - execute-api:Invoke
-                  Resource:
-                    # TODO: ERIK: What is this intended to do?  One cannot invoke roles.
-                    # TODO: use imported values
-                    - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}ProductCatalogReader
 
     # ===================== S3 =====================
 

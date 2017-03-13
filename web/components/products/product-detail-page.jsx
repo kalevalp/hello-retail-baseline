@@ -1,13 +1,19 @@
 import React, { Component, PropTypes } from 'react'
+import { browserHistory } from 'react-router'
 import ProductDataSource from './product-data-source'
+import ValidationErrors from '../validation-errors'
+import config from '../../config'
 
 class ProductDetailPage extends Component {
   static propTypes = {
     awsLogin: PropTypes.shape({
-      aws: PropTypes.shape({
-        DynamoDB: PropTypes.func,
+      state: PropTypes.shape({
+        profile: PropTypes.shape({
+          email: PropTypes.string,
+          name: PropTypes.string,
+        }),
       }),
-      getCredentialsForRole: PropTypes.func,
+      makeApiRequest: PropTypes.func,
     }),
     params: PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -22,6 +28,9 @@ class ProductDetailPage extends Component {
     super(props)
     this.state = {}
     this.productsLoaded = this.productsLoaded.bind(this)
+    this.purchaseProduct = this.purchaseProduct.bind(this)
+    this.state.errors = []
+    this.state.toBuy = true
   }
 
   productsLoaded(products) {
@@ -34,17 +43,54 @@ class ProductDetailPage extends Component {
     })
   }
 
+  purchaseProduct() {
+    this.props.awsLogin.makeApiRequest(config.ProductPurchaseAPI, 'POST', '/product-purchase/', {
+      schema: 'com.nordstrom/product/purchase/1-0-0',
+      id: this.props.params.id,
+      origin: `hello-retail/web-client-purchase-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
+    })
+      .then(
+        // browserHistory.push('/categories/')
+        this.setState({
+          toBuy: false,
+        })
+      )
+      .catch((error) => {
+        // Show error message and re-enable button so user can try again.
+        console.log(error)
+        this.setState({
+          errors: [error],
+        })
+      })
+  }
+
   render() {
     // TODO: Add query for single product by id
     // TODO: Add image
+
+    let blurb = null
+    if(this.state.toBuy){
+      blurb = <button onClick={this.purchaseProduct}>Buy</button>
+    }else{
+      blurb = <h4>Bought it!</h4>
+    }
+
+    const backButtonStyle = {
+      margin: '15px',
+    }
+
     return (
       <div>
-        <h3>{this.state.brand}</h3>
-        <h4>{this.state.name}</h4>
-        <div>{this.state.description}</div>
-        <br />
-        <button>Buy</button>
-        <ProductDataSource awsLogin={this.props.awsLogin} productId={this.props.params.id} productsLoaded={this.productsLoaded} />
+        <div>
+          <h3>{this.state.brand}</h3>
+          <h4>{this.state.name}</h4>
+          <div>{this.state.description}</div>
+          <br />
+          <ValidationErrors errors={this.state.errors} />
+          {blurb}
+          <ProductDataSource awsLogin={this.props.awsLogin} productId={this.props.params.id} productsLoaded={this.productsLoaded} />
+          <button style={backButtonStyle} onClick={browserHistory.goBack}>Back to List</button>
+        </div>
       </div>
     )
   }
