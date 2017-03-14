@@ -199,4 +199,4 @@ resources:
       Value:
         Ref: ApiClient
       Export:
-        Name: ${self:custom.exportProductCatalogApiClient}
+        Name: ${self:custom.productCatalogApi.custom.exportProductCatalogApiClient}

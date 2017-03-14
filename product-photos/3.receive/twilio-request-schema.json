@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "self": {
+    "vendor": "com.nordstrom",
+    "name": "product-photos/receive",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "path":                   { "type": "string", "pattern": "^/sms$" },
+    "httpMethod":             { "type": "string", "pattern": "^POST$" },
+    "headers":                {
+      "type": "object",
+      "properties": {
+        "X-Twilio-Signature": { "type": "string", "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)$" }
+      },
+      "additionalProperties": true
+    },
+    "body":                   { "type": "string" }
+  },
+  "required": [
+    "path",
+    "httpMethod",
+    "headers"
+  ],
+  "additionalProperties": true
+}

@@ -32,7 +32,7 @@ if (PROXY_SERVER) {
 }
 
 if (SLS_STAGE) {
-  process.argv = [null, null, '-s', SLS_STAGE];
+  process.argv = [null, null, '-s', SLS_STAGE]
 }
 
 const serverless = new Serverless({

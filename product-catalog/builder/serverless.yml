@@ -132,8 +132,7 @@ resources:
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
-                    Fn::Join:
-                      Fn::GetAtt: [ CatalogLogGroup, Arn ]
+                    Fn::GetAtt: [ CatalogLogGroup, Arn ]
                 - Effect: 'Allow'
                   Action:
                     - 'logs:PutLogEvents'
@@ -187,6 +186,7 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - '${self:custom.private.websiteRole}'
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -196,7 +196,7 @@ resources:
               Statement:
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamodb:Query'
+                     - 'dynamodb:Scan'
                    Resource:
                     Fn::Join:
                       - '/'
@@ -227,7 +227,7 @@ resources:
       Value:
         Ref: ProductCategory
       Export:
-        Name: ${self:custom.exportProductCategoryTableName}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
     ProductCategoryTableArn:
       Description: The ARN for the Product Category Table
       Value:
@@ -236,13 +236,13 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCategory
       Export:
-        Name: ${self:custom.exportProductCategoryTableArn}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
-        Name: ${self:custom.exportProductCatalogTableName}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
     ProductCatalogTableArn:
       Description: The ARN for the Product Catalog Table
       Value:
@@ -251,7 +251,7 @@ resources:
           - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
             - Ref: ProductCatalog
       Export:
-        Name: ${self:custom.exportProductCatalogTableArn}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
     ProductCatalogTableCategoryIndexArn:
       Description: The ARN for the Product Catalog Table's Category Index
       Value:
@@ -262,10 +262,10 @@ resources:
             - index
             - Category
       Export:
-        Name: ${self:custom.exportProductCatalogTableCategoryIndexArn}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
     ProductCatalogReaderArn:
       Description: The Role ARN for a Product Catalog Reader
       Value:
         Fn::GetAtt: [ ProductCatalogReader, Arn ]
       Export:
-        Name: ${self:custom.exportProductCatalogReaderArn}
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
