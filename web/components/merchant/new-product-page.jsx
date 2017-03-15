@@ -30,6 +30,7 @@ class NewProductPage extends Component {
     this.validateProduct = this.validateProduct.bind(this)
     this.resetProduct = this.resetProduct.bind(this)
     this.createProduct = this.createProduct.bind(this)
+    this.ackCreateProduct = this.ackCreateProduct.bind(this)
 
     this.emptyProduct = {
       category: '',
@@ -39,11 +40,16 @@ class NewProductPage extends Component {
     }
 
     this.state = this.emptyProduct
+    this.state.submittedProduct = false
     this.state.errors = []
   }
 
-  validateProduct() {
+  validateProduct(property, value) {
     const product = this.state
+
+    // Quick fix-up of changed property, not yet reflected in actual state.
+    product[property] = value
+
     this.setState({
       // Just need to have at least one alphanumeric in each field
       isProductValid: (
@@ -53,12 +59,11 @@ class NewProductPage extends Component {
         && product.description && product.description.match(/^[\w\d]+/)
       ),
     })
-    console.log(product, this.state.isProductValid)
   }
 
   resetProduct() {
     this.setState({
-      product: this.emptyProduct,
+      submittedProduct: true,
     })
   }
 
@@ -89,14 +94,31 @@ class NewProductPage extends Component {
     })
   }
 
+  ackCreateProduct() {
+    this.setState(this.emptyProduct)
+    this.setState({
+      submittedProduct: false,
+    })
+  }
+
   handleProductChange(property, event) {
     this.setState({
       [property]: event.target.value,
     })
-    this.validateProduct()
+    this.validateProduct(property, event.target.value)
   }
 
   render() {
+    if (this.state.submittedProduct) {
+      return (
+        <div>
+          <h4>Product {this.state.name} has been created!</h4>
+          <p>Press OK to add another product.</p>
+          <button onClick={this.ackCreateProduct}>OK</button>
+        </div>
+      )
+    }
+
     return (
       <div>
         <h4><em>Create New Product</em></h4>

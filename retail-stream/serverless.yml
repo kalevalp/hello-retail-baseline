@@ -52,11 +52,6 @@ resources:
                   - '${self:custom.private.productImageProvider}'
                   - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
                   - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
-#                  - Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseWriterArn}
-#                 # Above was supposed to be for cross-account services to access the retail stream writer role, but
-#                 # current set-up only works for same-account stream and purchase service.  TODO check if this is also the case for UserInfo & Product Creation.
-#                  - '${self:custom.private.productProvider}'
-#                 # Above was for the scraper, which is now not part of the project, as page layout changed.
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

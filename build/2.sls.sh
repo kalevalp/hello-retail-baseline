@@ -1,17 +1,19 @@
 #!/bin/sh -u
 
-echo $1 in $2
+# begin debug
+export SLS_DEBUG=*
+# end debug
+
+echo
+echo ${1} ${2} in ${3}
 
 OWD=$(pwd)
 
-cd ${2}
+cd ${3}
 RES=$?
 if [ ${RES} -eq 0 ]; then
-  npm install
+  sls ${1} -s ${STAGE} -v
   RES=$?
-  if [ ${RES} -ne 0 ]; then
-    tail -n 100 npm-debug.log
-  fi
   cd ${OWD}
   exit ${RES}
 else

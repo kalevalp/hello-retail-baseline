@@ -157,6 +157,7 @@ resources:
                     - sts:AssumeRole
                   Resource:
                     - Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
+                    - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
 
     # ===================== S3 =====================
 

@@ -53,6 +53,7 @@ class ProductDataSource extends Component {
         'description',
         'name',
         'id',
+        'image',
       ],
       TableName: config.ProductCatalogTableName,
       Key: {
@@ -79,6 +80,7 @@ class ProductDataSource extends Component {
           description: data.Item.description.S,
           name: data.Item.name.S,
           id: data.Item.id.S,
+          image: data.Item.image ? data.Item.image.S : null,
         })
         return productList
       }, (error) => { throw new Error(error) })

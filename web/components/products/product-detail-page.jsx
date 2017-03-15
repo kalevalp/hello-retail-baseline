@@ -40,6 +40,7 @@ class ProductDetailPage extends Component {
       brand: p.brand,
       description: p.description,
       id: p.id,
+      image: `https://${p.image}`,
     })
   }
 
@@ -89,6 +90,9 @@ class ProductDetailPage extends Component {
           <h3>{this.state.brand}</h3>
           <h4>{this.state.name}</h4>
           <div>{this.state.description}</div>
+          <div>
+            { this.state.image ? (<img className="productImage" src={this.state.image} alt={this.state.name} />) : null }
+          </div>
           <br />
           <ValidationErrors errors={this.state.errors} />
           {blurb}

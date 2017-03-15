@@ -88,6 +88,8 @@ class PhotographerRegisterPage extends Component {
           <label>
             Phone Number:
             <input value={this.state.phoneNumber} onChange={this.phoneNumberChange} />
+            <br />
+            <h5>(Additional charges may apply.)</h5>
           </label>
           <br />
           <ValidationErrors errors={this.state.errors} />
