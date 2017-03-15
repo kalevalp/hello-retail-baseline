@@ -4,10 +4,13 @@ phases:
   install:
     commands:
       - printenv
+      - chmod 700 $CODEBUILD_SRC_DIR/build/0.env.sh
       - echo
       - node --version
       - npm --version
-      - npm install -g serverless
+      #- npm install -g serverless
+      - npm install -g git+https://github.com/erikerikson/serverless.git#allow-self-reference
+
       - sls --version
       - echo
       # Is this up to date?
@@ -18,15 +21,18 @@ phases:
   pre_build:
     commands:
       - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Top-Level Project Dependencies"     $CODEBUILD_SRC_DIR
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies" $CODEBUILD_SRC_DIR/products/lambda
-      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing Product Catalog Dependencies"       $CODEBUILD_SRC_DIR/product-catalog
+      - npm run root:install       # Root Project (Dev Dependencies)
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies"       $CODEBUILD_SRC_DIR/product-creation/lambda
+      - npm run photos:install:all # Product Catalog
+      - npm run photos:install:all # Product Photos
   build:
     commands:
       - npm run test
       - npm run lint
-      - chmod 700 $CODEBUILD_SRC_DIR/build/2.deploy.sh
+      - chmod 700 $CODEBUILD_SRC_DIR/build/2.sls.sh
       - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Build Infrastructure"       $CODEBUILD_SRC_DIR/build
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Retail Stream"              $CODEBUILD_SRC_DIR/retail-stream
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying New Products Simulator"     $CODEBUILD_SRC_DIR/products/lambda
-      - $CODEBUILD_SRC_DIR/build/2.deploy.sh "Deploying Product Catalog Processor"  $CODEBUILD_SRC_DIR/product-catalog
+      - npm run stream:deploy     # Core Stream
+      # Product Creation
+      - $CODEBUILD_SRC_DIR/build/2.sls.sh "Deploying New Products Simulator"       $CODEBUILD_SRC_DIR/product-creation/lambda
+      - npm run photos:deploy:all # Product Catalog
+      - npm run photos:deploy:all # Product Photos

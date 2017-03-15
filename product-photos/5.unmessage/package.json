@@ -1,0 +1,19 @@
+{
+  "name": "send-unassignment",
+  "version": "0.0.1",
+  "description": "A Lambda function for sending a text to a photographer stating that they have been unassigned.",
+  "main": "unmessage.js",
+  "scripts": {
+    "test": "echo \"Error: tests executed by root hello-retail package.json\" && exit 1"
+  },
+  "author": "Nordstrom",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Nordstrom/hello-retail/issues"
+  },
+  "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "twilio": "^2.11.1"
+  }
+}

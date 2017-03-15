@@ -1,0 +1,88 @@
+#TODO REMOVE AND REPLACE
+bucket: ${self:custom.stage}.hello-retail.biz
+bucketArn: arn:aws:s3:::${self:custom.productPhotos.bucket}
+
+# Project
+name: ${self:custom.helloRetail.name}-product-photos
+productPhotosVersion: 1
+
+# Data
+dataName: ${self:custom.productPhotos.name}-data
+exportPhotoAssignmentsTableName: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsTableArn: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.productPhotosVersion}
+
+# Lambdas
+executeName: ${self:custom.productPhotos.name}-execute
+
+assignName: ${self:custom.productPhotos.name}-assign
+exportPhotoAssignmentsAssignLambdaName: ${self:custom.productPhotos.assignName}:${self:custom.stage}:PhotoAssignmentsAssignLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsAssignLambdaArn: ${self:custom.productPhotos.assignName}:${self:custom.stage}:PhotoAssignmentsAssignLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+messageName: ${self:custom.productPhotos.name}-message
+exportPhotoAssignmentsMessageLambdaName: ${self:custom.productPhotos.messageName}:${self:custom.stage}:PhotoAssignmentsMessageLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsMessageLambdaArn: ${self:custom.productPhotos.messageName}:${self:custom.stage}:PhotoAssignmentsMessageLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+recordName: ${self:custom.productPhotos.name}-record
+exportPhotoAssignmentsRecordLambdaName: ${self:custom.productPhotos.recordName}:${self:custom.stage}:PhotoAssignmentsRecordLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsRecordLambdaArn: ${self:custom.productPhotos.recordName}:${self:custom.stage}:PhotoAssignmentsRecordLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+receiveName: ${self:custom.productPhotos.name}-receive
+exportPhotoAssignmentsReceiveLambdaName: ${self:custom.productPhotos.receiveName}:${self:custom.stage}:PhotoAssignmentsReceiveLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsReceiveLambdaArn: ${self:custom.productPhotos.receiveName}:${self:custom.stage}:PhotoAssignmentsReceiveLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+failName: ${self:custom.productPhotos.name}-fail
+exportPhotoAssignmentsFailLambdaName: ${self:custom.productPhotos.failName}:${self:custom.stage}:PhotoAssignmentsFailLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsFailLambdaArn: ${self:custom.productPhotos.failName}:${self:custom.stage}:PhotoAssignmentsFailLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+successName: ${self:custom.productPhotos.name}-success
+exportPhotoAssignmentsSuccessLambdaName: ${self:custom.productPhotos.successName}:${self:custom.stage}:PhotoAssignmentsSuccessLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsSuccessLambdaArn: ${self:custom.productPhotos.successName}:${self:custom.stage}:PhotoAssignmentsSuccessLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+unmessageName: ${self:custom.productPhotos.name}-unmessage
+exportPhotoAssignmentsUnmessageLambdaName: ${self:custom.productPhotos.unmessageName}:${self:custom.stage}:PhotoAssignmentsUnmessageLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsUnmessageLambdaArn: ${self:custom.productPhotos.unmessageName}:${self:custom.stage}:PhotoAssignmentsUnmessageLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+reportName: ${self:custom.productPhotos.name}-report
+exportPhotoAssignmentsReportLambdaName: ${self:custom.productPhotos.reportName}:${self:custom.stage}:PhotoAssignmentsReportLambdaName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsReportLambdaArn: ${self:custom.productPhotos.reportName}:${self:custom.stage}:PhotoAssignmentsReportLambdaArn:${self:custom.productPhotos.productPhotosVersion}
+
+# Activities
+receiveActivityName: ${self:custom.stage}-${self:custom.productPhotos.name}-receive
+receiveActivityArn: arn:aws:states:${self:custom.private.region}:${self:custom.private.accountId}:activity:${self:custom.productPhotos.receiveActivityName}
+
+# Step Function
+processName: ${self:custom.productPhotos.name}-process
+exportPhotoAssignmentsStepFunctionName: ${self:custom.productPhotos.processName}:${self:custom.stage}:PhotoAssignmentsStepFunctionName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoAssignmentsStepFunctionArn: ${self:custom.productPhotos.processName}:${self:custom.stage}:PhotoAssignmentsStepFunctionArn:${self:custom.productPhotos.productPhotosVersion}
+
+# Policies
+getPhotoAssignment:
+  PolicyName: GetPhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:GetItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}
+updatePhotoAssignment:
+  PolicyName: UpdatePhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:UpdateItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}
+deletePhotoAssignment:
+  PolicyName: DeletePhotoAssignment
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: 'Allow'
+         Action:
+           - 'dynamodb:DeleteItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsTableArn}

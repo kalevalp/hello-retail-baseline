@@ -1,14 +1,24 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: hello-retail-stream
+service: ${self:custom.helloRetail.name}-stream
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  # Retail Stream Versions & Exports
+  # WARNING: each project that uses these will have to define the following two attributes (custom.retailStreamVersion, custom.retailStream) in its serverless.yml:
+  retailStreamVersion: 1 # The version of this service to depend upon
+  retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
+  # Exports
+  exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
+  exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
+  exportRetailStreamWriterArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamWriterArn:${self:custom.retailStreamVersion}
+  exportRetailStreamReaderArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamReaderArn:${self:custom.retailStreamVersion}
 
 provider:
   name: aws
-  deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
@@ -36,6 +46,7 @@ resources:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
                   - '${self:custom.private.productProvider}'
+                  - '${self:custom.private.productImageProvider}'
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -50,7 +61,7 @@ resources:
                      - 'kinesis:PutRecord'
                      - 'kinesis:PutRecords'
                    Resource:
-                     'Fn::GetAtt': [ RetailStream, Arn ]
+                     Fn::GetAtt: [ RetailStream, Arn ]
     RetailStreamReader: # role for consumers
       Type: AWS::IAM::Role
       Properties:
@@ -78,29 +89,29 @@ resources:
                      - 'kinesis:GetShardIterator'
                      - 'kinesis:ListStreams'
                    Resource:
-                     'Fn::GetAtt': [ RetailStream, Arn ]
+                     Fn::GetAtt: [ RetailStream, Arn ]
   Outputs:
     RetailStreamName:
       Description: The Name of the Retail Stream
       Value:
         Ref: RetailStream
       Export:
-        Name: '${self:service}:${self:custom.stage}:RetailStreamName'
+        Name: ${self:custom.retailStream.custom.exportRetailStreamName}
     RetailStreamArn:
       Description: The ARN for the Retail Stream
       Value:
-        'Fn::GetAtt': [ RetailStream, Arn ]
+        Fn::GetAtt: [ RetailStream, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:RetailStreamArn'
+        Name: ${self:custom.retailStream.custom.exportRetailStreamArn}
     RetailStreamWriterArn:
       Description: The ARN for the defined Role that can write events to the RetailStream
       Value:
-        'Fn::GetAtt': [ RetailStreamWriter, Arn ]
+        Fn::GetAtt: [ RetailStreamWriter, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:RetailStreamWriterArn'
+        Name: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
     RetailStreamReaderArn:
       Description: The ARN for the defined Role that can read events from the RetailStream
       Value:
-        'Fn::GetAtt': [ RetailStreamReader, Arn ]
+        Fn::GetAtt: [ RetailStreamReader, Arn ]
       Export:
-        Name: '${self:service}:${self:custom.stage}:RetailStreamReaderArn'
+        Name: ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
