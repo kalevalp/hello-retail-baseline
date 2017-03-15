@@ -76,7 +76,7 @@ class ProductDetailPage extends Component {
     if (!this.state.buyMessage) {
       blurb = <button onClick={this.purchaseProduct}>Buy</button>
     } else {
-      blurb = <h4>Bought it!</h4>
+      blurb = <h4>{this.state.buyMessage}</h4>
     }
 
     const backButtonStyle = {
