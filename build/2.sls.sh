@@ -12,7 +12,7 @@ OWD=$(pwd)
 cd ${3}
 RES=$?
 if [ ${RES} -eq 0 ]; then
-  slsDev ${1} -s ${STAGE} -v
+  sls ${1} -s ${STAGE} -v
   RES=$?
   cd ${OWD}
   exit ${RES}

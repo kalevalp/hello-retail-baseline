@@ -31,6 +31,11 @@ label {
   text-align:left;
 }
 
+.productImage {
+  width: 400px;
+  height: 400px;
+}
+
 .categoryList {
   background-color: cornflowerblue;
 }

@@ -68,7 +68,15 @@
     "web:build":            "./build/0.env.sh && ./build/2.sls.sh buildWebApp \"Building Web App\"                            ./web",
     "web:deploy":           "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Web App\"                                ./web",
     "web:deploy:all":       "npm run web:build && npm run web:deploy",
-    "web:remove:all":       "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Web App\"                                 ./web"
+    "web:remove:all":       "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Web App\"                                 ./web",
+
+    "web:build:test": "pushd ./web/ && sls buildWebApp -s test",
+    "web:build:prod": "pushd ./web/ && sls buildWebApp -s prod",
+    "web:build:demo": "pushd ./web/ && sls buildWebApp -s demo",
+    "web:deploy:test": "pushd ./web/ && sls deploy -s test && popd",
+    "web:deploy:prod": "pushd ./web/ && sls deploy -s prod && popd",
+    "web:deploy:demo": "pushd ./web/ && sls deploy -s demo && popd",
+    "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --https --hot --progress --colors --watch --display-error-details --display-cached --content-base ./web/app/"
   },
   "repository": {
     "type": "git",

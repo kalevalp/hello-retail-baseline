@@ -8,7 +8,6 @@ class ProductCard extends Component {
     description: PropTypes.string,
     id: PropTypes.string,
     name: PropTypes.string,
-    image: PropTypes.string,
   }
 
   static defaultProps = {
@@ -16,7 +15,6 @@ class ProductCard extends Component {
     description: '',
     id: 0,
     name: '',
-    image: `https://${config.Stage}`,
   }
 
   constructor(props) {
@@ -47,9 +45,6 @@ class ProductCard extends Component {
         </div>
         <div className="productBrand">{this.props.brand}</div>
         <div className="productDesc">{this.props.description}</div>
-        <div className="productImage">
-          <img src={this.props.image} alt="" />
-        </div>
         <br />
       </div>
     )
