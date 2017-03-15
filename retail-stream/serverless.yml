@@ -13,6 +13,7 @@ custom:
   userInfoApiVersion: 1
   userInfoApi: ${file(../user-info/api/serverless.yml)}
   productCreationApi: ${file(../product-creation/api/serverless.yml)}
+  productPurchaseApi: ${file(../product-purchase/api/serverless.yml)}
   # Exports
   exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
   exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
@@ -48,10 +49,9 @@ resources:
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-#                  - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
-#                  - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
-#                  - '${self:custom.private.productProvider}'
-#                  - '${self:custom.private.productImageProvider}'
+                  - '${self:custom.private.productImageProvider}'
+                  - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
+                  - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}

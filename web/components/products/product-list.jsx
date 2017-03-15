@@ -1,5 +1,7 @@
 import React, { Component, PropTypes } from 'react'
+import { browserHistory } from 'react-router'
 import ProductCard from './product-card'
+
 
 class ProductList extends Component {
   static propTypes = {
@@ -22,23 +24,29 @@ class ProductList extends Component {
       return null
     }
 
+    const backButtonStyle = {
+      margin: '15px',
+    }
+
     // TODO: Fix using an ID for key of product.
     return (
-      <div>{
-              /* eslint react/no-array-index-key: "off" */
-              this.props.products.map(product => (
-                <ProductCard
-                  className="productCard"
-                  name={product.name}
-                  key={product.id}
-                  brand={product.brand}
-                  description={product.description}
-                  id={product.id}
-                  image={product.image}
-                  category={this.props.category}
-                />
-              ))
-            }</div>
+      <div>
+        <div>{
+                /* eslint react/no-array-index-key: "off" */
+                this.props.products.map(product => (
+                  <ProductCard
+                    className="productCard"
+                    name={product.name}
+                    key={product.id}
+                    brand={product.brand}
+                    description={product.description}
+                    id={product.id}
+                    category={this.props.category}
+                  />
+                ))
+              }</div>
+        <button style={backButtonStyle} onClick={browserHistory.goBack}>Back to Categories</button>
+      </div>
     )
   }
 }
