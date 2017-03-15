@@ -44,8 +44,12 @@ class NewProductPage extends Component {
     this.state.errors = []
   }
 
-  validateProduct() {
+  validateProduct(property, value) {
     const product = this.state
+
+    // Quick fix-up of changed property, not yet reflected in actual state.
+    product[property] = value
+
     this.setState({
       // Just need to have at least one alphanumeric in each field
       isProductValid: (
@@ -55,7 +59,6 @@ class NewProductPage extends Component {
         && product.description && product.description.match(/^[\w\d]+/)
       ),
     })
-    console.log(product, this.state.isProductValid)
   }
 
   resetProduct() {
@@ -102,7 +105,7 @@ class NewProductPage extends Component {
     this.setState({
       [property]: event.target.value,
     })
-    this.validateProduct()
+    this.validateProduct(property, event.target.value)
   }
 
   render() {

@@ -182,9 +182,11 @@ resources:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
+              Action: sts:AssumeRole
               Principal:
                 AWS: # role ARNs that are allowed to read from the Product Catalog
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+                  - '${self:custom.private.websiteRole}'
               Action: sts:AssumeRole
             - Effect: Allow
               Principal:
@@ -200,7 +202,6 @@ resources:
               Statement:
                 -  Effect: 'Allow'
                    Action:
-                     - 'dynamodb:Query'
                      - 'dynamodb:Scan'
                    Resource:
                     Fn::Join:

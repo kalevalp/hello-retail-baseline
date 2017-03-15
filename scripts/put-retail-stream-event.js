@@ -1,6 +1,6 @@
 'use strict'
 
-const aws = require('aws-sdk')
+const aws = require('aws-sdk') // eslint-disable-line import/no-extraneous-dependencies
 const HttpsProxyAgent = require('https-proxy-agent') // eslint-disable-line import/no-extraneous-dependencies
 const url = require('url')
 const yaml = require('js-yaml') // eslint-disable-line import/no-extraneous-dependencies
@@ -37,5 +37,5 @@ if (process.argv.length < 5) {
   console.log('Missing arguments.  Usage: node put-retail-stream-event.js < streamName > < path to json file with event data > < partitionKey >.')
   console.log('Example: $ node put-retail-stream-event.js BIMXStream ./product-create-event.json 9000002')
 } else {
-  writeToKinesis(process.argv[2], JSON.stringify(require(process.argv[3])), process.argv[4])
+  writeToKinesis(process.argv[2], JSON.stringify(require(process.argv[3])), process.argv[4]) // eslint-disable-line global-require, import/no-dynamic-require
 }

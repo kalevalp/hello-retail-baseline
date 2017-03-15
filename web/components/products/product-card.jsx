@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import { Link } from 'react-router'
+import config from '../../config'
 
 class ProductCard extends Component {
   static propTypes = {
@@ -15,7 +16,7 @@ class ProductCard extends Component {
     description: '',
     id: 0,
     name: '',
-    image: '',
+    image: `https://${config.Stage}`,
   }
 
   constructor(props) {
@@ -23,9 +24,16 @@ class ProductCard extends Component {
 
     console.log(props)
 
+    this.domainName = 'hello-retail.biz'
+
+    if (config.Stage !== 'prod') {
+      this.domainName = `${config.Stage}.${this.domainName}`
+    }
+
     this.state = {}
   }
 
+  // image ratio: 3:4
   render() {
     return (
       <div>

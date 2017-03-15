@@ -12,7 +12,7 @@ custom:
   retailStream: ${file(../../retail-stream/serverless.yml)}
   serviceName: ${self:service}
   userInfoApiVersion: 1
-  userInfoApi: ${self:}
+  userInfoApi: ${file(../../user-info/api/serverless.yml)}
   productCreationApi: ${self:}
   # Exports
   exportProductCreationClientArn: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationClientArn
