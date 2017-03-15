@@ -37,5 +37,6 @@ if (process.argv.length < 5) {
   console.log('Missing arguments.  Usage: node put-retail-stream-event.js < streamName > < path to json file with event data > < partitionKey >.')
   console.log('Example: $ node put-retail-stream-event.js BIMXStream ./product-create-event.json 9000002')
 } else {
-  writeToKinesis(process.argv[2], JSON.stringify(require(process.argv[3])), process.argv[4]) // eslint-disable-line global-require, import/no-dynamic-require
+  const event = require(process.argv[3]) // eslint-disable-line global-require, import/no-dynamic-require
+  writeToKinesis(process.argv[2], JSON.stringify(event), process.argv[4]) // eslint-disable-line global-require, import/no-dynamic-require
 }
