@@ -30,7 +30,7 @@ class ProductDetailPage extends Component {
     this.productsLoaded = this.productsLoaded.bind(this)
     this.purchaseProduct = this.purchaseProduct.bind(this)
     this.state.errors = []
-    this.state.toBuy = true
+    this.state.buyMessage = null
   }
 
   productsLoaded(products) {
@@ -49,11 +49,12 @@ class ProductDetailPage extends Component {
       id: this.props.params.id,
       origin: `hello-retail/web-client-purchase-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
     })
-      .then(
+      .then(() => {
         // browserHistory.push('/categories/')
         this.setState({
-          toBuy: false,
-        }))
+          buyMessage: 'Bought it!',
+        })
+      })
       .catch((error) => {
         // Show error message and re-enable button so user can try again.
         console.log(error)
@@ -61,6 +62,10 @@ class ProductDetailPage extends Component {
           errors: [error],
         })
       })
+
+    this.setState({
+      buyMessage: 'On order.',
+    })
   }
 
   render() {
@@ -68,7 +73,7 @@ class ProductDetailPage extends Component {
     // TODO: Add image
 
     let blurb = null
-    if (this.state.toBuy) {
+    if (!this.state.buyMessage) {
       blurb = <button onClick={this.purchaseProduct}>Buy</button>
     } else {
       blurb = <h4>Bought it!</h4>
