@@ -53,8 +53,7 @@ class ProductDetailPage extends Component {
         // browserHistory.push('/categories/')
         this.setState({
           toBuy: false,
-        })
-      )
+        }))
       .catch((error) => {
         // Show error message and re-enable button so user can try again.
         console.log(error)
@@ -69,9 +68,9 @@ class ProductDetailPage extends Component {
     // TODO: Add image
 
     let blurb = null
-    if(this.state.toBuy){
+    if (this.state.toBuy) {
       blurb = <button onClick={this.purchaseProduct}>Buy</button>
-    }else{
+    } else {
       blurb = <h4>Bought it!</h4>
     }
 
