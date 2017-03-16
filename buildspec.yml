@@ -3,6 +3,7 @@ version: 0.1
 phases:
   install:
     commands:
+      - echo $SHELL
       - printenv
       - chmod 700 $CODEBUILD_SRC_DIR/build/0.env.sh
       - head -50 $CODEBUILD_SRC_DIR/build/0.env.sh
