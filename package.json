@@ -19,6 +19,10 @@
     "create:deploy":        "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Creation API\"                   ./product-creation/api",
     "create:remove":        "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Creation API\"                    ./product-creation/api",
 
+    "purchase:install":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Purchase Dependencies\"            ./product-purchase/api",
+    "purchase:deploy":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Purchase API\"                   ./product-purchase/api",
+    "puchase:remove":       "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Purchase API\"                    ./product-purchase/api",
+
     "catalog:install:1":    "./build/0.env.sh && ./build/1.install.sh \"Installing Product Catalog Dependencies\"             ./product-catalog/builder",
     "catalog:install:2":    "./build/0.env.sh && ./build/1.install.sh \"Installing Product Catalog API\"                      ./product-catalog/api",
     "catalog:install:all":  "npm run catalog:install:1 && npm run catalog:install:2",
