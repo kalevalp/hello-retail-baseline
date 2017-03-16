@@ -86,7 +86,7 @@ resources:
                     - 'kinesis:ListStreams'
                   Resource:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-          - PolicyName: ExecuteStepFunction
+          - PolicyName: ExecuteStepFunction  # see https://forums.aws.amazon.com/thread.jspa?messageID=755476&tstart=0 for StepFunction IAM docs
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
