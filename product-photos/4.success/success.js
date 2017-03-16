@@ -1,8 +1,8 @@
 'use strict'
 
 /**
- * Handle the failure of the process to obtain a photograph from a photographer
- * @param event The event indicating the context of the failed assignment
+ * Handle the success of the process to obtain a photograph from a photographer
+ * @param event The event indicating the context of the successful assignment
  * Example event:
  * {
  *   schema: 'com.nordstrom/retail-stream/1-0-0',
@@ -21,6 +21,8 @@
  *     name: 'Erik',
  *     phone: '+<num>',
  *   },
+ *   image: 'erik.hello-retail.biz/i/p/4579874',
+ *   success: 'true'
  * }
  * @param context see Lambda docs
  * @param callback see Lambda docs
