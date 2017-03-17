@@ -48,8 +48,7 @@ resources:
             - Effect: Allow
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - '${self:custom.private.productImageProvider}'
+                  - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}
                   - Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoReaderWriterArn}
                   - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
               Action: sts:AssumeRole

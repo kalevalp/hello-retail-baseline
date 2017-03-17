@@ -40,9 +40,6 @@ ajv.addSchema(productImageSchema, productImageSchemaId)
  */
 const dynamo = new aws.DynamoDB.DocumentClient()
 const kinesis = new aws.Kinesis()
-kinesis.config.credentials = new aws.TemporaryCredentials({
-  RoleArn: constants.RETAIL_STREAM_WRITER_ARN,
-})
 
 /**
  * Implementation

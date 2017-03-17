@@ -73,6 +73,15 @@ resources:
                       - - 'Fn::GetAtt': [ ReportLogGroup, Arn ]
                         - '*'
           - ${self:custom.productPhotos.deletePhotoAssignment}
+          - PolicyName: WriteToRetailStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: 'Allow'
+                  Action:
+                    - 'kinesis:PutRecord'
+                  Resource:
+                    'Fn::GetAtt': ${self:custom.retailStream.custom.exportRetailStreamArn}
   Outputs:
     ReportLambdaName:
       Description: The Name of the Photo Assignments Report Lambda
