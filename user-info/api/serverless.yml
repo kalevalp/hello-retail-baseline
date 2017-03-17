@@ -10,7 +10,6 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
-  serviceName: ${self:service}
   userInfoApiVersion: 1
   userInfoApi: ${self:}
   # Exports
