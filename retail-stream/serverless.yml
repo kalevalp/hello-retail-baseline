@@ -39,7 +39,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}RetailStreamWriter
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Principal:
@@ -51,7 +51,7 @@ resources:
         Policies:
           - PolicyName: WriteToStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
                 -  Effect: Allow
                    Action:
@@ -66,7 +66,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}RetailStreamReader
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Principal:
@@ -78,7 +78,7 @@ resources:
         Policies:
           - PolicyName: ReadFromStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
                 -  Effect: Allow
                    Action:

@@ -67,7 +67,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPurchaseClient
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -80,9 +80,9 @@ resources:
         Policies:
           - PolicyName: ReadFromApi
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'execute-api:Invoke'
                   Resource:
@@ -97,7 +97,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPurchaseWriter
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -107,15 +107,15 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                     - 'logs:PutLogEvents'
@@ -128,9 +128,9 @@ resources:
 #         # Once that's in place, then won't need the next policy, which would only work same-account anyway.
 #          - PolicyName: WriteToKinesisUsingCrossAccountRole
 #            PolicyDocument:
-#              Version: '2012-10-17'
+#              Version: 2012-10-17
 #              Statement:
-#                - Effect: 'Allow'
+#                - Effect: Allow
 #                  Action:
 #                    - 'sts:AssumeRole'
 #                  Resource:
@@ -138,9 +138,9 @@ resources:
           # This policy works only if the retail stream and the service share the same account.
           - PolicyName: WriteToKinesis
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:

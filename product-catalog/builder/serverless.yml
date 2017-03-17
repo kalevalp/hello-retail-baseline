@@ -47,19 +47,19 @@ functions:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
 #            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
-          startingPosition: 'TRIM_HORIZON'
+          startingPosition: TRIM_HORIZON
 
 resources:
   Resources:
     # Log Group
     CatalogLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-catalog'
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-catalog
         RetentionInDays: 7
     # Product Catalog Tables
     ProductCategory:
-      Type: 'AWS::DynamoDB::Table'
+      Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
           - AttributeName: category
@@ -72,7 +72,7 @@ resources:
           WriteCapacityUnits: 1
         TableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogBuilderVersion}
     ProductCatalog:
-      Type: 'AWS::DynamoDB::Table'
+      Type: AWS::DynamoDB::Table
       Properties:
         AttributeDefinitions:
           - AttributeName: id
@@ -110,7 +110,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogReaderWriter
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -120,20 +120,20 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ CatalogLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -143,9 +143,9 @@ resources:
                         - '*'
           - PolicyName: ReadFromKinesis
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:GetRecords'
                     - 'kinesis:GetShardIterator'
@@ -155,9 +155,9 @@ resources:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: WriteToCatalog
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
@@ -165,7 +165,7 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:UpdateItem'
                    Resource:
@@ -179,7 +179,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogReader${self:custom.productCatalogBuilderVersion}
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -192,9 +192,9 @@ resources:
         Policies:
           - PolicyName: ReadFromCatalog
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Scan'
                    Resource:
@@ -202,7 +202,7 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCategory
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:GetItem'
                      - 'dynamodb:BatchGetItem'
@@ -211,7 +211,7 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Query'
                    Resource:

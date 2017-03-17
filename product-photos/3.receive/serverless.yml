@@ -42,7 +42,7 @@ resources:
   Resources:
     # Log Group
     ReceiveLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-receive'
         RetentionInDays: 7
@@ -53,25 +53,25 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ReceiveRole${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ ReceiveLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -82,17 +82,17 @@ resources:
           - ${self:custom.productPhotos.getPhotoAssignment}
           - PolicyName: StoreImageInBucket
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 's3:putObject'
                   Resource: ${self:custom.productPhotos.bucketArn}/i/p/*
           - PolicyName: SucceedActivityTask
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'states:SendTaskSuccess'
                   Resource: ${self:custom.productPhotos.receiveActivityArn}

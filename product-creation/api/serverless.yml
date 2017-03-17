@@ -68,7 +68,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCreationClient
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -81,9 +81,9 @@ resources:
         Policies:
           - PolicyName: ReadFromApi
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'execute-api:Invoke'
                   Resource:
@@ -100,7 +100,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCreationWriter
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -111,15 +111,15 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                     - 'logs:PutLogEvents'
@@ -130,9 +130,9 @@ resources:
                         - '*'
           - PolicyName: WriteToKinesis
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:

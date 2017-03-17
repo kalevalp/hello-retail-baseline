@@ -136,7 +136,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}HelloRetailWebIdentity
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Principal:
@@ -150,7 +150,7 @@ resources:
         Policies:
           - PolicyName: AllowAssumeProductCatalogReader
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
                 - Effect: Allow
                   Action:

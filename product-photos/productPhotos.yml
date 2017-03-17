@@ -59,9 +59,9 @@ exportPhotoAssignmentsStepFunctionArn: ${self:custom.productPhotos.processName}:
 getPhotoAssignment:
   PolicyName: GetPhotoAssignment
   PolicyDocument:
-    Version: '2012-10-17'
+    Version: 2012-10-17
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:GetItem'
          Resource:
@@ -69,9 +69,9 @@ getPhotoAssignment:
 updatePhotoAssignment:
   PolicyName: UpdatePhotoAssignment
   PolicyDocument:
-    Version: '2012-10-17'
+    Version: 2012-10-17
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:UpdateItem'
          Resource:
@@ -79,9 +79,9 @@ updatePhotoAssignment:
 deletePhotoAssignment:
   PolicyName: DeletePhotoAssignment
   PolicyDocument:
-    Version: '2012-10-17'
+    Version: 2012-10-17
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:DeleteItem'
          Resource:

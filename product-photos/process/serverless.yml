@@ -31,7 +31,7 @@ resources:
           Path: /
           RoleName: ${self:custom.stage}ProductPhotosStepFunction${self:custom.productPhotos.productPhotosVersion}
           AssumeRolePolicyDocument:
-            Version: '2012-10-17'
+            Version: 2012-10-17
             Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -42,9 +42,9 @@ resources:
           Policies:
             - PolicyName: InvokeLambdas
               PolicyDocument:
-                Version: '2012-10-17'
+                Version: 2012-10-17
                 Statement:
-                  - Effect: 'Allow'
+                  - Effect: Allow
                     Action:
                       - 'lambda:InvokeFunction'
                     Resource:

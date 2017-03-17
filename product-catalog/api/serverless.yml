@@ -56,14 +56,14 @@ resources:
   Resources:
     # Log Group
     CategoriesLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-categories'
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-categories
         RetentionInDays: 7
     ProductsLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-products'
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-products
         RetentionInDays: 7
     # Product Catalog Roles
     ProductCatalogApiCategoriesReader: # role for Categories Lambda
@@ -72,7 +72,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogApiCategoriesReader
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -88,14 +88,14 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ CategoriesLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -105,9 +105,9 @@ resources:
                         - '*'
           - PolicyName: ReadFromCategories
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Scan'
                    Resource:
@@ -118,7 +118,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogApiProductsReader
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -128,20 +128,20 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ ProductsLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -151,15 +151,15 @@ resources:
                         - '*'
           - PolicyName: ReadFromProducts
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
 # TODO enable once we are getting single items.
-#                -  Effect: 'Allow'
+#                -  Effect: Allow
 #                   Action:
 #                     - 'dynamodb:GetItem'
 #                   Resource:
 #                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableArn}
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Query'
                    Resource:
@@ -170,7 +170,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogApiClient${self:custom.productCatalogApiVersion}
         AssumeRolePolicyDocument:
-          Version: '2012-10-17'
+          Version: 2012-10-17
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -182,9 +182,9 @@ resources:
         Policies:
           - PolicyName: ReadFromApi
             PolicyDocument:
-              Version: '2012-10-17'
+              Version: 2012-10-17
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'execute-api:Invoke'
                   Resource:
