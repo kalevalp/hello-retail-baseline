@@ -58,11 +58,6 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
                 Service: 'lambda.amazonaws.com'
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -101,7 +96,6 @@ resources:
                   Action:
                     - 'states:SendTaskSuccess'
                   Resource: ${self:custom.productPhotos.receiveActivityArn}
-          - ${self:custom.productPhotos.getPhotoAssignment}
   Outputs:
     ReceiveLambdaName:
       Description: The Name of the Photo Assignments Receive Lambda
