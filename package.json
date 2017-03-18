@@ -66,7 +66,7 @@
     "photos:remove:9":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 6.Report\"               ./product-photos/6.report",
     "photos:remove:10":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - Process\"                ./product-photos/process",
     "photos:remove:11":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 0.Execute\"              ./product-photos/0.execute",
-    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2 && npm run photos:deploy:1",
+    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2 && npm run photos:remove:1",
 
     "web:install":          "./build/0.env.sh && ./build/1.install.sh \"Installing Web App Dependencies\"                     ./web",
     "web:build":            "./build/0.env.sh && ./build/2.sls.sh buildWebApp \"Building Web App\"                            ./web",
