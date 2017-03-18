@@ -6,8 +6,8 @@ custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
   private: ${file(../../private.yml)}
   helloRetail: ${file(../../helloRetail.yml)}
-  retailStream: ${file(../../retail-stream/serverless.yml)}
   retailStreamVersion: 1
+  retailStream: ${file(../../retail-stream/serverless.yml)}
   # Product Catalog Versions & Exports
   # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogBuilderVersion, custom.productCatalogBuilder) in its serverless.yml:
   productCatalogBuilderVersion: 1 # The version of this service to depend upon
@@ -18,7 +18,6 @@ custom:
   exportProductCatalogTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableArn:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableCategoryIndexArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn:${self:custom.productCatalogBuilderVersion}
-  exportProductCatalogReaderArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogReaderArn:${self:custom.productCatalogBuilderVersion}
 
 provider:
   name: aws
@@ -30,14 +29,9 @@ provider:
 functions:
   catalog:
     role:
-      Fn::GetAtt: [ ProductCatalogReaderWriter, Arn ]
+      Fn::GetAtt: [ ProductCatalogBuilder, Arn ]
     handler: catalog.processKinesisEvent
     environment:
-      STAGE: ${self:custom.stage}
-      STREAM_ARN:
-        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-      STREAM_ROLE_ARN:
-        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamReaderArn}
       TABLE_PRODUCT_CATEGORY_NAME:
         Ref: ProductCategory
       TABLE_PRODUCT_CATALOG_NAME:
@@ -104,11 +98,11 @@ resources:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
     # Product Catalog Roles
-    ProductCatalogReaderWriter: # role for the Catalog (Maintaining) Lambda
+    ProductCatalogBuilder: # role for the Catalog (Maintaining) Lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCatalogReaderWriter
+        RoleName: ${self:custom.stage}ProductCatalogBuilder${self:custom.productCatalogBuilderVersion}
         AssumeRolePolicyDocument:
           Version: 2012-10-17
           Statement:
@@ -173,54 +167,6 @@ resources:
                       - '/'
                       - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
                         - Ref: ProductCatalog
-    ProductCatalogReader: # role for consumers of the catalog
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        RoleName: ${self:custom.stage}ProductCatalogReader${self:custom.productCatalogBuilderVersion}
-        AssumeRolePolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
-        ManagedPolicyArns:
-          - ${self:custom.private.teamPolicy}
-        Policies:
-          - PolicyName: ReadFromCatalog
-            PolicyDocument:
-              Version: 2012-10-17
-              Statement:
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:Scan'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCategory
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:GetItem'
-                     - 'dynamodb:BatchGetItem'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCatalog
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:Query'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCatalog
-                        - index
-                        - Category
 
   Outputs:
     ProductCategoryTableName:
@@ -264,9 +210,3 @@ resources:
             - Category
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
-    ProductCatalogReaderArn:
-      Description: The Role ARN for a Product Catalog Reader
-      Value:
-        Fn::GetAtt: [ ProductCatalogReader, Arn ]
-      Export:
-        Name: ${self:custom.exportProductCatalogReaderArn}
