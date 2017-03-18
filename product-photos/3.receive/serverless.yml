@@ -21,7 +21,6 @@ functions:
       Fn::GetAtt: [ ReceiveRole, Arn ]
     handler: receive.handler
     environment:
-      STAGE: ${self:custom.stage}
       IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
       ENDPOINT:
         Fn::Join:
@@ -53,7 +52,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ReceiveRole${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -64,7 +63,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -82,7 +81,7 @@ resources:
           - ${self:custom.productPhotos.getPhotoAssignment}
           - PolicyName: StoreImageInBucket
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -90,7 +89,7 @@ resources:
                   Resource: ${self:custom.productPhotos.bucketArn}/i/p/*
           - PolicyName: SucceedActivityTask
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:

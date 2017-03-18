@@ -62,7 +62,9 @@ custom:
   retailStream: ${file(../retail-stream/serverless.yml)}
   productCatalogBuilderVersion: 1
   productCatalogBuilder: ${file(../product-catalog/builder/serverless.yml)}
+  productCreationApiVersion: 1
   productCreationApi: ${file(../product-creation/api/serverless.yml)}
+  productPurchaseApiVersion: 1
   productPurchaseApi: ${file(../product-purchase/api/serverless.yml)}
   userInfoVersion: 1
   userInfo: ${file(../user-info/serverless.yml)}
@@ -100,11 +102,11 @@ custom:
       ProductCategoryTableName:
         Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
       UserInfoAPI:
-        Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestAPI}
+        Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestApi}
       ProductCreateAPI:
-        Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationRestAPI}
+        Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationRestApi}
       ProductPurchaseAPI:
-        Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestAPI}
+        Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestApi}
     webpackPath: ./webpack.config.js
 
   webApp: ${self:} # externally, use `${file(~/web/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
@@ -136,7 +138,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}HelloRetailWebIdentity
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -148,16 +150,26 @@ resources:
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
-          - PolicyName: AllowAssumeProductCatalogReader
+          - PolicyName: ReadFromProductCatalog
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
-                - Effect: Allow
-                  Action:
-                    - sts:AssumeRole
-                  Resource:
-                    - Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogReaderArn}
-                    - Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:Scan'
+                   Resource:
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:GetItem'
+                     - 'dynamodb:BatchGetItem'
+                   Resource:
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:Query'
+                   Resource:
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
 
     # ===================== S3 =====================
 

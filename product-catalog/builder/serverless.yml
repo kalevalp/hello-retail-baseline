@@ -104,7 +104,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogBuilder${self:custom.productCatalogBuilderVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -120,7 +120,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -137,7 +137,7 @@ resources:
                         - '*'
           - PolicyName: ReadFromKinesis
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -149,7 +149,7 @@ resources:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: WriteToCatalog
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 -  Effect: Allow
                    Action:

@@ -208,27 +208,8 @@ class AmazonLogin extends Component {
   }
 
   assumeProductCatalogReaderRole() {
-    const that = this
-
-    const params = {
-      RoleArn: this.loginConfig.catalogReaderRole,
-      RoleSessionName: this.loginConfig.sessionName,
-    }
-
-    console.log('that.webApplicationIdentityCredentials')
-    console.log(that.webApplicationIdentityCredentials)
-    that.sts.config.credentials = that.webApplicationIdentityCredentials
-
-    return new Promise((resolve, reject) => {
-      that.sts.assumeRole(params, (err, data) => {
-        if (err) {
-          console.error(`Failed to assume ProductCatalogReader role: ${err}`)
-          reject(err)
-        } else {
-          resolve(data)
-        }
-      })
-    })
+    // TODO a cleaner way to change this.  but, since this needs to be switched to reading from ApiGateway API, do the cheap thing
+    Promise.resolve(this.webApplicationIdentityCredentials)
   }
 
   render() {

@@ -25,7 +25,6 @@ functions:
       Fn::GetAtt: [ ProductCatalogApiCategoriesReader, Arn ]
     handler: catalogApi.categories
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATEGORY_NAME:
         Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
     events:
@@ -38,7 +37,6 @@ functions:
       Fn::GetAtt: [ ProductCatalogApiProductsReader, Arn ]
     handler: catalogApi.products
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATALOG_NAME:
         Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
     events:
@@ -67,7 +65,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogApiCategoriesReader${self:custom.productCatalogApiVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -78,7 +76,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -95,7 +93,7 @@ resources:
                         - '*'
           - PolicyName: ReadFromCategories
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 -  Effect: Allow
                    Action:
@@ -108,7 +106,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductCatalogApiProductsReader${self:custom.productCatalogApiVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -119,7 +117,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -136,7 +134,7 @@ resources:
                         - '*'
           - PolicyName: ReadFromProducts
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
 # TODO enable once we are getting single items.
 #                -  Effect: Allow

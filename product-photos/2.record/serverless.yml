@@ -22,7 +22,6 @@ functions:
     handler: record.handler
     timeout: 240
     environment:
-      STAGE: ${self:custom.stage}
       ACTIVITY_RECEIVE_ARN: ${self:custom.productPhotos.receiveActivityArn}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
@@ -42,7 +41,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosRecord${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -53,7 +52,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -70,7 +69,7 @@ resources:
                         - '*'
           - PolicyName: GetAndFailActivityTask
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:

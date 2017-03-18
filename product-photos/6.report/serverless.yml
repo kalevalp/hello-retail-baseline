@@ -23,7 +23,6 @@ functions:
       'Fn::GetAtt': [ ReportRole, Arn ]
     handler: report.handler
     environment:
-      STAGE: ${self:custom.stage}
       RETAIL_STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
       RETAIL_STREAM_WRITER_ARN:
@@ -46,7 +45,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosReport${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -57,7 +56,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -75,13 +74,13 @@ resources:
           - ${self:custom.productPhotos.deletePhotoAssignment}
           - PolicyName: WriteToRetailStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:
-                    'Fn::GetAtt': ${self:custom.retailStream.custom.exportRetailStreamArn}
+                    'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
   Outputs:
     ReportLambdaName:
       Description: The Name of the Photo Assignments Report Lambda

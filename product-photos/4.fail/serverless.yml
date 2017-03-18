@@ -21,7 +21,6 @@ functions:
       'Fn::GetAtt': [ FailRole, Arn ]
     handler: fail.handler
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
@@ -40,7 +39,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosFail${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -51,7 +50,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:

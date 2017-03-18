@@ -23,7 +23,6 @@ functions:
       'Fn::GetAtt': [ ExecuteRole, Arn ]
     handler: execute.processKinesisEvent
     environment:
-      STAGE: ${self:custom.stage}
       STEP_FUNCTION:
         'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
     events:
@@ -48,7 +47,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosExecute${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -59,7 +58,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -76,7 +75,7 @@ resources:
                         - '*'
           - PolicyName: ReadFromKinesis
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -88,7 +87,7 @@ resources:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           - PolicyName: ExecuteStepFunction
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:

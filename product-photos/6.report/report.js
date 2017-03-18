@@ -66,7 +66,7 @@ const impl = {
       const params = {
         Data: JSON.stringify(imageEvent),
         PartitionKey: productId,
-        StreamName: process.env.RETAIL_STREAM_NAME,
+        StreamName: constants.RETAIL_STREAM_NAME,
       }
       kinesis.putRecord(params, callback)
     }

@@ -20,8 +20,6 @@ functions:
     role:
       'Fn::GetAtt': [ AssignRole, Arn ]
     handler: assign.handler
-    environment:
-      STAGE: ${self:custom.stage}
 
 resources:
   Resources:
@@ -38,7 +36,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosAssign${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -49,7 +47,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:

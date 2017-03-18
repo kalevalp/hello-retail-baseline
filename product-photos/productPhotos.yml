@@ -59,7 +59,7 @@ exportPhotoAssignmentsStepFunctionArn: ${self:custom.productPhotos.processName}:
 getPhotoAssignment:
   PolicyName: GetPhotoAssignment
   PolicyDocument:
-    Version: 2012-10-17
+    Version: '2012-10-17'
     Statement:
       -  Effect: Allow
          Action:
@@ -69,7 +69,7 @@ getPhotoAssignment:
 updatePhotoAssignment:
   PolicyName: UpdatePhotoAssignment
   PolicyDocument:
-    Version: 2012-10-17
+    Version: '2012-10-17'
     Statement:
       -  Effect: Allow
          Action:
@@ -79,7 +79,7 @@ updatePhotoAssignment:
 deletePhotoAssignment:
   PolicyName: DeletePhotoAssignment
   PolicyDocument:
-    Version: 2012-10-17
+    Version: '2012-10-17'
     Statement:
       -  Effect: Allow
          Action:

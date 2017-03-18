@@ -37,9 +37,9 @@ resources:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}RetailStreamWriter
+        RoleName: ${self:custom.stage}RetailStreamWriter${self:custom.retailStreamVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -51,7 +51,7 @@ resources:
         Policies:
           - PolicyName: WriteToStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 -  Effect: Allow
                    Action:
@@ -64,9 +64,9 @@ resources:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}RetailStreamReader
+        RoleName: ${self:custom.stage}RetailStreamReader${self:custom.retailStreamVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -78,7 +78,7 @@ resources:
         Policies:
           - PolicyName: ReadFromStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 -  Effect: Allow
                    Action:

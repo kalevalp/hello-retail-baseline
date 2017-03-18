@@ -20,10 +20,6 @@ functions:
     role:
       'Fn::GetAtt': [ SuccessRole, Arn ]
     handler: success.handler
-    environment:
-      STAGE: ${self:custom.stage}
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 resources:
   Resources:
@@ -40,7 +36,7 @@ resources:
         Path: /
         RoleName: ${self:custom.stage}ProductPhotosSuccess${self:custom.productPhotos.productPhotosVersion}
         AssumeRolePolicyDocument:
-          Version: 2012-10-17
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
@@ -51,7 +47,7 @@ resources:
         Policies:
           - PolicyName: CreateAndWriteToLogStream
             PolicyDocument:
-              Version: 2012-10-17
+              Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
@@ -66,7 +62,6 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ SuccessLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.updatePhotoAssignment}
   Outputs:
     SuccessLambdaName:
       Description: The Name of the Photo Assignments Success Lambda
