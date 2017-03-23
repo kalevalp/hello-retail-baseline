@@ -14,14 +14,10 @@ class ProductDetailPage extends Component {
         }),
       }),
       makeApiRequest: PropTypes.func,
-    }),
+    }).isRequired,
     params: PropTypes.shape({
       id: PropTypes.string.isRequired,
     }).isRequired,
-  }
-
-  static defaultProps = {
-    awsLogin: null,
   }
 
   constructor(props) {
