@@ -28,16 +28,14 @@ class ProductDataSource extends Component {
   }
 
   componentDidMount() {
-    const callback = this.props.productsLoaded
-
     this.dynamo = new this.props.awsLogin.aws.DynamoDB()
 
     if (this.props.category) {
       return this.getProductsByCategoryAsync(this.props.category)
-        .then(callback)
+        .then(this.props.productsLoaded)
     } else if (this.props.productId) {
       return this.getProductsByIdAsync(this.props.productId)
-        .then(callback)
+        .then(this.props.productsLoaded)
     } else {
       return Promise.reject(new Error('either category or productId required'))
     }

@@ -23,12 +23,10 @@ class CategoryDataSource extends Component {
   }
 
   componentDidMount() {
-    const callback = this.props.categoriesLoaded
-
     this.dynamo = new this.props.awsLogin.aws.DynamoDB()
 
     this.getCategoriesAsync()
-      .then(callback)
+      .then(this.props.categoriesLoaded)
   }
 
   getCategoriesFromDynamoAsync() {
