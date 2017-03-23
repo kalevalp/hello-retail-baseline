@@ -14,15 +14,11 @@ class AmazonLogin extends Component {
     super(props)
 
     this.loginConfig = {
-      // TODO: Sign requests like: https://github.com/Nordstrom/artillery-plugin-aws-sigv4/blob/master/lib/aws-sigv4.js
-      catalogReaderRole: config.CatalogReaderRole,
       clientId: config.AuthClientId,
       awsRegion: config.AWSRegion,
       sessionName: config.SessionName,
       webAppRole: config.WebAppRole,
     }
-
-    console.log(this.loginConfig)
 
     // Amazon auth options passed to authorize()
     this.authOptions = {
@@ -31,7 +27,6 @@ class AmazonLogin extends Component {
 
     this.assumeWebAppIdentityWithToken = this.assumeWebAppIdentityWithToken.bind(this)
     this.authAmazonLogin = this.authAmazonLogin.bind(this)
-    this.assumeProductCatalogReaderRole = this.assumeProductCatalogReaderRole.bind(this)
     this.componentWillMount = this.componentWillMount.bind(this)
     this.loginClicked = this.loginClicked.bind(this)
     this.retrieveProfile = this.retrieveProfile.bind(this)
@@ -53,34 +48,6 @@ class AmazonLogin extends Component {
     loadjs('https://api-cdn.amazon.com/sdk/login1.js')
   }
 
-  getCredentialsForRole(roleArn) {
-    const that = this
-
-    const params = {
-      RoleArn: roleArn,
-      RoleSessionName: this.loginConfig.sessionName,
-    }
-
-    // TODO: don't rely on current webApp creds to be unexpired -- alter assumeWebAppIdentityWithToken to cache and update if needed
-    // TODO: implement caching for all role credentials
-
-    that.sts.config.credentials = that.webApplicationIdentityCredentials
-
-    return new Promise((resolve, reject) => {
-      that.sts.assumeRole(params, (err, data) => {
-        if (err) {
-          reject(`Failed to assume role ${roleArn}: ${err}`)
-        } else {
-          resolve({
-            accessKeyId: data.Credentials.AccessKeyId,
-            secretAccessKey: data.Credentials.SecretAccessKey,
-            sessionToken: data.Credentials.SessionToken,
-          })
-        }
-      })
-    })
-  }
-
   authAmazonLogin() {
     const that = this
 
@@ -88,15 +55,12 @@ class AmazonLogin extends Component {
       window.amazon.Login.setClientId(that.loginConfig.clientId)
       window.amazon.Login.authorize(that.authOptions, (response) => {
         if (response.error) { reject(response.error) }
-        console.log(response)
         resolve(response)
       })
     })
   }
 
   assumeWebAppIdentityWithToken(token) {
-    const that = this
-
     const params = {
       DurationSeconds: 3600,
       ProviderId: 'www.amazon.com',
@@ -104,15 +68,7 @@ class AmazonLogin extends Component {
       RoleSessionName: this.loginConfig.sessionName,
       WebIdentityToken: token,
     }
-
-    console.log(params)
-
-    return new Promise((resolve, reject) => {
-      that.sts.assumeRoleWithWebIdentity(params, (err, data) => {
-        if (err) { reject(err) }
-        resolve(data)
-      })
-    })
+    return this.sts.assumeRoleWithWebIdentity(params).promise()
   }
 
   loginClicked() {
@@ -125,15 +81,11 @@ class AmazonLogin extends Component {
         return that.assumeWebAppIdentityWithToken(loginResponse.access_token)
       })
       .then((identity) => {
-        console.log('identity')
-        console.log(identity)
-
         that.webApplicationIdentityCredentials = {
           accessKeyId: identity.Credentials.AccessKeyId,
           secretAccessKey: identity.Credentials.SecretAccessKey,
           sessionToken: identity.Credentials.SessionToken,
         }
-
         return that.retrieveProfile()
       })
       .then((profile) => {
@@ -144,11 +96,9 @@ class AmazonLogin extends Component {
             name: profile.Name,
           },
         })
-
         that.aws = AWS
         AWS.config.credentials = that.webApplicationIdentityCredentials
         AWS.config.region = that.loginConfig.awsRegion
-
         return that.sendUserLogin()
       })
       .then(() => {
@@ -205,11 +155,6 @@ class AmazonLogin extends Component {
       postRequest.write(body)
       postRequest.end()
     })
-  }
-
-  assumeProductCatalogReaderRole() {
-    // TODO a cleaner way to change this.  but, since this needs to be switched to reading from ApiGateway API, do the cheap thing
-    Promise.resolve(this.webApplicationIdentityCredentials)
   }
 
   render() {

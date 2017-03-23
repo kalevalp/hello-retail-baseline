@@ -7,7 +7,6 @@ class CategoryDataSource extends Component {
       aws: PropTypes.shape({
         DynamoDB: PropTypes.func,
       }),
-      getCredentialsForRole: PropTypes.func,
     }),
     categoriesLoaded: PropTypes.func.isRequired,
   }
@@ -24,14 +23,12 @@ class CategoryDataSource extends Component {
   }
 
   componentDidMount() {
-    const that = this
+    const callback = this.props.categoriesLoaded
 
     this.dynamo = new this.props.awsLogin.aws.DynamoDB()
 
-    this.props.awsLogin.getCredentialsForRole(config.CatalogReaderRole)
-      .then(creds => (that.dynamo.config.credentials = creds))
-      .then(() => that.getCategoriesAsync())
-      .then(this.props.categoriesLoaded)
+    this.getCategoriesAsync()
+      .then(callback)
   }
 
   getCategoriesFromDynamoAsync() {
@@ -39,18 +36,12 @@ class CategoryDataSource extends Component {
       TableName: config.ProductCategoryTableName,
       AttributesToGet: ['category'],
     }
-
-    return new Promise((resolve, reject) => {
-      this.dynamo.scan(params, (err, data) => {
-        if (err) { reject(err) }
-        resolve(data)
-      })
-    })
+    return this.dynamo.scan(params).promise()
   }
 
   getCategoriesAsync() {
     return this.getCategoriesFromDynamoAsync()
-      .then((data) => {
+      .then((data) => { // report successful results
         const categoriesList = []
         data.Items.forEach((item) => {
           categoriesList.push({
@@ -58,7 +49,7 @@ class CategoryDataSource extends Component {
           })
         })
         return categoriesList
-      }, (error) => { throw new Error(error) })
+      })
   }
 
   render() {

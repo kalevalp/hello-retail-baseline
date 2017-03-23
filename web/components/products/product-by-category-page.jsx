@@ -10,7 +10,6 @@ class ProductCategoryPage extends Component {
       aws: PropTypes.shape({
         DynamoDB: PropTypes.func,
       }),
-      getCredentialsForRole: PropTypes.func,
     }),
     params: PropTypes.shape({
       category: PropTypes.string.isRequired,

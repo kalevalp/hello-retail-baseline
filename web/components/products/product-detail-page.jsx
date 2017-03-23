@@ -7,6 +7,9 @@ import config from '../../config'
 class ProductDetailPage extends Component {
   static propTypes = {
     awsLogin: PropTypes.shape({
+      aws: PropTypes.shape({
+        DynamoDB: PropTypes.func,
+      }),
       state: PropTypes.shape({
         profile: PropTypes.shape({
           email: PropTypes.string,

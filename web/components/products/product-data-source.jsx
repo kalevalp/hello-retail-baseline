@@ -7,7 +7,6 @@ class ProductDataSource extends Component {
       aws: PropTypes.shape({
         DynamoDB: PropTypes.func,
       }),
-      getCredentialsForRole: PropTypes.func,
     }),
     category: PropTypes.string,
     productId: PropTypes.string,
@@ -29,21 +28,19 @@ class ProductDataSource extends Component {
   }
 
   componentDidMount() {
+    const callback = this.props.productsLoaded
+
     this.dynamo = new this.props.awsLogin.aws.DynamoDB()
 
-    this.props.awsLogin.getCredentialsForRole(config.CatalogReaderRole)
-      .then((creds) => {
-        this.dynamo.config.credentials = creds
-      })
-      .then(() => {
-        if (this.props.category) {
-          this.getProductsByCategoryAsync(this.props.category)
-            .then(this.props.productsLoaded)
-        } else if (this.props.productId) {
-          this.getProductsByIdAsync(this.props.productId)
-            .then(this.props.productsLoaded)
-        }
-      })
+    if (this.props.category) {
+      return this.getProductsByCategoryAsync(this.props.category)
+        .then(callback)
+    } else if (this.props.productId) {
+      return this.getProductsByIdAsync(this.props.productId)
+        .then(callback)
+    } else {
+      return Promise.reject(new Error('either category or productId required'))
+    }
   }
 
   getProductByIdFromDynamoAsync(id) {
@@ -57,18 +54,10 @@ class ProductDataSource extends Component {
       ],
       TableName: config.ProductCatalogTableName,
       Key: {
-        id: {
-          S: id.toString(),
-        },
+        id: { S: id.toString() },
       },
     }
-
-    return new Promise((resolve, reject) => {
-      this.dynamo.getItem(params, (err, data) => {
-        if (err) { reject(err) }
-        resolve(data)
-      })
-    })
+    return this.dynamo.getItem(params).promise()
   }
 
   getProductsByIdAsync(id) {
@@ -83,32 +72,26 @@ class ProductDataSource extends Component {
           image: data.Item.image ? data.Item.image.S : null,
         })
         return productList
-      }, (error) => { throw new Error(error) })
+      })
   }
 
   getProductsByCategoryFromDynamoAsync(category) {
     const params = {
-      ProjectionExpression: 'brand, description, #na, id',
+      ProjectionExpression: '#br, #de, #na, id',
       TableName: config.ProductCatalogTableName,
       IndexName: 'Category',
-      KeyConditionExpression: '#ct = :cat',
+      KeyConditionExpression: '#ct = :ct',
       ExpressionAttributeNames: {
-        '#ct': 'category',
+        '#br': 'brand',
+        '#de': 'description',
         '#na': 'name',
+        '#ct': 'category',
       },
       ExpressionAttributeValues: {
-        ':cat': {
-          S: category,
-        },
+        ':ct': { S: category },
       },
     }
-
-    return new Promise((resolve, reject) => {
-      this.dynamo.query(params, (err, data) => {
-        if (err) { reject(err) }
-        resolve(data)
-      })
-    })
+    return this.dynamo.query(params).promise()
   }
 
   getProductsByCategoryAsync(category) {
@@ -123,9 +106,8 @@ class ProductDataSource extends Component {
             id: item.id.S,
           })
         })
-        console.log(JSON.stringify(productList))
         return productList
-      }, (error) => { throw new Error(error) })
+      })
   }
 
   render() {

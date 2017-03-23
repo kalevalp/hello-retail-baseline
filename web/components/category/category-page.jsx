@@ -5,7 +5,7 @@ import CategoryDataSource from './category-data-source'
 class CategoryPage extends Component {
   static propTypes = {
     awsLogin: PropTypes.shape({
-      AWS: PropTypes.shape({
+      aws: PropTypes.shape({
         DynamoDB: PropTypes.func,
       }),
     }),
