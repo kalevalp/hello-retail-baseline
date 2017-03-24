@@ -54,7 +54,6 @@ custom:
   private: ${file(../private.yml)}
 
   helloRetail: ${file(../helloRetail.yml)}
-  # TODO Suspect some strangeness in referencing of external serverless files by productCatalogBuilder requires these be provided
   retailStreamVersion: 1
   retailStream: ${file(../retail-stream/serverless.yml)}
 
