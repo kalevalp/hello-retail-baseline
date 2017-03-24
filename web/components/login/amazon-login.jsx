@@ -31,9 +31,11 @@ class AmazonLogin extends Component {
     this.loginClicked = this.loginClicked.bind(this)
     this.retrieveProfile = this.retrieveProfile.bind(this)
     this.sendUserLogin = this.sendUserLogin.bind(this)
+    this.performLoginAndAssumeIdentity = this.performLoginAndAssumeIdentity.bind(this)
 
     this.state = {
       amazonLoginReady: false,
+      autoLoginAttempted: false,
     }
   }
 
@@ -43,13 +45,17 @@ class AmazonLogin extends Component {
       that.setState({
         amazonLoginReady: true,
       })
+
+      this.performLoginAndAssumeIdentity('never')
     }
 
     loadjs('https://api-cdn.amazon.com/sdk/login1.js')
   }
 
-  authAmazonLogin() {
+  authAmazonLogin(interactive) {
     const that = this
+
+    this.authOptions.ineractive = interactive
 
     return new Promise((resolve, reject) => {
       window.amazon.Login.setClientId(that.loginConfig.clientId)
@@ -71,11 +77,11 @@ class AmazonLogin extends Component {
     return this.sts.assumeRoleWithWebIdentity(params).promise()
   }
 
-  loginClicked() {
+  performLoginAndAssumeIdentity(interactive) {
     const that = this
     this.sts = new AWS.STS()
 
-    this.authAmazonLogin()
+    this.authAmazonLogin(interactive)
       .then((loginResponse) => {
         that.accessToken = loginResponse.access_token
         return that.assumeWebAppIdentityWithToken(loginResponse.access_token)
@@ -86,6 +92,7 @@ class AmazonLogin extends Component {
           secretAccessKey: identity.Credentials.SecretAccessKey,
           sessionToken: identity.Credentials.SessionToken,
         }
+
         return that.retrieveProfile()
       })
       .then((profile) => {
@@ -96,14 +103,20 @@ class AmazonLogin extends Component {
             name: profile.Name,
           },
         })
+
         that.aws = AWS
         AWS.config.credentials = that.webApplicationIdentityCredentials
         AWS.config.region = that.loginConfig.awsRegion
+
         return that.sendUserLogin()
       })
       .then(() => {
         that.props.awsLoginComplete(that)
       })
+  }
+
+  loginClicked() {
+    this.performLoginAndAssumeIdentity('auto')
   }
 
   retrieveProfile() {
@@ -119,10 +132,11 @@ class AmazonLogin extends Component {
   }
 
   sendUserLogin() {
-    this.makeApiRequest(config.UserInfoAPI, 'POST', '/login-user/', {
+    this.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/user-info/login/1-0-0',
       id: this.state.profile.id,
       name: this.state.profile.name,
+      origin: `hello-retail/web-client-login-user/${this.state.profile.email}/${this.state.profile.name}`,
     })
   }
 
@@ -158,6 +172,10 @@ class AmazonLogin extends Component {
   }
 
   render() {
+    if (!this.state.amazonLoginReady || !this.state.autoLoginAttempted) {
+      return (<div> Waiting for Amazon Login...</div>)
+    }
+
     return (
       <div id="amazon-root">
         <button onClick={this.loginClicked} disabled={!this.state.amazonLoginReady}>Amazon Login</button>

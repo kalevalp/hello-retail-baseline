@@ -1,19 +1,17 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-product-purchase-api
-
-# TODO: Consider enforcing schema versions
+service: ${self:custom.helloRetail.name}-event-writer-api
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../../private.yml)}
-  helloRetail: ${file(../../helloRetail.yml)}
+  private: ${file(../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  retailStream: ${file(../retail-stream/serverless.yml)}
   retailStreamVersion: 1
-  retailStream: ${file(../../retail-stream/serverless.yml)}
-  productPurchaseApiVersion: 1
-  productPurchaseApi: ${self:}
+  eventWriterApiVersion: 1 # The version of this service to depend upon
+  eventWriterApi: ${self:} # externally, use `${file(~/event-writer/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
   # Exports
-  exportProductPurchaseRestApi: ${self:custom.productPurchaseApi.service}:${self:custom.stage}:ProductPurchaseRestApi${self:custom.productPurchaseApiVersion}
+  exportEventWriterRestApi: ${self:custom.eventWriterApi.service}:${self:custom.stage}:EventWriterRestApi:${self:custom.eventWriterApiVersion}
 
 provider:
   name: aws
@@ -21,18 +19,20 @@ provider:
   runtime: nodejs4.3
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
+  environment:
+    STAGE: ${self:custom.stage}
 
 functions:
-  productPurchase:
+  eventWriter:
     role:
-      Fn::GetAtt: [ ProductPurchaseWriter, Arn ]
-    handler: productPurchaseApi.productPurchase
+      Fn::GetAtt: [ EventWriter, Arn ]
+    handler: eventWriterApi.eventWriter
     environment:
       STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
     events:
       - http:
-          path: product-purchase
+          path: event-writer
           method: post
           cors:
             origins:
@@ -49,25 +49,24 @@ functions:
 resources:
   Resources:
     # Log Group
-    ProductPurchaseLogGroup:
+    EventWriterLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-productPurchase
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-eventWriter
         RetentionInDays: 7
 
-    # User Information Roles
-    ProductPurchaseWriter: # role for the Product Purchase Lambda to write to logs and to a retail stream deployed in the same account
+    EventWriter: # role for the Event Writer Lambda to write to logs and the Kinesis Stream (retailStream)
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPurchaseWriter${self:custom.productPurchaseApiVersion}
+        RoleName: ${self:custom.stage}EventWriter${self:custom.eventWriterApiVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: lambda.amazonaws.com
+                Service: 'lambda.amazonaws.com'
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -75,38 +74,29 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: Allow
+                - Effect: 'Allow'
                   Action:
                     - 'logs:CreateLogStream'
-                  Resource:
-                    Fn::GetAtt: [ ProductPurchaseLogGroup, Arn ]
-                - Effect: Allow
-                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     - Fn::Join:
                       - ':'
-                      - - Fn::GetAtt: [ ProductPurchaseLogGroup, Arn ]
+                      - - Fn::GetAtt: [ EventWriterLogGroup, Arn ]
                         - '*'
           - PolicyName: WriteToKinesis
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: Allow
+                - Effect: 'Allow'
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
 
-# NOTE: This named gleaned from SLS generated CF template
-#    ApiGatewayMethodUserDashinfoPost:
-#      Properties:
-#        AuthorizationType: AWS_IAM
-
   Outputs:
-    ProductPurchaseRestApi:
-      Description: API used to submit product purchase events
+    EventWriterRestApi:
+      Description: API used to submit producer events to the Kinesis Stream
       Value:
         Ref: ApiGatewayRestApi
       Export:
-        Name: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestApi}
+        Name: ${self:custom.eventWriterApi.custom.exportEventWriterRestApi}

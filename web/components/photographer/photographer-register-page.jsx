@@ -9,6 +9,8 @@ class PhotographerRegisterPage extends Component {
       state: PropTypes.shape({
         profile: PropTypes.shape({
           id: PropTypes.string,
+          email: PropTypes.string,
+          name: PropTypes.string,
         }),
       }),
       makeApiRequest: PropTypes.func,
@@ -41,10 +43,11 @@ class PhotographerRegisterPage extends Component {
     })
 
     // Call user-info api with update-phone event
-    this.props.awsLogin.makeApiRequest(config.UserInfoAPI, 'POST', '/update-phone/', {
+    this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/user-info/update-phone/1-0-0',
       id: this.props.awsLogin.state.profile.id,
       phone: phoneNumber,
+      origin: `hello-retail/web-client-update-phone/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
     })
     .then(() => {
       this.setState({

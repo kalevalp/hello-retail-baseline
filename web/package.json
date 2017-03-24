@@ -3,8 +3,5 @@
   "version": "1.0.0",
   "description": "Web application that provides the front end to Hello Retail.",
   "repository": "https://github.com/Nordstrom/hello-retail",
-  "license": "MIT",
-  "devDependencies": {
-    "depoly-web-app-plugin": "file:./deploy-web-app-plugin"
-  }
+  "license": "MIT"
 }

@@ -9,7 +9,7 @@ custom:
   # Retail Stream Versions & Exports
   # WARNING: each project that uses these will have to define the following two attributes in its serverless.yml: (custom.retailStreamVersion, custom.retailStream)
   retailStreamVersion: 1 # The version of this service to depend upon
-  retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']  userInfoApiVersion: 1
+  retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
   # Exports
   exportRetailStreamName: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamName:${self:custom.retailStreamVersion}
   exportRetailStreamArn: ${self:custom.retailStream.service}:${self:custom.stage}:RetailStreamArn:${self:custom.retailStreamVersion}
@@ -33,7 +33,9 @@ resources:
       Properties:
         Name: ${self:custom.stage}RetailStream
         ShardCount: 10
-    RetailStreamWriter: # role for producers
+
+    # Role for direct producers
+    RetailStreamWriter:
       Type: AWS::IAM::Role
       Properties:
         Path: /
@@ -60,7 +62,8 @@ resources:
                      - 'kinesis:PutRecords'
                    Resource:
                      Fn::GetAtt: [ RetailStream, Arn ]
-    RetailStreamReader: # role for consumers
+    # Role for direct consumers
+    RetailStreamReader:
       Type: AWS::IAM::Role
       Properties:
         Path: /

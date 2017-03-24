@@ -1,7 +1,7 @@
 /* global document */
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Router, Route, IndexRoute, browserHistory } from 'react-router'
+import { Router, Route, IndexRoute, hashHistory } from 'react-router'
 
 import App from './app'
 import CategoryPage from './category/category-page'
@@ -12,7 +12,7 @@ import ProductDetailPage from './products/product-detail-page'
 import RoleSelectionPage from './roles/role-selection-page'
 
 ReactDOM.render(
-  (<Router history={browserHistory}>
+  (<Router history={hashHistory}>
     <Route path="/" component={App}>
       <IndexRoute component={RoleSelectionPage} />
 

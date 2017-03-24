@@ -64,6 +64,10 @@ class NewProductPage extends Component {
   resetProduct() {
     this.setState({
       submittedProduct: true,
+      category: '',
+      name: '',
+      brand: '',
+      description: '',
     })
   }
 
@@ -75,7 +79,7 @@ class NewProductPage extends Component {
       isProductValid: false,
     })
 
-    this.props.awsLogin.makeApiRequest(config.ProductCreateAPI, 'POST', '/product-create/', {
+    this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/product/create/1-0-0',
       id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
       origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
@@ -95,7 +99,7 @@ class NewProductPage extends Component {
   }
 
   ackCreateProduct() {
-    this.setState(this.emptyProduct)
+    this.resetProduct()
     this.setState({
       submittedProduct: false,
     })

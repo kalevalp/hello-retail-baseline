@@ -23,9 +23,6 @@ custom:
       - HelloRetailWebDistribution
       - DomainName
 
-  # Hosted Zone ID for all of CloudFormation.
-  cloudFrontHostedZoneId: Z2FDTNDATAQYW2
-
   # Public domain for the site e.g. hello-retail.biz
   domainName: ${self:custom.private.domainName}
 
@@ -57,19 +54,14 @@ custom:
   private: ${file(../private.yml)}
 
   helloRetail: ${file(../helloRetail.yml)}
-
+  # TODO Suspect some strangeness in referencing of external serverless files by productCatalogBuilder requires these be provided
   retailStreamVersion: 1
   retailStream: ${file(../retail-stream/serverless.yml)}
+
+  eventWriterApiVersion: 1
+  eventWriterApi: ${file(../event-writer/serverless.yml)}
   productCatalogBuilderVersion: 1
   productCatalogBuilder: ${file(../product-catalog/builder/serverless.yml)}
-  productCreationApiVersion: 1
-  productCreationApi: ${file(../product-creation/api/serverless.yml)}
-  productPurchaseApiVersion: 1
-  productPurchaseApi: ${file(../product-purchase/api/serverless.yml)}
-  userInfoVersion: 1
-  userInfo: ${file(../user-info/serverless.yml)}
-  userInfoApiVersion: 1
-  userInfoApi: ${file(../user-info/api/serverless.yml)}
 
   s3Bucket:
     Fn::Join: # e.g. s3://stage.hello-retail.biz/
@@ -99,12 +91,8 @@ custom:
         Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
       ProductCategoryTableName:
         Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
-      UserInfoAPI:
-        Fn::ImportValue: ${self:custom.userInfoApi.custom.exportUserInfoRestApi}
-      ProductCreateAPI:
-        Fn::ImportValue: ${self:custom.productCreationApi.custom.exportProductCreationRestApi}
-      ProductPurchaseAPI:
-        Fn::ImportValue: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestApi}
+      EventWriterApi:
+        Fn::ImportValue: ${self:custom.eventWriterApi.custom.exportEventWriterRestApi}
     webpackPath: ./webpack.config.js
 
   webApp: ${self:} # externally, use `${file(~/web/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
@@ -250,12 +238,12 @@ resources:
           Type: A
           AliasTarget:
             DNSName: ${self:custom.cloudFrontDomainName}
-            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
+            HostedZoneId: ${self:custom.hostedZoneId}
         - Name: ${self:custom.dnsHostName}
           Type: AAAA
           AliasTarget:
             DNSName: ${self:custom.cloudFrontDomainName}
-            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
+            HostedZoneId: ${self:custom.hostedZoneId}
       DependsOn:
         - HelloRetailWebDistribution
 

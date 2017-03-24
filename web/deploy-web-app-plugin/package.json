@@ -1,7 +1,0 @@
-{
-  "name": "deploy-web-app-plugin",
-  "version": "1.0.0",
-  "description": "Plugin that deploys the web application to S3.",
-  "author": "",
-  "license": "MIT"
-}
