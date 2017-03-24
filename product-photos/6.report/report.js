@@ -40,9 +40,6 @@ ajv.addSchema(productImageSchema, productImageSchemaId)
  */
 const dynamo = new aws.DynamoDB.DocumentClient()
 const kinesis = new aws.Kinesis()
-kinesis.config.credentials = new aws.TemporaryCredentials({
-  RoleArn: constants.RETAIL_STREAM_WRITER_ARN,
-})
 
 /**
  * Implementation
@@ -69,7 +66,7 @@ const impl = {
       const params = {
         Data: JSON.stringify(imageEvent),
         PartitionKey: productId,
-        StreamName: process.env.RETAIL_STREAM_NAME,
+        StreamName: constants.RETAIL_STREAM_NAME,
       }
       kinesis.putRecord(params, callback)
     }

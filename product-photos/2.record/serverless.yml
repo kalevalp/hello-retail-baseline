@@ -22,7 +22,6 @@ functions:
     handler: record.handler
     timeout: 240
     environment:
-      STAGE: ${self:custom.stage}
       ACTIVITY_RECEIVE_ARN: ${self:custom.productPhotos.receiveActivityArn}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
@@ -31,7 +30,7 @@ resources:
   Resources:
     # Log Group
     RecordLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-record'
         RetentionInDays: 7
@@ -47,7 +46,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -55,12 +54,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ RecordLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -72,7 +71,7 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'states:GetActivityTask'
                     - 'states:SendTaskFailure'

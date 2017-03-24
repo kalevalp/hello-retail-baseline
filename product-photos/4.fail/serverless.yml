@@ -21,7 +21,6 @@ functions:
       'Fn::GetAtt': [ FailRole, Arn ]
     handler: fail.handler
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
@@ -29,7 +28,7 @@ resources:
   Resources:
     # Log Group
     FailLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-fail'
         RetentionInDays: 7
@@ -45,7 +44,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -53,12 +52,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ FailLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:

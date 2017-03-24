@@ -21,7 +21,6 @@ functions:
       Fn::GetAtt: [ ReceiveRole, Arn ]
     handler: receive.handler
     environment:
-      STAGE: ${self:custom.stage}
       IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
       ENDPOINT:
         Fn::Join:
@@ -42,7 +41,7 @@ resources:
   Resources:
     # Log Group
     ReceiveLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-receive'
         RetentionInDays: 7
@@ -58,12 +57,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -71,12 +65,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ ReceiveLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -89,7 +83,7 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 's3:putObject'
                   Resource: ${self:custom.productPhotos.bucketArn}/i/p/*
@@ -97,11 +91,10 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'states:SendTaskSuccess'
                   Resource: ${self:custom.productPhotos.receiveActivityArn}
-          - ${self:custom.productPhotos.getPhotoAssignment}
   Outputs:
     ReceiveLambdaName:
       Description: The Name of the Photo Assignments Receive Lambda

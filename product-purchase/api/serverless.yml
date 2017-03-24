@@ -10,12 +10,10 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
-  serviceName: ${self:service}
+  productPurchaseApiVersion: 1
   productPurchaseApi: ${self:}
   # Exports
-  exportProductPurchaseClientArn: ${self:custom.productPurchaseApi.service}:${self:custom.stage}:ProductPurchaseClientArn
-#  exportProductPurchaseWriterArn: ${self:custom.productPurchaseApi.service}:${self:custom.stage}:ProductPurchaseWriterArn # TODO re-instate if lambda will do cross-account assumption of a role
-  exportProductPurchaseRestAPI: ${self:custom.productPurchaseApi.service}:${self:custom.stage}:ProductPurchaseRestAPI
+  exportProductPurchaseRestApi: ${self:custom.productPurchaseApi.service}:${self:custom.stage}:ProductPurchaseRestApi${self:custom.productPurchaseApiVersion}
 
 provider:
   name: aws
@@ -32,10 +30,6 @@ functions:
     environment:
       STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
-      # TODO re-instate if lambda will do cross-account assumption of a role, will need for sts.assumeRole
-      # STAGE: ${self:custom.stage}
-      # STREAM_WRITER_ROLE:
-      #   Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
     events:
       - http:
           path: product-purchase
@@ -62,53 +56,18 @@ resources:
         RetentionInDays: 7
 
     # User Information Roles
-    ProductPurchaseClient: # role for consumers of the Product Purchase API
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        RoleName: ${self:custom.stage}ProductPurchaseClient
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                AWS: # role ARNs that are allowed to call the Product Purchase API
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
-        ManagedPolicyArns:
-          - ${self:custom.private.teamPolicy}
-        Policies:
-          - PolicyName: ReadFromApi
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'execute-api:Invoke'
-                  Resource:
-                    Fn::Join:
-                      - ''
-                      - - 'arn:aws:execute-api:${self:provider.region}:${self:custom.private.accountId}:'
-                        - Ref: ApiGatewayRestApi
-                        - '/${self:custom.stage}/*/*'
     ProductPurchaseWriter: # role for the Product Purchase Lambda to write to logs and to a retail stream deployed in the same account
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPurchaseWriter
+        RoleName: ${self:custom.stage}ProductPurchaseWriter${self:custom.productPurchaseApiVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to write to logs and retail stream
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -116,32 +75,24 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ ProductPurchaseLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     - Fn::Join:
                       - ':'
                       - - Fn::GetAtt: [ ProductPurchaseLogGroup, Arn ]
                         - '*'
-#         # TODO For the lambda to assume a cross-account role, it first needs code to sts.assumeRole the RetailStreamWriter Role
-#         # Once that's in place, then won't need the next policy, which would only work same-account anyway.
-#          - PolicyName: WriteToKinesisUsingCrossAccountRole
-#            PolicyDocument:
-#              Version: '2012-10-17'
-#              Statement:
-#                - Effect: 'Allow'
-#                  Action:
-#                    - 'sts:AssumeRole'
-#                  Resource:
-#                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
-          # This policy works only if the retail stream and the service share the same account.
           - PolicyName: WriteToKinesis
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:
@@ -153,25 +104,9 @@ resources:
 #        AuthorizationType: AWS_IAM
 
   Outputs:
-    ProductPurchaseClientArn:
-      Description: Arn for role used by clients of the Product Purchase API
-      Value:
-        Fn::GetAtt: [ ProductPurchaseClient, Arn ]
-      Export:
-        Name: ${self:custom.productPurchaseApi.custom.exportProductPurchaseClientArn}
-#    # Not useful without cross-account assumption of RetailStreamWriter role by the lambda, in which case this role
-#    # below would need to register with RetailStreamWriter.
-#    # TODO re-instate if lambda will do cross-account assumption of a role
-#    ProductPurchaseWriterArn:
-#      Description: A role allowing for writing to kinesis
-#      Value:
-#        Fn::GetAtt: [ ProductPurchaseWriter, Arn ]
-#      Export:
-#        Name: ${self:custom.productPurchaseApi.custom.exportProductPurchaseWriterArn}
-    # NB Below is defined in the Cloud Formation templates generated by Serverless in the .serverless directory
-    ProductPurchaseRestAPI:
+    ProductPurchaseRestApi:
       Description: API used to submit product purchase events
       Value:
         Ref: ApiGatewayRestApi
       Export:
-        Name: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestAPI}
+        Name: ${self:custom.productPurchaseApi.custom.exportProductPurchaseRestApi}

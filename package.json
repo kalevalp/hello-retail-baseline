@@ -8,9 +8,9 @@
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
 
     "root:install":         "./build/0.env.sh && ./build/1.install.sh \"Installing Top-Level Project Dependencies\"            .",
-    "root:install:all":     "npm run root:install && npm run catalog:install:all && npm run photos:install:all",
-    "root:deploy:all":      "npm run stream:deploy && npm run create:deploy && npm run catalog:deploy:all && npm run photos:deploy:all && npm run web:deploy:all",
-    "root:remove:all":      "npm run web:remove:all && npm run photos:deploy:all && npm run catalog:deploy:all && npm run create:deploy && npm run stream:deploy",
+    "root:install:all":     "npm run root:install && npm run create:install && npm run purchase:install && npm run userInfo:install && npm run catalog:install:all && npm run photos:install:all && npm run web:install",
+    "root:deploy:all":      "npm run stream:deploy && npm run create:deploy && npm run purchase:deploy && npm run userInfo:deploy && npm run catalog:deploy:all && npm run photos:deploy:all && npm run web:deploy:all",
+    "root:remove:all":      "npm run web:remove:all && npm run photos:remove:all && npm run catalog:remove:all && npm run userInfo:remove && npm run purchase:remove && npm run create:remove && npm run stream:remove",
 
     "stream:deploy":        "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Retail Stream\"                          ./retail-stream",
     "stream:remove":        "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Retail Stream\"                           ./retail-stream",
@@ -21,7 +21,11 @@
 
     "purchase:install":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Purchase Dependencies\"            ./product-purchase/api",
     "purchase:deploy":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Purchase API\"                   ./product-purchase/api",
-    "puchase:remove":       "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Purchase API\"                    ./product-purchase/api",
+    "purchase:remove":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Purchase API\"                    ./product-purchase/api",
+
+    "userInfo:install":     "./build/0.env.sh && ./build/1.install.sh \"Installing User Info Dependencies\"                   ./user-info/api",
+    "userInfo:deploy":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying User Info API\"                          ./user-info/api",
+    "userInfo:remove":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing User Info API\"                           ./user-info/api",
 
     "catalog:install:1":    "./build/0.env.sh && ./build/1.install.sh \"Installing Product Catalog Dependencies\"             ./product-catalog/builder",
     "catalog:install:2":    "./build/0.env.sh && ./build/1.install.sh \"Installing Product Catalog API\"                      ./product-catalog/api",
@@ -66,7 +70,7 @@
     "photos:remove:9":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 6.Report\"               ./product-photos/6.report",
     "photos:remove:10":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - Process\"                ./product-photos/process",
     "photos:remove:11":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 0.Execute\"              ./product-photos/0.execute",
-    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2 && npm run photos:deploy:1",
+    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2 && npm run photos:remove:1",
 
     "web:install":          "./build/0.env.sh && ./build/1.install.sh \"Installing Web App Dependencies\"                     ./web",
     "web:build":            "./build/0.env.sh && ./build/2.sls.sh buildWebApp \"Building Web App\"                            ./web",

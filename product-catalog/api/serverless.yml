@@ -8,14 +8,9 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
-  productCatalogVersion: 1
-  productCatalog: ${file(../builder/serverless.yml)}
-  # Product Catalog Versions & Exports
-  # WARNING: each project that uses these will have to define the following two attributes (custom.productCatalogApiVersion, custom.productCatalogApi) in its serverless.yml:
-  productCatalogApiVersion: 1 # The version of this service to depend upon
-  productCatalogApi: ${self:} # externally, use `${file(~/product-catalog/api/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
-  # Exports
-  exportProductCatalogApiClient: ${self:custom.productCatalogApi.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogVersion}
+  productCatalogBuilderVersion: 1
+  productCatalogBuilder: ${file(../builder/serverless.yml)}
+  productCatalogApiVersion: 1
 
 provider:
   name: aws
@@ -30,9 +25,8 @@ functions:
       Fn::GetAtt: [ ProductCatalogApiCategoriesReader, Arn ]
     handler: catalogApi.categories
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATEGORY_NAME:
-        Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCategoryTableName}
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
     events:
       - http:
           path: categories
@@ -43,9 +37,8 @@ functions:
       Fn::GetAtt: [ ProductCatalogApiProductsReader, Arn ]
     handler: catalogApi.products
     environment:
-      STAGE: ${self:custom.stage}
       TABLE_PRODUCT_CATALOG_NAME:
-        Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableName}
+        Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
     events:
       - http:
           path: products
@@ -56,33 +49,28 @@ resources:
   Resources:
     # Log Group
     CategoriesLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-categories'
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-categories
         RetentionInDays: 7
     ProductsLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-products'
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-products
         RetentionInDays: 7
     # Product Catalog Roles
     ProductCatalogApiCategoriesReader: # role for Categories Lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCatalogApiCategoriesReader
+        RoleName: ${self:custom.stage}ProductCatalogApiCategoriesReader${self:custom.productCatalogApiVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -90,12 +78,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ CategoriesLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -107,28 +95,23 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                -  Effect: 'Allow'
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Scan'
                    Resource:
-                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCategoryTableArn}
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
     ProductCatalogApiProductsReader: # role for Products Lambda
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCatalogApiProductsReader
+        RoleName: ${self:custom.stage}ProductCatalogApiProductsReader${self:custom.productCatalogApiVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -136,12 +119,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     Fn::GetAtt: [ ProductsLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -154,49 +137,13 @@ resources:
               Version: '2012-10-17'
               Statement:
 # TODO enable once we are getting single items.
-#                -  Effect: 'Allow'
+#                -  Effect: Allow
 #                   Action:
 #                     - 'dynamodb:GetItem'
 #                   Resource:
-#                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableArn}
-                -  Effect: 'Allow'
+#                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
+                -  Effect: Allow
                    Action:
                      - 'dynamodb:Query'
                    Resource:
-                    Fn::ImportValue: ${self:custom.productCatalog.custom.exportProductCatalogTableCategoryIndexArn}
-    ApiClient: # role for consumers of the Product Catalog API
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        RoleName: ${self:custom.stage}ProductCatalogApiClient${self:custom.productCatalogApiVersion}
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                AWS: # role ARNs that are allowed to read from the Product Catalog
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-        ManagedPolicyArns:
-          - ${self:custom.private.teamPolicy}
-        Policies:
-          - PolicyName: ReadFromApi
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'execute-api:Invoke'
-                  Resource:
-                    Fn::Join:
-                      - ''
-                      - - 'arn:aws:execute-api:${self:provider.region}:${self:custom.private.accountId}:'
-                        - Ref: ApiGatewayRestApi
-                        - '/${self:custom.stage}/*/*'
-  Outputs:
-    ProductCatalogApiClient:
-      Description: A role for clients of the Product Catalog API
-      Value:
-        Ref: ApiClient
-      Export:
-        Name: ${self:custom.productCatalogApi.custom.exportProductCatalogApiClient}
+                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}

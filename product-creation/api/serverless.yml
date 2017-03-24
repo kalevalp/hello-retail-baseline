@@ -10,14 +10,10 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStreamVersion: 1
   retailStream: ${file(../../retail-stream/serverless.yml)}
-  serviceName: ${self:service}
-  userInfoApiVersion: 1
-  userInfoApi: ${file(../../user-info/api/serverless.yml)}
+  productCreationApiVersion: 1
   productCreationApi: ${self:}
   # Exports
-  exportProductCreationClientArn: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationClientArn
-  exportProductCreationWriterArn: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationReaderWriterArn
-  exportProductCreationRestAPI: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationRestAPI
+  exportProductCreationRestApi: ${self:custom.productCreationApi.service}:${self:custom.stage}:ProductCreationRestApi:${self:custom.productCreationApiVersion}
 
 provider:
   name: aws
@@ -32,9 +28,6 @@ functions:
       Fn::GetAtt: [ ProductCreationWriter, Arn ]
     handler: productCreationApi.productCreate
     environment:
-      STAGE: ${self:custom.stage}
-      STREAM_WRITER_ROLE:
-        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
       STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
     events:
@@ -61,58 +54,19 @@ resources:
       Properties:
         LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-productCreate
         RetentionInDays: 7
-
     # User Information Roles
-    ProductCreationClient: # role for consumers of the Product Create API
-      Type: AWS::IAM::Role
-      Properties:
-        Path: /
-        RoleName: ${self:custom.stage}ProductCreationClient
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                AWS: # role ARNs that are allowed to call the Product Create API
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}HelloRetailWebIdentity'
-        ManagedPolicyArns:
-          - ${self:custom.private.teamPolicy}
-        Policies:
-          - PolicyName: ReadFromApi
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: 'Allow'
-                  Action:
-                    - 'execute-api:Invoke'
-                  Resource:
-                    Fn::Join:
-                      - ''
-                      - - 'arn:aws:execute-api:${self:provider.region}:${self:custom.private.accountId}:'
-                        - Ref: ApiGatewayRestApi
-                        - '/${self:custom.stage}/*/*'
-
-    # TODO: When implementing builder, create new role and transfer Kinesis read and Dynamo write rights to that service's role
     ProductCreationWriter: # role for the Product Create Lambdas
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductCreationWriter
+        RoleName: ${self:custom.stage}ProductCreationWriter${self:custom.productCreationApiVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                AWS: # role ARNs that are allowed to call the Product Create API
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.stage}RetailStreamWriter'
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -120,9 +74,13 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ ProductCreationLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
                     - 'logs:PutLogEvents'
                   Resource:
                     - Fn::Join:
@@ -133,12 +91,11 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:PutRecord'
                   Resource:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-
 
     # NOTE: This named gleaned from SLS generated CF template
 #    ApiGatewayMethodUserDashinfoPost:
@@ -146,21 +103,9 @@ resources:
 #        AuthorizationType: AWS_IAM
 
   Outputs:
-    ProductCreationClientArn:
-      Description: Arn for role used by clients of the Product Create API
-      Value:
-        Fn::GetAtt: [ ProductCreationClient, Arn ]
-      Export:
-        Name: ${self:custom.productCreationApi.custom.exportProductCreationClientArn}
-    ProductCreationWriterArn:
-      Description: A role allowing for reading from kinesis and writing to dynamo
-      Value:
-        Fn::GetAtt: [ ProductCreationWriter, Arn ]
-      Export:
-        Name: ${self:custom.productCreationApi.custom.exportProductCreationWriterArn}
-    ProductCreationRestAPI:
+    ProductCreationRestApi:
       Description: API used to submit product creation events
       Value:
         Ref: ApiGatewayRestApi
       Export:
-        Name: ${self:custom.productCreationApi.custom.exportProductCreationRestAPI}
+        Name: ${self:custom.productCreationApi.custom.exportProductCreationRestApi}

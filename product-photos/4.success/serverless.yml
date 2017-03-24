@@ -20,16 +20,12 @@ functions:
     role:
       'Fn::GetAtt': [ SuccessRole, Arn ]
     handler: success.handler
-    environment:
-      STAGE: ${self:custom.stage}
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 resources:
   Resources:
     # Log Group
     SuccessLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-success'
         RetentionInDays: 7
@@ -45,7 +41,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -53,12 +49,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ SuccessLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -66,7 +62,6 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ SuccessLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.updatePhotoAssignment}
   Outputs:
     SuccessLambdaName:
       Description: The Name of the Photo Assignments Success Lambda

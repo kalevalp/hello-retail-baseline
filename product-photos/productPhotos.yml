@@ -61,7 +61,7 @@ getPhotoAssignment:
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:GetItem'
          Resource:
@@ -71,7 +71,7 @@ updatePhotoAssignment:
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:UpdateItem'
          Resource:
@@ -81,7 +81,7 @@ deletePhotoAssignment:
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:DeleteItem'
          Resource:

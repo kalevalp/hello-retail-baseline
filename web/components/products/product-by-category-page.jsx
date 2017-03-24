@@ -6,19 +6,10 @@ import ProductDataSource from './product-data-source'
 
 class ProductCategoryPage extends Component {
   static propTypes = {
-    awsLogin: PropTypes.shape({
-      aws: PropTypes.shape({
-        DynamoDB: PropTypes.func,
-      }),
-      getCredentialsForRole: PropTypes.func,
-    }),
+    awsLogin: PropTypes.shape({}).isRequired,
     params: PropTypes.shape({
       category: PropTypes.string.isRequired,
     }).isRequired,
-  }
-
-  static defaultProps = {
-    awsLogin: null,
   }
 
   constructor(props) {

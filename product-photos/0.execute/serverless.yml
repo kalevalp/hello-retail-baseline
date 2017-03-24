@@ -23,7 +23,6 @@ functions:
       'Fn::GetAtt': [ ExecuteRole, Arn ]
     handler: execute.processKinesisEvent
     environment:
-      STAGE: ${self:custom.stage}
       STEP_FUNCTION:
         'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
     events:
@@ -31,13 +30,13 @@ functions:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
 #            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
           enabled: true
-          startingPosition: 'TRIM_HORIZON'
+          startingPosition: TRIM_HORIZON
 
 resources:
   Resources:
     # Log Group
     ExecuteLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-execute'
         RetentionInDays: 7
@@ -53,7 +52,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -61,12 +60,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ ExecuteLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -78,7 +77,7 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'kinesis:GetRecords'
                     - 'kinesis:GetShardIterator'
@@ -90,7 +89,7 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'states:StartExecution'
                   Resource:
