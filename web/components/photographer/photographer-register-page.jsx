@@ -9,7 +9,6 @@ class PhotographerRegisterPage extends Component {
       state: PropTypes.shape({
         profile: PropTypes.shape({
           id: PropTypes.string,
-          email: PropTypes.string,
           name: PropTypes.string,
         }),
       }),
@@ -47,7 +46,7 @@ class PhotographerRegisterPage extends Component {
       schema: 'com.nordstrom/user-info/update-phone/1-0-0',
       id: this.props.awsLogin.state.profile.id,
       phone: phoneNumber,
-      origin: `hello-retail/web-client-update-phone/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
+      origin: `hello-retail/web-client-update-phone/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
     })
     .then(() => {
       this.setState({
@@ -86,10 +85,11 @@ class PhotographerRegisterPage extends Component {
 
     return (
       <div>
-        <h4><em>Photographer Registration</em></h4>
+        <h3><em>Photographer Registration</em></h3>
         <div>
           <label>
             Phone Number:
+            <br />
             <input value={this.state.phoneNumber} onChange={this.phoneNumberChange} />
             <br />
             <h5>(Additional charges may apply.)</h5>

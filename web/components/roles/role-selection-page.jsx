@@ -10,7 +10,7 @@ class RoleSelectionPage extends Component {
   render() {
     return (
       <div>
-        <h4><em>Select Role</em></h4>
+        <h3><em>Select Role</em></h3>
         <div><Link to={'/merchant/'}> Merchant </Link></div>
         <div><Link to={'/photographer/'}> Photographer </Link></div>
         <div><Link to={'/categories/'}> Customer </Link></div>

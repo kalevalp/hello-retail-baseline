@@ -9,7 +9,7 @@ class ProductDetailPage extends Component {
     awsLogin: PropTypes.shape({
       state: PropTypes.shape({
         profile: PropTypes.shape({
-          email: PropTypes.string,
+          id: PropTypes.string,
           name: PropTypes.string,
         }),
       }),
@@ -36,7 +36,7 @@ class ProductDetailPage extends Component {
       brand: p.brand,
       description: p.description,
       id: p.id,
-      image: `https://${p.image}`,
+      image: p.image ? `https://${p.image}` : null,
     })
   }
 
@@ -44,7 +44,7 @@ class ProductDetailPage extends Component {
     this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/product/purchase/1-0-0',
       id: this.props.params.id,
-      origin: `hello-retail/web-client-purchase-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
+      origin: `hello-retail/web-client-purchase-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
     })
       .then(() => {
         // browserHistory.push('/categories/')

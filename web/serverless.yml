@@ -23,6 +23,9 @@ custom:
       - HelloRetailWebDistribution
       - DomainName
 
+  # Hosted Zone ID for all of CloudFormation.
+  cloudFrontHostedZoneId: Z2FDTNDATAQYW2
+
   # Public domain for the site e.g. hello-retail.biz
   domainName: ${self:custom.private.domainName}
 
@@ -32,9 +35,6 @@ custom:
       - ProductionStage
       - ${self:custom.domainName}
       - ${self:custom.stage}.${self:custom.domainName}
-
-  # Hosted Zone ID for website DNS.
-  hostedZoneId: ${self:custom.private.hostedZoneId}
 
   # FQDN for direct access to S3 bucket website.
   originDomainName:
@@ -237,12 +237,12 @@ resources:
           Type: A
           AliasTarget:
             DNSName: ${self:custom.cloudFrontDomainName}
-            HostedZoneId: ${self:custom.hostedZoneId}
+            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
         - Name: ${self:custom.dnsHostName}
           Type: AAAA
           AliasTarget:
             DNSName: ${self:custom.cloudFrontDomainName}
-            HostedZoneId: ${self:custom.hostedZoneId}
+            HostedZoneId: ${self:custom.cloudFrontHostedZoneId}
       DependsOn:
         - HelloRetailWebDistribution
 

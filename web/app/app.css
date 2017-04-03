@@ -1,7 +1,7 @@
 .app {
   font-size: 120%;
-  max-width: 20em;
   text-align: center;
+  width: 100%;
 }
 
 label {
@@ -18,17 +18,14 @@ label {
 }
 
 .productName {
-  text-align:left;
   font-size: x-large;
 }
 
 .productBrand {
-  text-align:left;
   font-size: large;
 }
 
 .productDesc {
-  text-align:left;
 }
 
 .productImage {
@@ -58,4 +55,45 @@ label {
 
 .errorMessage {
   color: red;
+}
+
+.homeLink {
+  position: absolute;
+  left: 1em;
+  top: 1em;
+  font-size: 120%;
+  text-decoration: none !important;
+}
+
+
+button:not(.awsLoginButton) {
+  color: black;
+  background-color: cornflowerblue;
+  boder: 3px solid black;
+  border-radius: 15px;
+  padding: 10px 30px;
+  margin: 1em;
+}
+
+.awsLoginButton {
+  border: none;
+  background-color: transparent;
+}
+
+@media only screen and (max-device-width: 480px) {
+  .homeLink {
+    font-size: 300%;
+  }
+
+  * {
+    font-size: 120%;
+  }
+
+  input {
+    border: 2px solid black;
+  }
+
+  .awsLoginButton img {
+    width: 320px;
+  }
 }

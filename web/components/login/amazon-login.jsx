@@ -35,7 +35,7 @@ class AmazonLogin extends Component {
 
     this.state = {
       amazonLoginReady: false,
-      autoLoginAttempted: false,
+      autoLoginFailed: false,
     }
   }
 
@@ -55,7 +55,7 @@ class AmazonLogin extends Component {
   authAmazonLogin(interactive) {
     const that = this
 
-    this.authOptions.ineractive = interactive
+    this.authOptions.interactive = interactive
 
     return new Promise((resolve, reject) => {
       window.amazon.Login.setClientId(that.loginConfig.clientId)
@@ -99,7 +99,6 @@ class AmazonLogin extends Component {
         that.setState({
           profile: {
             id: profile.CustomerId,
-            email: profile.PrimaryEmail,
             name: profile.Name,
           },
         })
@@ -112,6 +111,11 @@ class AmazonLogin extends Component {
       })
       .then(() => {
         that.props.awsLoginComplete(that)
+      })
+      .catch(() => {
+        that.setState({
+          autoLoginFailed: true,
+        })
       })
   }
 
@@ -132,11 +136,11 @@ class AmazonLogin extends Component {
   }
 
   sendUserLogin() {
-    this.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
+    this.makeApiRequest(config.EventWriterAPI, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/user-info/login/1-0-0',
       id: this.state.profile.id,
       name: this.state.profile.name,
-      origin: `hello-retail/web-client-login-user/${this.state.profile.email}/${this.state.profile.name}`,
+      origin: `hello-retail/web-client-login-user/${this.state.profile.id}/${this.state.profile.name}`,
     })
   }
 
@@ -172,13 +176,19 @@ class AmazonLogin extends Component {
   }
 
   render() {
-    if (!this.state.amazonLoginReady || !this.state.autoLoginAttempted) {
+    if (!this.state.amazonLoginReady || !this.state.autoLoginFailed) {
       return (<div> Waiting for Amazon Login...</div>)
     }
 
     return (
       <div id="amazon-root">
-        <button onClick={this.loginClicked} disabled={!this.state.amazonLoginReady}>Amazon Login</button>
+        <button onClick={this.loginClicked} className="awsLoginButton">
+          <img
+            src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
+            disabled={!this.state.amazonLoginReady}
+            alt="Amazon Login"
+          />
+        </button>
       </div>
     )
   }

@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Link } from 'react-router'
 import AmazonLogin from './login/amazon-login'
 import config from '../config'
 
@@ -33,13 +34,17 @@ class App extends Component {
     }
 
     return (
-      <div className="app text-center container" >
-        <h2>{config.WebAppName}</h2>
-        { this.state.loggedIn ? (<em>Welcome {app.state.awsLogin.state.profile.name}</em>) : null }
-        <div className="content">
-          {children}
+      <div>
+        <Link className="homeLink glyphicon glyphicon-home" to={'/'} />
+        <div className="app text-center container" >
+          <h1>{config.WebAppName}</h1>
+          { this.state.loggedIn ? (<h4>Welcome <em>{app.state.awsLogin.state.profile.name}</em></h4>) : null }
+          <hr />
+          <div className="content">
+            {children}
+          </div>
+          {config.Stage !== 'prod' ? (<h6 className="stageLabel">{config.Stage}</h6>) : null }
         </div>
-        {config.Stage !== 'prod' ? (<h6 className="stageLabel">{config.Stage}</h6>) : null }
       </div>
     )
   }

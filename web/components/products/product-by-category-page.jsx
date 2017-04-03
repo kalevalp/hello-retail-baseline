@@ -29,7 +29,7 @@ class ProductCategoryPage extends Component {
   render() {
     return (
       <div>
-        <h4>{this.state.category}</h4>
+        <h3>{this.state.category}</h3>
         <ProductList products={this.state.productsList} category={this.state.category} />
         <ProductDataSource awsLogin={this.props.awsLogin} category={this.state.category} productsLoaded={this.productsLoaded} />
       </div>

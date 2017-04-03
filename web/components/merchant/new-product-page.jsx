@@ -8,7 +8,7 @@ class NewProductPage extends Component {
     awsLogin: PropTypes.shape({
       state: PropTypes.shape({
         profile: PropTypes.shape({
-          email: PropTypes.string,
+          id: PropTypes.string,
           name: PropTypes.string,
         }),
       }),
@@ -82,7 +82,7 @@ class NewProductPage extends Component {
     this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
       schema: 'com.nordstrom/product/create/1-0-0',
       id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
-      origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.email}/${this.props.awsLogin.state.profile.name}`,
+      origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
       category: product.category,
       name: product.name,
       brand: product.brand,
@@ -116,7 +116,7 @@ class NewProductPage extends Component {
     if (this.state.submittedProduct) {
       return (
         <div>
-          <h4>Product {this.state.name} has been created!</h4>
+          <h2>Product {this.state.name} has been created!</h2>
           <p>Press OK to add another product.</p>
           <button onClick={this.ackCreateProduct}>OK</button>
         </div>
@@ -125,28 +125,28 @@ class NewProductPage extends Component {
 
     return (
       <div>
-        <h4><em>Create New Product</em></h4>
+        <h3><em>Create New Product</em></h3>
         <div>
           <label>
-            Category:
+            Category:<br />
             <input value={this.state.category} onChange={this.categoryChange} />
           </label>
         </div>
         <div>
           <label>
-            Name:
+            Name:<br />
             <input value={this.state.name} onChange={this.nameChange} />
           </label>
         </div>
         <div>
           <label>
-            Brand:
+            Brand:<br />
             <input value={this.state.brand} onChange={this.brandChange} />
           </label>
         </div>
         <div>
           <label>
-            Description:
+            Description:<br />
             <input value={this.state.description} onChange={this.descriptionChange} />
           </label>
         </div>
