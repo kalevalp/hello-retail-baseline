@@ -83,10 +83,10 @@ class NewProductPage extends Component {
       schema: 'com.nordstrom/product/create/1-0-0',
       id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
       origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
-      category: product.category,
-      name: product.name,
-      brand: product.brand,
-      description: product.description,
+      category: product.category.trim(),
+      name: product.name.trim(),
+      brand: product.brand.trim(),
+      description: product.description.trim(),
     })
     .then(this.resetProduct)
     .catch((error) => {
@@ -106,10 +106,18 @@ class NewProductPage extends Component {
   }
 
   handleProductChange(property, event) {
+    let value = event.target.value
+
+    // Check for and remove any null characters
+    while (value.indexOf(0) >= 0 && value.length) {
+      value = value.replace(0, '')
+    }
+
     this.setState({
-      [property]: event.target.value,
+      [property]: value,
     })
-    this.validateProduct(property, event.target.value)
+
+    this.validateProduct(property, value)
   }
 
   render() {
