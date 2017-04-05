@@ -106,18 +106,11 @@ class NewProductPage extends Component {
   }
 
   handleProductChange(property, event) {
-    let value = event.target.value
-
-    // Check for and remove any null characters
-    while (value.indexOf(0) >= 0 && value.length) {
-      value = value.replace(0, '')
-    }
-
     this.setState({
-      [property]: value,
+      [property]: event.target.value,
     })
 
-    this.validateProduct(property, value)
+    this.validateProduct(property, event.target.value)
   }
 
   render() {
