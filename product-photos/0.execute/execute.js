@@ -184,12 +184,16 @@ module.exports = {
             record.kinesis &&
             record.kinesis.data
           ) {
+            let parsed
             try {
-              const payload = new Buffer(record.kinesis.data, 'base64').toString('ascii')
+              const payload = new Buffer(record.kinesis.data, 'base64').toString()
               console.log(`${constants.MODULE} ${constants.METHOD_PROCESS_KINESIS_EVENT} - payload: ${payload}`)
-              impl.processEvent(JSON.parse(payload), complete)
+              parsed = JSON.parse(payload)
             } catch (ex) {
               complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} failed to decode and parse the data - "${ex.stack}".`)
+            }
+            if (parsed) {
+              impl.processEvent(parsed, complete)
             }
           } else {
             complete(`${constants.METHOD_PROCESS_EVENT} ${constants.BAD_MSG} record missing kinesis data.`)
