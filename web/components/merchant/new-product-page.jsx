@@ -118,8 +118,7 @@ class NewProductPage extends Component {
       return (
         <div>
           <h2>Product {this.state.name} has been created!</h2>
-          <p>Press OK to add another product.</p>
-          <button onClick={this.ackCreateProduct}>OK</button>
+          <button onClick={this.ackCreateProduct}>Add More</button>
         </div>
       )
     }
@@ -148,7 +147,7 @@ class NewProductPage extends Component {
         <div>
           <label>
             Description:<br />
-            <input value={this.state.description} onChange={this.descriptionChange} />
+            <textarea rows="10" value={this.state.description} onChange={this.descriptionChange} />
           </label>
         </div>
         <ValidationErrors errors={this.state.errors} />

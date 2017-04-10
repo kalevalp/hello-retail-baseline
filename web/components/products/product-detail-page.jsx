@@ -49,7 +49,7 @@ class ProductDetailPage extends Component {
       .then(() => {
         // browserHistory.push('/categories/')
         this.setState({
-          buyMessage: 'Bought it!',
+          buyMessage: 'Order Placed.',
         })
       })
       .catch((error) => {
@@ -61,7 +61,7 @@ class ProductDetailPage extends Component {
       })
 
     this.setState({
-      buyMessage: 'Submitting order.',
+      buyMessage: 'Please wait...',
     })
   }
 

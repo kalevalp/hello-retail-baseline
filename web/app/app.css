@@ -80,16 +80,25 @@ button:not(.awsLoginButton) {
   background-color: transparent;
 }
 
+input, textarea {
+  border: 1px solid silver;
+}
+
+textarea {
+  width: 100%;
+  margin-right: 136px;
+}
+
 @media only screen and (max-device-width: 480px) {
   .homeLink {
     font-size: 300%;
   }
 
-  * {
+  *, textarea {
     font-size: 120%;
   }
 
-  input {
+  input, textarea {
     border: 2px solid black;
   }
 
