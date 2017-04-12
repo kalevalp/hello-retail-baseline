@@ -15,7 +15,7 @@ class CategoryPage extends Component {
 
   categoriesLoaded(categories) {
     this.setState({
-      categoryList: categories,
+      categoryList: categories.sort((l, r) => l.name.localeCompare(r.name)),
     })
   }
 
