@@ -7,14 +7,14 @@
     "test": "./node_modules/.bin/mocha --recursive -R min ./**/*.spec.js",
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
 
-    "root:install":         "./build/0.env.sh && ./build/1.install.sh \"Installing Top-Level Project Dependencies\"            .",
+    "root:install":         "./build/0.env.sh && ./build/1.install.sh \"Installing Top-Level Project Dependencies\"           .",
     "root:install:all":     "npm run root:install && npm run writer:install && npm run catalog:install:all && npm run photos:install:all && npm run web:install",
     "root:deploy:all":      "npm run stream:deploy && npm run writer:deploy && npm run catalog:deploy:all && npm run photos:deploy:all && npm run web:deploy:all",
     "root:remove:all":      "npm run web:remove:all && npm run photos:remove:all && npm run catalog:remove:all && npm run writer:remove && npm run stream:remove",
 
-    "writer:install":       "./build/0.env.sh && ./build/1.install.sh \"Installing Event Writer Dependencies\"               ./event-writer",
-    "writer:deploy":        "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Event Writer\"                          ./event-writer",
-    "writer:remove":        "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Event Writer\"                           ./event-writer",
+    "writer:install":       "./build/0.env.sh && ./build/1.install.sh \"Installing Event Writer Dependencies\"                ./event-writer",
+    "writer:deploy":        "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Event Writer\"                           ./event-writer",
+    "writer:remove":        "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Event Writer\"                            ./event-writer",
 
     "stream:deploy":        "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Retail Stream\"                          ./retail-stream",
     "stream:remove":        "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Retail Stream\"                           ./retail-stream",
@@ -31,12 +31,13 @@
     "catalog:remove:2":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Catalog API\"                     ./product-catalog/api",
     "catalog:remove:all":   "npm run catalog:remove:2 && npm run catalog:remove:1",
 
-    "photos:install:1":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Execute Dependencies\"    ./product-photos/0.execute",
-    "photos:install:2":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Message Dependencies\"    ./product-photos/2.message",
-    "photos:install:3":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Receive Dependencies\"    ./product-photos/3.receive",
-    "photos:install:4":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Unmessage Dependencies\"  ./product-photos/5.unmessage",
-    "photos:install:5":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Report Dependencies\"     ./product-photos/6.report",
-    "photos:install:all":   "npm run photos:install:1 && npm run photos:install:2 && npm run photos:install:3 && npm run photos:install:4 && npm run photos:install:5",
+    "photos:install:1":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Processor Dependencies\"  ./product-photos/0.processor",
+    "photos:install:2":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Assign Dependencies\"     ./product-photos/1.assign",
+    "photos:install:3":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Message Dependencies\"    ./product-photos/2.message",
+    "photos:install:4":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Receive Dependencies\"    ./product-photos/3.receive",
+    "photos:install:5":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Unmessage Dependencies\"  ./product-photos/5.unmessage",
+    "photos:install:6":     "./build/0.env.sh && ./build/1.install.sh \"Installing Product Photos - Report Dependencies\"     ./product-photos/6.report",
+    "photos:install:all":   "npm run photos:install:1 && npm run photos:install:2 && npm run photos:install:3 && npm run photos:install:4 && npm run photos:install:5 && npm run photos:install:6",
 
     "photos:deploy:1":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - Data\"                  ./product-photos/data",
     "photos:deploy:2":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - 1.Assign\"              ./product-photos/1.assign",
@@ -48,7 +49,7 @@
     "photos:deploy:8":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - 5.Unmessage\"           ./product-photos/5.unmessage",
     "photos:deploy:9":      "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - 6.Report\"              ./product-photos/6.report",
     "photos:deploy:10":     "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - Process\"               ./product-photos/process",
-    "photos:deploy:11":     "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - 0.Execute\"             ./product-photos/0.execute",
+    "photos:deploy:11":     "./build/0.env.sh && ./build/2.sls.sh deploy \"Deploying Product Photos - 0.Processor\"           ./product-photos/0.processor",
     "photos:deploy:all":    "npm run photos:deploy:1 && npm run photos:deploy:2 && npm run photos:deploy:3 && npm run photos:deploy:4 && npm run photos:deploy:5 && npm run photos:deploy:6 && npm run photos:deploy:7 && npm run photos:deploy:8 && npm run photos:deploy:9 && npm run photos:deploy:10 && npm run photos:deploy:11",
 
     "photos:remove:1":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - Data\"                   ./product-photos/data",
@@ -61,7 +62,7 @@
     "photos:remove:8":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 5.Unmessage\"            ./product-photos/5.unmessage",
     "photos:remove:9":      "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 6.Report\"               ./product-photos/6.report",
     "photos:remove:10":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - Process\"                ./product-photos/process",
-    "photos:remove:11":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 0.Execute\"              ./product-photos/0.execute",
+    "photos:remove:11":     "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Product Photos - 0.Processor\"            ./product-photos/0.processor",
     "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2 && npm run photos:remove:1",
 
     "web:install":          "./build/0.env.sh && ./build/1.install.sh \"Installing Web App Dependencies\"                     ./web",

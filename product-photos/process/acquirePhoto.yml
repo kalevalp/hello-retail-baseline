@@ -15,11 +15,24 @@ States:
       - ErrorEquals:
           - States.ALL
         Next: AssignPhotographerError
-    Next: SendAssignmentNotice
+    Next: CheckAssignment
   AssignPhotographerError:
     Type: Fail
     Cause: Repeated Failure Assigning Photographer
     Error: RepeatedFailure
+  CheckAssignment:
+    Type: Choice
+    Choices:
+      - Variable: '$.assigned'
+        StringEquals: 'false'
+        Next: WaitAssignment
+      - Variable: '$.assigned'
+        StringEquals: 'true'
+        Next: SendAssignmentNotice
+  WaitAssignment:
+    Type: Wait
+    Seconds: 15
+    Next: AssignPhotographer
   SendAssignmentNotice:
     Type: Task
     Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.messageName}-${self:custom.stage}-message
@@ -121,12 +134,12 @@ States:
   RetryOrComplete:
     Type: Choice
     Choices:
-      - Variable: '$.success'
-        StringEquals: 'true'
-        Next: CompleteAssignment
-      - Variable: '$.success'
+      - Variable: '$.assignmentComplete'
         StringEquals: 'false'
         Next: SendUnassignmentNotice
+      - Variable: '$.assignmentComplete'
+        StringEquals: 'true'
+        Next: CompleteAssignment
   SendUnassignmentNotice:
     Type: Task
     Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.productPhotos.unmessageName}-${self:custom.stage}-unmessage

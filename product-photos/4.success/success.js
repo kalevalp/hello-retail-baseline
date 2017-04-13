@@ -22,7 +22,7 @@
  *     phone: '+<num>',
  *   },
  *   image: 'erik.hello-retail.biz/i/p/4579874',
- *   success: 'true'
+ *   assignmentComplete: 'false'
  * }
  * @param context see Lambda docs
  * @param callback see Lambda docs
@@ -31,7 +31,7 @@ exports.handler = (event, context, callback) => {
   console.log(JSON.stringify(event))
 
   const result = event
-  result.success = 'true'
+  result.assignmentComplete = 'true'
   callback(null, result)
 }
 

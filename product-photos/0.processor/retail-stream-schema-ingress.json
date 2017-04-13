@@ -8,14 +8,15 @@
   },
   "type": "object",
   "properties": {
-    "schema":      { "type": "string", "format": "url" },
+    "schema":      { "type": "string" },
     "followsFrom": { "type": "string" },
+    "eventId":     { "type": "string" },
     "origin":      { "type": "string" },
     "timeOrigin":  { "type": "string", "format": "date-time" },
     "data": {
       "type": "object",
       "properties": {
-        "schema": { "type": "string", "format": "url" }
+        "schema": { "type": "string" }
       },
       "required": [
         "schema"

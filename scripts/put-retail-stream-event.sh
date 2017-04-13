@@ -12,7 +12,5 @@ if [ ! -e $3 ]
     exit 1
 fi
 
-json_data=`cat $3`
-
-aws kinesis put-record --stream-name $1RetailStream --data "${json_data//\"/\\\"}" --partition-key $2
+aws kinesis put-record --stream-name $1RetailStream --data "$(cat $3)" --partition-key $2
 

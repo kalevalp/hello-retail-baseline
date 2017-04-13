@@ -27,6 +27,8 @@ functions:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
       RETAIL_STREAM_WRITER_ARN:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
@@ -71,6 +73,7 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ ReportLogGroup, Arn ]
                         - '*'
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
           - ${self:custom.productPhotos.deletePhotoAssignment}
           - PolicyName: WriteToRetailStream
             PolicyDocument:

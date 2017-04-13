@@ -20,6 +20,9 @@ functions:
     role:
       'Fn::GetAtt': [ AssignRole, Arn ]
     handler: assign.handler
+    environment:
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
 
 resources:
   Resources:
@@ -62,6 +65,8 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ AssignLogGroup, Arn ]
                         - '*'
+          - ${self:custom.productPhotos.queryPhotoRegistrationsAssignmentsIndex}
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
   Outputs:
     AssignLambdaName:
       Description: The Name of the Photo Assignments Assign Lambda

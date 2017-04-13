@@ -65,7 +65,7 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ FailLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.updatePhotoAssignment}
+          - ${self:custom.productPhotos.deletePhotoAssignment}
   Outputs:
     FailLambdaName:
       Description: The Name of the Photo Assignments Fail Lambda

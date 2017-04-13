@@ -21,8 +21,8 @@ functions:
       'Fn::GetAtt': [ UnmessageRole, Arn ]
     handler: unmessage.handler
     environment:
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
       TWILIO_ACCOUNT_SID_ENCRYPTED: ${self:custom.private.twilio.accountSid}
       TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
       TWILIO_NUMBER: ${self:custom.private.twilio.${self:custom.stage}.number}
@@ -68,6 +68,7 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ UnmessageLogGroup, Arn ]
                         - '*'
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
   Outputs:
     UnmessageLambdaName:
       Description: The Name of the Photo Assignments Unmessage Lambda

@@ -21,8 +21,6 @@ functions:
       'Fn::GetAtt': [ MessageRole, Arn ]
     handler: message.handler
     environment:
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
       TWILIO_ACCOUNT_SID_ENCRYPTED: ${self:custom.private.twilio.accountSid}
       TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
       TWILIO_NUMBER: ${self:custom.private.twilio.${self:custom.stage}.number}
