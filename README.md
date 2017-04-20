@@ -45,7 +45,6 @@ If you are responsible for deploying this system, you'll want to do the followin
 ```yaml
 # Login with Amazon
 loginWithAmazonClientId: amzn1.application-oa2-client.0c5b13fba4be0ae5b7c1816481fc93a
-                                                      
 loginWithAmazonAppId: amzn1.application.0bfd7ce688a440a1a0a1ad215923053e1
 ```
 
