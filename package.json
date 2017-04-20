@@ -114,6 +114,7 @@
     "eslint-plugin-jsx-a11y": "^3.0.2",
     "eslint-plugin-react": "^6.9.0",
     "https-proxy-agent": "^1.0.0",
+    "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git",
     "js-yaml": "^3.7.0",
     "jsdom": "^9.9.1",
     "json-loader": "^0.5.4",
