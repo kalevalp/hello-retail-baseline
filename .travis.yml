@@ -1,4 +1,15 @@
 language: node_js
 node_js:
   - "4.3.2"
-script: npm run test && npm run lint
+install: npm run root:install:all
+script:
+  - provider: script
+    script: npm run test
+  - provider: script
+    script: npm run lint
+#  - provider: script # TODO
+#    script: npm run root:deploy:all # ci
+#  - provider: script
+#    script: npm run root:integration:all
+#  - provider: script
+#    script: npm run root:deploy:all # demo
