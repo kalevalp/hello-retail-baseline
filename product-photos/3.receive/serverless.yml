@@ -1,0 +1,110 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.productPhotos.receiveName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  receive:
+    role:
+      Fn::GetAtt: [ ReceiveRole, Arn ]
+    handler: receive.handler
+    environment:
+      IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
+      ENDPOINT:
+        Fn::Join:
+          - ''
+          - - https://
+            - Ref: ApiGatewayRestApi
+            - .execute-api.us-west-2.amazonaws.com/${self:custom.stage}/sms
+      TABLE_PHOTO_ASSIGNMENTS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
+    events:
+      - http:
+          path: sms
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    # Log Group
+    ReceiveLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-receive'
+        RetentionInDays: 7
+    # Roles
+    ReceiveRole: # role for Categories Lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ReceiveRole${self:custom.productPhotos.productPhotosVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ ReceiveLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ ReceiveLogGroup, Arn ]
+                        - '*'
+          - ${self:custom.productPhotos.getPhotoAssignment}
+          - PolicyName: StoreImageInBucket
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 's3:putObject'
+                  Resource: ${self:custom.productPhotos.bucketArn}/i/p/*
+          - PolicyName: SucceedActivityTask
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'states:SendTaskSuccess'
+                  Resource: ${self:custom.productPhotos.receiveActivityArn}
+  Outputs:
+    ReceiveLambdaName:
+      Description: The Name of the Photo Assignments Receive Lambda
+      Value:
+        Ref: ReceiveLambdaFunction
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsReceiveLambdaName}
+    ReceiveLambdaArn:
+      Description: The Name of the Photo Assignments Receive Lambda
+      Value:
+        'Fn::GetAtt': [ ReceiveLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsReceiveLambdaArn}

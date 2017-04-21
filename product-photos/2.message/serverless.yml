@@ -1,0 +1,81 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.productPhotos.messageName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  message:
+    role:
+      'Fn::GetAtt': [ MessageRole, Arn ]
+    handler: message.handler
+    environment:
+      TWILIO_ACCOUNT_SID_ENCRYPTED: ${self:custom.private.twilio.accountSid}
+      TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
+      TWILIO_NUMBER: ${self:custom.private.twilio.${self:custom.stage}.number}
+
+resources:
+  Resources:
+    # Log Group
+    MessageLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-message'
+        RetentionInDays: 7
+    # Role
+    MessageRole: # role for the assignment messaging lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosMessage${self:custom.productPhotos.productPhotosVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ MessageLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ MessageLogGroup, Arn ]
+                        - '*'
+  Outputs:
+    MessageLambdaName:
+      Description: The Name of the Photo Assignments Message Lambda
+      Value:
+        Ref: MessageLambdaFunction
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsMessageLambdaName}
+    MessageLambdaArn:
+      Description: The ARN of the Photo Assignments Message Lambda
+      Value:
+        'Fn::GetAtt': [ MessageLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsMessageLambdaArn}

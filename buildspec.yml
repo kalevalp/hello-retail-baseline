@@ -1,0 +1,43 @@
+version: 0.1
+
+phases:
+  install:
+    commands:
+      - echo $SHELL
+      - printenv
+      - chmod 700 $CODEBUILD_SRC_DIR/build/0.env.sh
+      - head -50 $CODEBUILD_SRC_DIR/build/0.env.sh
+      - echo
+      - node --version
+      - npm --version
+      #- npm install -g serverless
+      - npm install -g git+https://github.com/erikerikson/serverless.git#allow-self-reference
+
+      - sls --version
+      - echo
+      # Is this up to date?
+      - aws s3 sync s3://com.$COMPANY.$TEAM.serverless.$REGION/secrets/hello-retail . --region $REGION
+      - ls -l
+      - head -50 ./private.yml
+      - echo
+  pre_build:
+    commands:
+      - chmod 700 $CODEBUILD_SRC_DIR/build/1.install.sh
+      - head -50 $CODEBUILD_SRC_DIR/build/1.install.sh
+      - npm run root:install       # Root Project (Dev Dependencies)
+      - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies"       $CODEBUILD_SRC_DIR/product-creation/lambda
+      - npm run catalog:install:all # Product Catalog
+      - npm run photos:install:all # Product Photos
+      - npm run purchase:install:all # Product Purchase
+  build:
+    commands:
+      - npm run test
+      - npm run lint
+      - chmod 700 $CODEBUILD_SRC_DIR/build/2.sls.sh
+      - head -50 $CODEBUILD_SRC_DIR/build/2.sls.sh
+      - npm run stream:deploy     # Core Stream
+      # Product Creation
+      - $CODEBUILD_SRC_DIR/build/2.sls.sh "Deploying New Products Simulator"       $CODEBUILD_SRC_DIR/product-creation/lambda
+      - npm run catalog:deploy:all # Product Catalog
+      - npm run photos:deploy:all # Product Photos
+      - npm run purchase:deploy:all # Product Purchase

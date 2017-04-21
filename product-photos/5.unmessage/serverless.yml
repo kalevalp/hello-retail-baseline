@@ -1,0 +1,84 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.productPhotos.unmessageName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  unmessage:
+    role:
+      'Fn::GetAtt': [ UnmessageRole, Arn ]
+    handler: unmessage.handler
+    environment:
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
+      TWILIO_ACCOUNT_SID_ENCRYPTED: ${self:custom.private.twilio.accountSid}
+      TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
+      TWILIO_NUMBER: ${self:custom.private.twilio.${self:custom.stage}.number}
+
+resources:
+  Resources:
+    # Log Group
+    UnmessageLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-unmessage'
+        RetentionInDays: 7
+    # Role
+    UnmessageRole: # role for the assignment messaging lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosUnmessage${self:custom.productPhotos.productPhotosVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ UnmessageLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ UnmessageLogGroup, Arn ]
+                        - '*'
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
+  Outputs:
+    UnmessageLambdaName:
+      Description: The Name of the Photo Assignments Unmessage Lambda
+      Value:
+        Ref: UnmessageLambdaFunction
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsUnmessageLambdaName}
+    UnmessageLambdaArn:
+      Description: The ARN of the Photo Assignments Unmessage Lambda
+      Value:
+        'Fn::GetAtt': [ UnmessageLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsUnmessageLambdaArn}

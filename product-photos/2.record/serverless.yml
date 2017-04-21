@@ -1,0 +1,92 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.productPhotos.recordName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  productPhotos: ${file(../productPhotos.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs4.3
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  record:
+    role:
+      'Fn::GetAtt': [ RecordRole, Arn ]
+    handler: record.handler
+    timeout: 240
+    environment:
+      ACTIVITY_RECEIVE_ARN: ${self:custom.productPhotos.receiveActivityArn}
+      TABLE_PHOTO_ASSIGNMENTS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+
+resources:
+  Resources:
+    # Log Group
+    RecordLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-record'
+        RetentionInDays: 7
+    # Role
+    RecordRole: # role for the assignment recording lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPhotosRecord${self:custom.productPhotos.productPhotosVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ RecordLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ RecordLogGroup, Arn ]
+                        - '*'
+          - PolicyName: GetAndFailActivityTask
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'states:GetActivityTask'
+                    - 'states:SendTaskFailure'
+                  Resource: ${self:custom.productPhotos.receiveActivityArn}
+          - ${self:custom.productPhotos.updatePhotoAssignment}
+  Outputs:
+    RecordLambdaName:
+      Description: The Name of the Photo Assignments Record Lambda
+      Value:
+        Ref: RecordLambdaFunction
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsRecordLambdaName}
+    RecordLambdaArn:
+      Description: The Name of the Photo Assignments Record Lambda
+      Value:
+        'Fn::GetAtt': [ RecordLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.productPhotos.exportPhotoAssignmentsRecordLambdaArn}
