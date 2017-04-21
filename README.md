@@ -36,6 +36,22 @@ If you are responsible for deploying this system, you'll want to do the followin
     <stage>: +12345678901 # full `+<countryCode>` and 10 digit number
   ```
 
+5. Create an [Login with Amazon](http://login.amazon.com/) account to add authentication and identity using oAuth.
+
+6. In the *Login with Amazon Developer Center* -> Sign into the *App Console* -> *Register new application* button. Fill out requested information about the application.
+
+7. Copy the _Application ID_ to the `private.yml` in the property `loginWithAmazonAppId` and the _Client ID_ to the property `loginWithAmazonClientId`:
+
+```yaml
+# Login with Amazon
+loginWithAmazonClientId: amzn1.application-oa2-client.0c5b13fba4be0ae5b7c1816481fc93a
+loginWithAmazonAppId: amzn1.application.0bfd7ce688a440a1a0a1ad215923053e1
+```
+
+8. Expand *Web Settings* and click the *Edit* button.
+
+9. In the *Allowed JavaScript Origins* enter the Fully Qualified Domain Name for your hosted websites, e.g. `https://<stage>.<example.com>` where `stage` will be the name of the stage web application when deployed, and `example.com` is the registered domain name. Local development requires that `https://localhost:7700` is allowed as an origin. This application does not employ return URLs. Once the list of origins is complete, click "Save". 
+
 ## Deploy
 
 To deploy the entirety of the project, execute the following from the repository's root directory:
