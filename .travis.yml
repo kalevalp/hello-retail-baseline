@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - "4.3.2"
 install: npm run root:install:all
-script: npm run test && npm run lint && printenv
+script: printenv && npm run test && npm run lint
 #deploy:
 #  - provider: script # TODO
 #    script: npm run root:deploy:all # ci
