@@ -34,10 +34,10 @@ build/Release
 node_modules
 jspm_packages
 
-#IDE
+# IDE
 **/.idea
 
-#OS
+# OS
 .DS_Store
 .tmp
 
@@ -47,5 +47,8 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 
-#Serverless
+# Serverless
 **/.serverless
+
+# Web Project
+web/config.js
