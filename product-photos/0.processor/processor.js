@@ -17,6 +17,7 @@ const constants = {
   // methods
   METHOD_START_EXECUTION: 'startExecution',
   // values
+  ASSIGNMENTS_PER_REGISTRATION: process.env.STAGE === 'demo' ? 1 : 3,
   TTL_DELTA_IN_SECONDS: 60 /* seconds per minute */ * 60 /* minutes per hour */ * 2 /* hours */,
   // resources
   STEP_FUNCTION: process.env.STEP_FUNCTION,
@@ -90,7 +91,7 @@ const impl = {
         updatedBy: event.origin,
         phone: `+1${event.data.phone}`,
         lastEvent: event.eventId,
-        registrations: 3,
+        registrations: constants.ASSIGNMENTS_PER_REGISTRATION,
         assignments: 0,
         timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
       },
@@ -131,7 +132,7 @@ const impl = {
               ':u': updated,
               ':ub': event.origin,
               ':le': event.eventId, // TODO the right thing (this field is not currently available in event)
-              ':re': 3,
+              ':re': constants.ASSIGNMENTS_PER_REGISTRATION,
               ':as': 0,
               ':tt': (Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS).toString(),
             },

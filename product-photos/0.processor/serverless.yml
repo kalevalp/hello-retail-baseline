@@ -23,6 +23,7 @@ functions:
       'Fn::GetAtt': [ ProcessorRole, Arn ]
     handler: processor.processKinesisEvent
     environment:
+      STAGE: ${self:custom.stage}
       STEP_FUNCTION:
         'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoAssignmentsStepFunctionArn}
       TABLE_PHOTO_REGISTRATIONS_NAME:
