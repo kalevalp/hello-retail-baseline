@@ -13,6 +13,6 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
-    "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git"
+    "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git#add-transformer"
   }
 }
