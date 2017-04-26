@@ -7,7 +7,7 @@ const KH = require('kinesis-handler')
  * AJV Schemas
  */
 // TODO Get these from a better place later
-const eventSchema = require('./retail-stream-schema-ingress.json')
+const eventSchema = require('./retail-stream-schema-egress.json')
 const updatePhoneSchema = require('./user-update-phone-schema.json')
 const productCreateSchema = require('./product-create-schema.json')
 
@@ -25,9 +25,21 @@ const constants = {
 }
 
 /**
+ * Transform record (which will be of the form in ingress schema) to the form of egress schema
+ */
+const transformer = (payload, record) => {
+  const result = Object.assign({}, payload)
+  result.schema = 'com.nordstrom/retail-stream-egress/1-0-0'
+  result.eventId = record.eventID
+  result.timeIngest = new Date(record.kinesis.approximateArrivalTimestamp * 1000).toISOString()
+  result.timeProcess = new Date().toISOString()
+  return result
+}
+
+/**
  * Event Processor
  */
-const kh = new KH.KinesisHandler(eventSchema, constants.MODULE)
+const kh = new KH.KinesisHandler(eventSchema, constants.MODULE, transformer)
 
 /**
  * AWS
