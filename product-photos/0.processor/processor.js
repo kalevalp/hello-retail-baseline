@@ -17,7 +17,7 @@ const constants = {
   // methods
   METHOD_START_EXECUTION: 'startExecution',
   // values
-  ASSIGNMENTS_PER_REGISTRATION: process.env.STAGE === 'demo' ? 1 : 3,
+  ASSIGNMENTS_PER_REGISTRATION: process.env.ASSIGNMENTS_PER_REGISTRATION,
   TTL_DELTA_IN_SECONDS: 60 /* seconds per minute */ * 60 /* minutes per hour */ * 2 /* hours */,
   // resources
   STEP_FUNCTION: process.env.STEP_FUNCTION,
