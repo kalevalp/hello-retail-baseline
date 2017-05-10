@@ -20,11 +20,14 @@ class ServerlessPlugin {
     this.hooks = {
       'buildWebApp:config': this.configureWebApp.bind(this),
       'buildWebApp:build': this.buildWebApp.bind(this),
-      'after:deploy:deploy': this.uploadWebApp.bind(this)
+      'after:deploy:deploy': this.uploadWebApp.bind(this),
+      'before:remove:remove': this.emptyWebAppBucket.bind(this),
     }
 
     this.getConfig = this.getConfig.bind(this)
     this.validateConfig = this.validateConfig.bind(this)
+    this.runAwiCliCommand = this.runAwiCliCommand.bind(this)
+    this.getBucketName = this.getBucketName.bind(this)
   }
 
   getConfig() {
@@ -86,26 +89,7 @@ class ServerlessPlugin {
     this.serverless.cli.log(`Webpack Done.`)
   }
 
-  uploadWebApp() {
-    const config = this.getConfig()
-    if(!this.validateConfig(config)) {
-      return
-    }
-
-    this.serverless.cli.log(`Uploading files from /app to S3 ...`)
-
-    const stage = this.serverless.variables.service.custom.stage
-    const s3Bucket = stage === 'prod' ?
-                     this.serverless.service.custom.domainName :
-                     `${stage}.${this.serverless.service.custom.domainName}`
-
-    const args = [
-      's3',
-      'sync',
-      `${__dirname}/../app/`,
-      `s3://${s3Bucket}/`,
-    ]
-
+  runAwiCliCommand(args) {
     const process = spawnSync('aws', args)
     const stdout = process.stdout.toString()
     const stderr = process.stderr.toString()
@@ -117,8 +101,51 @@ class ServerlessPlugin {
     if(stderr) {
       this.serverless.cli.log(stderr)
     }
+  }
 
-    this.serverless.cli.log(`Upload to S3 Done.`)
+  getBucketName() {
+    const stage = this.serverless.variables.service.custom.stage
+    const s3Bucket = stage === 'prod' ?
+      this.serverless.service.custom.domainName :
+      `${stage}.${this.serverless.service.custom.domainName}`
+
+    return s3Bucket;
+  }
+
+  uploadWebApp() {
+    const config = this.getConfig()
+    if(!this.validateConfig(config)) {
+      return
+    }
+
+    this.serverless.cli.log(`Uploading files from /app to S3 bucket ${this.getBucketName()}...`)
+
+    this.runAwiCliCommand([
+      's3',
+      'sync',
+      `${__dirname}/../app/`,
+      `s3://${this.getBucketName()}/`,
+    ])
+
+    this.serverless.cli.log(`Upload to S3 bucket ${this.getBucketName()} Done.`)
+  }
+
+  emptyWebAppBucket() {
+    const config = this.getConfig()
+    if(!this.validateConfig(config)) {
+      return
+    }
+
+    this.serverless.cli.log(`Emptying WebApp S3 bucket ${this.getBucketName()} ...`)
+
+    this.runAwiCliCommand([
+      's3',
+      'rm',
+      `s3://${this.getBucketName()}/`,
+      '--recursive'
+    ])
+
+    this.serverless.cli.log(`S3 bucket ${this.getBucketName()} emptied.`)
   }
 
   getImportValue(name, outputName) {
