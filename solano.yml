@@ -1,0 +1,7 @@
+nodejs:
+  version: '6.10'
+hooks:
+  pre_setup: npm run root:install:all
+tests:
+  - npm run test
+  - npm run lint
