@@ -1,8 +1,8 @@
 {
-  "name": "send-assignment",
+  "name": "assign-photographer",
   "version": "0.0.1",
-  "description": "A Lambda function for sending a text to a photographer requesting a product image.",
-  "main": "message.js",
+  "description": "A Lambda function for recording the assigning a photographer.",
+  "main": "assign.js",
   "scripts": {
     "test": "echo \"Error: tests executed by root hello-retail package.json\" && exit 1"
   },
@@ -13,8 +13,6 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
-    "aws-xray-sdk": "^1.1.1",
-    "bluebird": "^3.4.7",
-    "twilio": "^2.11.1"
+    "aws-xray-sdk": "^1.1.1"
   }
 }

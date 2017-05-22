@@ -10,6 +10,7 @@
     "url": "https://github.com/Nordstrom/hello-retail/issues"
   },
   "dependencies": {
-    "ajv": "^4.10.4"
+    "ajv": "^4.10.4",
+    "aws-xray-sdk": "^1.1.1"
   }
 }

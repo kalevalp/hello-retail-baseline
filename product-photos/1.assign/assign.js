@@ -1,6 +1,7 @@
 'use strict'
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const awsXRay = require('aws-xray-sdk')
+const aws = awsXRay.captureAWS(require('aws-sdk')) // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 const Promise = require('bluebird')
 
 Promise.config({
@@ -106,11 +107,7 @@ const impl = {
             .then(
               () => Promise.resolve(true),
               (err) => {
-                if (err.code && err.code === 'ConditionalCheckFailedException') { // don't fail, another claimant obtained the photographer since we queried above
-                  return Promise.resolve()
-                } else {
-                  return Promise.reject(new ServerError(err))
-                }
+                return Promise.reject(new ServerError(err))
               } // eslint-disable-line comma-dangle
             )
           console.log(`update result: ${JSON.stringify(updateData, null, 2)}`)

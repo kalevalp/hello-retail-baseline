@@ -1,6 +1,7 @@
 'use strict'
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const awsXRay = require('aws-xray-sdk')
+const aws = awsXRay.captureAWS(require('aws-sdk')) // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 const dynamo = new aws.DynamoDB.DocumentClient()
 const stepfunctions = new aws.StepFunctions()

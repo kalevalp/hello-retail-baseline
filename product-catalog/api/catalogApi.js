@@ -1,7 +1,8 @@
 'use strict'
 
 const AJV = require('ajv')
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const awsXRay = require('aws-xray-sdk')
+const aws = awsXRay.captureAWS(require('aws-sdk')) // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 // TODO Get these from a better place later
 const categoryRequestSchema = require('./categories-request-schema.json')

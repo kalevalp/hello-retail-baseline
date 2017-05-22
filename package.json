@@ -97,7 +97,7 @@
   "dependencies": {},
   "devDependencies": {
     "ajv": "^4.11.2",
-    "aws-sdk": "^2.7.16",
+    "aws-xray-sdk": "^1.1.1",
     "babel-core": "^6.6.4",
     "babel-eslint": "^7.1.1",
     "babel-loader": "^6.2.10",

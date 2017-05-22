@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^4.11.3",
+    "aws-xray-sdk": "^1.1.1",
     "bluebird": "^3.4.7",
     "got": "^6.7.1",
     "twilio": "^2.11.1"

@@ -73,3 +73,34 @@ If an errors occur, troubleshoot, resolve, and resume deployment.
 2. Note the `ServiceEndpoint` output from the execution of `npm run photos:deploy:5`.  Alternatively, inspect or describe the stack `hello-retail-product-photos-receive-<stage>` and note the `ServiceEndpoint` output.  This value will look like `https://<apiId>.execute-api.us-west-2.amazonaws.com/<stage>`.  Open the phone number configuration page for the Twilio number that you purchased and set the Messaging Webhook (use defaults "Webhooks/TwiML", "Webhook", and "HTTP POST") value to that value with a `/sms` appended to it (e.g. `https://<apiId>.execute-api.us-west-2.amazonaws.com/<stage>/sms`).  It may be helpful to note the stage name in the "Friendly Name" field as well.  Then save those configuration changes.
 
 3. Enable TTL on the table `<stage>-hello-retail-product-photos-data-PhotoRegistrations-1` using the attribute `timeToLive`
+
+---
+
+### BRANCH: aws-xray
+
+The code changes in the branch effectively instruments the lambdas in the Hello-Retail application
+ by wrapping the `aws` requirements with the `aws-xray-sdk` which forwards the AWS trace ID to the
+ other AWS services so their telemetry is included in the X-Ray Trace.
+ 
+> ### NOTE: This feature is in _preview_ for Lambda
+> There does not appear to be support for CloudFormation to define a Lambda with *Active Tracing* enabled,
+ so for each Lambda for which tracing information is desired, will need to be enabled in the AWS Console
+ under *Configuration -> Advanced Settings -> AWS X-Ray -> Enable Active Tracing*.
+ 
+> The first time this change is made to a Lambda, the following message is displayed in the console
+```
+When you save your function with active tracing enabled, Lambda will automatically add permissions: 
+"xray:PutTraceSegments", "xray:PutTelemetryRecords" 
+to the function's current role if it does not have necessary permissions.
+```
+and when the *Save* button is clicked, there is an error message:
+```
+The Configuration tab failed to save. Reason: The provided execution role does not have permissions to call PutTraceSegments on XRAY
+```
+and the user is required to wait 30-60 seconds, click the *Save* button again, and the Lambda will save successfully
+with the changes made according to the first message by adding a policy named like `AWSLambdaTracerAccessExecutionRole-XXXXXXXXX` to 
+the Lambda's role.
+
+#### TODO:
+
+ * Add `xray:PutTraceSegments` and `xray:PutTelemetryRecords` to appropriate roles in this branch.  
