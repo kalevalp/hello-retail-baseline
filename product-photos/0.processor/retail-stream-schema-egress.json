@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/schema#",
   "self": {
     "vendor": "com.nordstrom",
-    "name": "retail-stream-ingress",
+    "name": "retail-stream-egress",
     "format": "jsonschema",
     "version": "1-0-0"
   },
@@ -10,7 +10,6 @@
   "properties": {
     "schema":      { "type": "string" },
     "followsFrom": { "type": "string" },
-    "eventId":     { "type": "string" },
     "origin":      { "type": "string" },
     "timeOrigin":  { "type": "string", "format": "date-time" },
     "data": {
@@ -22,13 +21,19 @@
         "schema"
       ],
       "additionalProperties": true
-    }
+    },
+    "eventId": { "type": "string" },
+    "timeIngest":  { "type": "string", "format": "date-time" },
+    "timeProcess": { "type": "string", "format": "date-time" }
   },
   "required": [
     "schema",
     "origin",
     "timeOrigin",
-    "data"
+    "data",
+    "eventId",
+    "timeIngest",
+    "timeProcess"
   ],
   "additionalProperties": false
 }

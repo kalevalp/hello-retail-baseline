@@ -128,5 +128,23 @@
     "serverless": "^1.4.0",
     "webpack": "^1.14.0",
     "webpack-dev-server": "^1.16.2"
-  }
+  },
+  "contributors": [
+    {
+      "name": "Gregory W. Smith II",
+      "url": "https://github.com/gwsii"
+    },
+    {
+      "name": "Lauren Wang",
+      "url": "https://github.com/laurwang"
+    },
+    {
+      "name": "Rob Gruhl",
+      "url": "https://github.com/RobGruhl"
+    },
+    {
+      "name": "Erik Erikson",
+      "url": "https://github.com/erikerikson"
+    }
+  ]
 }
