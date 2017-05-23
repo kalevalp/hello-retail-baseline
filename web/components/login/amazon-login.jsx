@@ -1,4 +1,4 @@
-/* global amazon window */
+/* global window */
 import AWS from 'aws-sdk'
 import https from 'https'
 import loadjs from 'loadjs'
