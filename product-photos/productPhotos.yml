@@ -8,11 +8,14 @@ productPhotosVersion: 1
 
 # Data
 dataName: ${self:custom.productPhotos.name}-data
+exportPhotoRegistrationsTableName: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoRegistrationsTableName:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoRegistrationsTableArn: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoRegistrationsTableArn:${self:custom.productPhotos.productPhotosVersion}
+exportPhotoRegistrationsTableAssignmentsIndexArn: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoRegistrationsTableAssignmentsIndexArn:${self:custom.productPhotos.productPhotosVersion}
 exportPhotoAssignmentsTableName: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableName:${self:custom.productPhotos.productPhotosVersion}
 exportPhotoAssignmentsTableArn: ${self:custom.productPhotos.dataName}:${self:custom.stage}:PhotoAssignmentsTableArn:${self:custom.productPhotos.productPhotosVersion}
 
 # Lambdas
-executeName: ${self:custom.productPhotos.name}-execute
+processorName: ${self:custom.productPhotos.name}-processor
 
 assignName: ${self:custom.productPhotos.name}-assign
 exportPhotoAssignmentsAssignLambdaName: ${self:custom.productPhotos.assignName}:${self:custom.stage}:PhotoAssignmentsAssignLambdaName:${self:custom.productPhotos.productPhotosVersion}
@@ -56,12 +59,52 @@ exportPhotoAssignmentsStepFunctionName: ${self:custom.productPhotos.processName}
 exportPhotoAssignmentsStepFunctionArn: ${self:custom.productPhotos.processName}:${self:custom.stage}:PhotoAssignmentsStepFunctionArn:${self:custom.productPhotos.productPhotosVersion}
 
 # Policies
+getPhotoRegistrations:
+  PolicyName: GetPhotoRegistrations
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: Allow
+         Action:
+           - 'dynamodb:GetItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoRegistrationsTableArn}
+putPhotoRegistrations:
+  PolicyName: PutPhotoRegistrations
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: Allow
+         Action:
+           - 'dynamodb:PutItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoRegistrationsTableArn}
+updatePhotoRegistrations:
+  PolicyName: UpdatePhotoRegistrations
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: Allow
+         Action:
+           - 'dynamodb:UpdateItem'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoRegistrationsTableArn}
+queryPhotoRegistrationsAssignmentsIndex:
+  PolicyName: QueryPhotoRegistrationsAssignmentsIndex
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      -  Effect: Allow
+         Action:
+           - 'dynamodb:Query'
+         Resource:
+          'Fn::ImportValue': ${self:custom.productPhotos.exportPhotoRegistrationsTableAssignmentsIndexArn}
 getPhotoAssignment:
   PolicyName: GetPhotoAssignment
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:GetItem'
          Resource:
@@ -71,7 +114,7 @@ updatePhotoAssignment:
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:UpdateItem'
          Resource:
@@ -81,7 +124,7 @@ deletePhotoAssignment:
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
-      -  Effect: 'Allow'
+      -  Effect: Allow
          Action:
            - 'dynamodb:DeleteItem'
          Resource:

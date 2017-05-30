@@ -23,11 +23,12 @@ functions:
       'Fn::GetAtt': [ ReportRole, Arn ]
     handler: report.handler
     environment:
-      STAGE: ${self:custom.stage}
       RETAIL_STREAM_NAME:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
       RETAIL_STREAM_WRITER_ARN:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
@@ -35,7 +36,7 @@ resources:
   Resources:
     # Log Group
     ReportLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-report'
         RetentionInDays: 7
@@ -51,7 +52,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -59,12 +60,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ ReportLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -72,7 +73,17 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ ReportLogGroup, Arn ]
                         - '*'
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
           - ${self:custom.productPhotos.deletePhotoAssignment}
+          - PolicyName: WriteToRetailStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'kinesis:PutRecord'
+                  Resource:
+                    'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
   Outputs:
     ReportLambdaName:
       Description: The Name of the Photo Assignments Report Lambda

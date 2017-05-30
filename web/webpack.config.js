@@ -2,9 +2,9 @@ module.exports = {
   context: __dirname,
   entry: './components/router.jsx',
   output: {
-    path: __dirname,
+    path: `${__dirname}/app/`,
     filename: 'bundle.js',
-    publicPath: 'http://localhost:7700/',
+    publicPath: 'https://localhost:7700/',
   },
   module: {
     loaders: [

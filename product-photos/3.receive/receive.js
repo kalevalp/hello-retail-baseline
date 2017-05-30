@@ -219,7 +219,7 @@ const impl = {
       .then(
         (data) => {
           if (!data.Item) {
-            return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  Please wait for a request.'))
+            return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  If you have registered and not completed your assignments, we will send one shortly.'))
           } else {
             const item = data.Item
             item.taskEvent = JSON.parse(item.taskEvent)

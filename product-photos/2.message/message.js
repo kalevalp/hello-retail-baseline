@@ -31,10 +31,19 @@ const constants = {
   METHOD_ENSURE_TWILIO_INITIALIZED: 'ensureAuthTokenDecrypted',
   METHOD_SEND_MESSAGE: 'sendMessage',
   // external
-  TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
   TWILIO_ACCOUNT_SID_ENCRYPTED: process.env.TWILIO_ACCOUNT_SID_ENCRYPTED,
   TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
   TWILIO_NUMBER: process.env.TWILIO_NUMBER,
+}
+
+/**
+ * Errors
+ */
+class ServerError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = constants.ERROR_SERVER
+  }
 }
 
 /**
@@ -69,8 +78,8 @@ const impl = {
         twilio.sdk = Twilio(twilio.accountSid, twilio.authToken)
         twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create)
         return BbPromise.resolve(event)
-      }).error((field, error) =>
-        BbPromise.reject(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${field}': ${error}`) // eslint-disable-line comma-dangle
+      }).catch((field, error) =>
+        BbPromise.reject(new ServerError(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${field}': ${error}`)) // eslint-disable-line comma-dangle
       )
     } else {
       return BbPromise.resolve(event)
@@ -87,9 +96,11 @@ const impl = {
       `Hello ${event.photographer.name}!`,
       'Please snap a pic of:',
       `  ${event.data.name}`,
-    ].join('\n'),
-  }).error(
-    err => BbPromise.reject(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${err}`) // eslint-disable-line comma-dangle
+      'Created by:',
+      `  ${event.merchantName}`,
+    ].join('\n').trim(),
+  }).catch(
+    err => BbPromise.reject(new ServerError(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${JSON.stringify(err, null, 2)}`)) // eslint-disable-line comma-dangle
   ),
 }
 
@@ -172,10 +183,8 @@ module.exports = {
         console.log(`Success: ${JSON.stringify(message, null, 2)}`)
         callback(null, event)
       })
-      .error((err) => {
-        callback(`${constants.MODULE} ${err}`)
-      })
       .catch((ex) => {
+        console.log(JSON.stringify(ex, null, 2))
         callback(`${constants.MODULE} ${ex.message}:\n${ex.stack}`)
       })
   },

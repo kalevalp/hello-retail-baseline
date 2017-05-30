@@ -28,6 +28,7 @@ phases:
       - $CODEBUILD_SRC_DIR/build/1.install.sh "Installing New Product Simulator Dependencies"       $CODEBUILD_SRC_DIR/product-creation/lambda
       - npm run catalog:install:all # Product Catalog
       - npm run photos:install:all # Product Photos
+      - npm run purchase:install:all # Product Purchase
   build:
     commands:
       - npm run test
@@ -40,3 +41,4 @@ phases:
       - $CODEBUILD_SRC_DIR/build/2.sls.sh "Deploying New Products Simulator"       $CODEBUILD_SRC_DIR/product-creation/lambda
       - npm run catalog:deploy:all # Product Catalog
       - npm run photos:deploy:all # Product Photos
+      - npm run purchase:deploy:all # Product Purchase

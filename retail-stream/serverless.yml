@@ -7,7 +7,7 @@ custom:
   private: ${file(../private.yml)}
   helloRetail: ${file(../helloRetail.yml)}
   # Retail Stream Versions & Exports
-  # WARNING: each project that uses these will have to define the following two attributes (custom.retailStreamVersion, custom.retailStream) in its serverless.yml:
+  # WARNING: each project that uses these will have to define the following two attributes in its serverless.yml: (custom.retailStreamVersion, custom.retailStream)
   retailStreamVersion: 1 # The version of this service to depend upon
   retailStream: ${self:} # externally, use `${file(~/retail-stream/serverless.yml)}`, replacing the `~` therein with the appropriate relative reference [e.g. '..' or '../..']
   # Exports
@@ -33,20 +33,20 @@ resources:
       Properties:
         Name: ${self:custom.stage}RetailStream
         ShardCount: 10
-    RetailStreamWriter: # role for producers
+
+    # Role for direct producers
+    RetailStreamWriter:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}RetailStreamWriter
+        RoleName: ${self:custom.stage}RetailStreamWriter${self:custom.retailStreamVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
                 AWS: # role ARNs that are allowed to write to the Retail stream
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
-                  - '${self:custom.private.productProvider}'
-                  - '${self:custom.private.productImageProvider}'
+                  - arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
@@ -62,17 +62,18 @@ resources:
                      - 'kinesis:PutRecords'
                    Resource:
                      Fn::GetAtt: [ RetailStream, Arn ]
-    RetailStreamReader: # role for consumers
+    # Role for direct consumers
+    RetailStreamReader:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}RetailStreamReader
+        RoleName: ${self:custom.stage}RetailStreamReader${self:custom.retailStreamVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
-                AWS: # role ARNs that are allowed to write to the Retail stream
+                AWS: # role ARNs that are allowed to read from the Retail stream
                   - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
               Action: sts:AssumeRole
         ManagedPolicyArns:
@@ -90,6 +91,7 @@ resources:
                      - 'kinesis:ListStreams'
                    Resource:
                      Fn::GetAtt: [ RetailStream, Arn ]
+
   Outputs:
     RetailStreamName:
       Description: The Name of the Retail Stream

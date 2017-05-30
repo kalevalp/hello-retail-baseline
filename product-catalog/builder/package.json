@@ -13,6 +13,6 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-catalog#readme",
   "dependencies": {
-    "ajv": "^4.10.4"
+    "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git"
   }
 }

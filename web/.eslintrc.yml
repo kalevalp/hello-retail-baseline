@@ -1,0 +1,5 @@
+rules:
+  # Since everything is bundled with webpack, there are technically no runtime dependencies.
+  import/no-extraneous-dependencies: off
+  # Accessibility not a priority for sample web interface
+  jsx-a11y/label-has-for: off

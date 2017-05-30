@@ -12,7 +12,7 @@ OWD=$(pwd)
 cd ${3}
 RES=$?
 if [ ${RES} -eq 0 ]; then
-  sls ${1} -s ${STAGE} -v
+  ${OWD}/node_modules/.bin/sls ${1} -s ${STAGE} -v
   RES=$?
   cd ${OWD}
   exit ${RES}

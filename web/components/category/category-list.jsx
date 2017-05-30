@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react'  // eslint-disable-line import/no-extraneous-dependencies
+import React, { Component, PropTypes } from 'react'
 import CategoryItem from './category-item'
 
 class CategoryList extends Component {
@@ -17,14 +17,14 @@ class CategoryList extends Component {
 
   render() {
     if (!this.props.categories) {
-      return (<div />)
+      return null
     }
 
     return (
       <div>
         {
           this.props.categories.map(cat => (
-            <CategoryItem className="categoryItem" categoryName={cat.name} />
+            <CategoryItem className="categoryItem" categoryName={cat.name} key={cat.name} />
           ))
         }
       </div>

@@ -1,13 +1,12 @@
 language: node_js
 node_js:
   - "4.3.2"
-  - "4"
-  - "5"
-  - "6"
-before_script:
-  - 'if [ "$NPM_VERSION" ]; then npm install -g npm@^$NPM_VERSION; fi'
-  - 'npm --version'
-
-env:
-  - NPM_VERSION=2
-  - NPM_VERSION=3
+install: npm run root:install:all
+script: printenv && npm run test && npm run lint
+#deploy:
+#  - provider: script # TODO
+#    script: npm run root:deploy:all # ci
+#  - provider: script
+#    script: npm run root:integration:all
+#  - provider: script
+#    script: npm run root:deploy:all # demo

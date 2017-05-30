@@ -21,13 +21,14 @@ functions:
       'Fn::GetAtt': [ AssignRole, Arn ]
     handler: assign.handler
     environment:
-      STAGE: ${self:custom.stage}
+      TABLE_PHOTO_REGISTRATIONS_NAME:
+        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
 
 resources:
   Resources:
     # Log Group
     AssignLogGroup:
-      Type: 'AWS::Logs::LogGroup'
+      Type: AWS::Logs::LogGroup
       Properties:
         LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-assign'
         RetentionInDays: 7
@@ -43,7 +44,7 @@ resources:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service: 'lambda.amazonaws.com'
+                Service: lambda.amazonaws.com
         ManagedPolicyArns:
           - ${self:custom.private.teamPolicy}
         Policies:
@@ -51,12 +52,12 @@ resources:
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
                     'Fn::GetAtt': [ AssignLogGroup, Arn ]
-                - Effect: 'Allow'
+                - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
@@ -64,6 +65,8 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ AssignLogGroup, Arn ]
                         - '*'
+          - ${self:custom.productPhotos.queryPhotoRegistrationsAssignmentsIndex}
+          - ${self:custom.productPhotos.updatePhotoRegistrations}
   Outputs:
     AssignLambdaName:
       Description: The Name of the Photo Assignments Assign Lambda

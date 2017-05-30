@@ -38,5 +38,5 @@ if (process.argv.length < 5) {
   console.log('Example: $ node put-retail-stream-event.js BIMXStream ./product-create-event.json 9000002')
 } else {
   const event = require(process.argv[3]) // eslint-disable-line global-require, import/no-dynamic-require
-  writeToKinesis(process.argv[2], JSON.stringify(event), process.argv[4])
+  writeToKinesis(process.argv[2], JSON.stringify(event), process.argv[4]) // eslint-disable-line global-require, import/no-dynamic-require
 }

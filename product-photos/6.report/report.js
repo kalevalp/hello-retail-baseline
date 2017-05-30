@@ -11,10 +11,12 @@ const constants = {
   MODULE: 'product-photos/6.report/report.js',
   METHOD_: '',
   METHOD_WRITE_TO_STREAM: 'writeToStream',
+  METHOD_SUCCEED_ASSIGNMENT: 'succeedAssignment',
   METHOD_DELETE_ASSIGNMENT: 'deleteAssignment',
   // external
   RETAIL_STREAM_NAME: process.env.RETAIL_STREAM_NAME,
   RETAIL_STREAM_WRITER_ARN: process.env.RETAIL_STREAM_WRITER_ARN,
+  TABLE_PHOTO_REGISTRATIONS_NAME: process.env.TABLE_PHOTO_REGISTRATIONS_NAME,
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
 }
 
@@ -40,9 +42,6 @@ ajv.addSchema(productImageSchema, productImageSchemaId)
  */
 const dynamo = new aws.DynamoDB.DocumentClient()
 const kinesis = new aws.Kinesis()
-kinesis.config.credentials = new aws.TemporaryCredentials({
-  RoleArn: constants.RETAIL_STREAM_WRITER_ARN,
-})
 
 /**
  * Implementation
@@ -69,10 +68,44 @@ const impl = {
       const params = {
         Data: JSON.stringify(imageEvent),
         PartitionKey: productId,
-        StreamName: process.env.RETAIL_STREAM_NAME,
+        StreamName: constants.RETAIL_STREAM_NAME,
       }
       kinesis.putRecord(params, callback)
     }
+  },
+  succeedAssignment: (event, callback) => {
+    const updated = Date.now()
+    const params = {
+      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+      Key: {
+        id: event.photographer.id,
+      },
+      ConditionExpression: '#aa=:aa',
+      UpdateExpression: [
+        'set',
+        '#u=:u,',
+        '#ub=:ub,',
+        '#as=#as+:as',
+        'remove',
+        '#aa',
+      ].join(' '),
+      ExpressionAttributeNames: {
+        '#u': 'updated',
+        '#ub': 'updatedBy',
+        '#as': 'assignments',
+        '#aa': 'assignment',
+      },
+      ExpressionAttributeValues: {
+        ':u': updated,
+        ':ub': event.origin,
+        ':as': 1,
+        ':aa': event.data.id.toString(),
+      },
+      ReturnValues: 'NONE',
+      ReturnConsumedCapacity: 'NONE',
+      ReturnItemCollectionMetrics: 'NONE',
+    }
+    dynamo.update(params, callback)
   },
   deleteAssignment: (event, callback) => {
     const params = {
@@ -80,15 +113,28 @@ const impl = {
       Key: {
         number: event.photographer.phone,
       },
-      // ConditionExpression: <record exists?>
+      ConditionExpression: 'attribute_exists(#nu)',
+      ExpressionAttributeNames: {
+        '#nu': 'number', // status
+      },
     }
-    dynamo.delete(params, callback)
+    dynamo.delete(params, (err) => {
+      if (err) {
+        if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
+          callback()
+        } else {
+          callback(err)
+        }
+      } else {
+        callback()
+      }
+    })
   },
 }
 
 module.exports = {
   /**
-   * Handle the report stage of the Aquire Photo Step Function
+   * Handle the report stage of the Acquire Photo Step Function
    *    1. Report the photo to the stream
    *    2. Delete the pending assignment
    * Example Event:
@@ -119,13 +165,19 @@ module.exports = {
       if (wErr) {
         callback(`${constants.MODULE} ${constants.METHOD_WRITE_TO_STREAM} - ${wErr.stack}`)
       } else {
-        impl.deleteAssignment(event, (dErr) => {
-          if (dErr) {
-            callback(`${constants.MODULE} ${constants.METHOD_DELETE_ASSIGNMENT} - ${dErr.stack}`)
+        impl.succeedAssignment(event, (sErr) => {
+          if (sErr && !(sErr.code && sErr.code === 'ConditionalCheckFailedException')) { // if we fail due to the conditional check, we should proceed regardless to remain idempotent
+            callback(`${constants.MODULE} ${constants.METHOD_SUCCEED_ASSIGNMENT} - ${sErr.stack}`)
           } else {
-            const result = event
-            result.outcome = 'photo taken'
-            callback(null, result)
+            impl.deleteAssignment(event, (dErr) => {
+              if (dErr) {
+                callback(`${constants.MODULE} ${constants.METHOD_DELETE_ASSIGNMENT} - ${dErr.stack}`)
+              } else {
+                const result = event
+                result.outcome = 'photo taken'
+                callback(null, result)
+              }
+            })
           }
         })
       }
