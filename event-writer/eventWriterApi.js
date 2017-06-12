@@ -74,7 +74,7 @@ const impl = {
             schema: 'com.nordstrom/retail-stream-ingress/1-0-0',
             timeOrigin: new Date().toISOString(),
             data: eventData,
-            origin, //TODO mask any PII here
+            origin, // TODO mask any PII here
           }),
           PartitionKey: eventData.id, // TODO if some schema use id field something other than the partition key, the schema need to have a keyName field and here code should be eventData[eventData.keyName]
           StreamName: process.env.STREAM_NAME,
