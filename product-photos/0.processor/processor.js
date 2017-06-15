@@ -18,7 +18,7 @@ const constants = {
   // methods
   METHOD_START_EXECUTION: 'startExecution',
   // values
-  ASSIGNMENTS_PER_REGISTRATION: process.env.ASSIGNMENTS_PER_REGISTRATION,
+  ASSIGNMENTS_PER_REGISTRATION: parseInt(process.env.ASSIGNMENTS_PER_REGISTRATION, 10),
   TTL_DELTA_IN_SECONDS: 60 /* seconds per minute */ * 60 /* minutes per hour */ * 2 /* hours */,
   // resources
   STEP_FUNCTION: process.env.STEP_FUNCTION,
