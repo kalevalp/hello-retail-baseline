@@ -11,6 +11,11 @@ import ProductCategoryPage from './products/product-by-category-page'
 import ProductDetailPage from './products/product-detail-page'
 import RoleSelectionPage from './roles/role-selection-page'
 
+// Load Foundation
+require('style!css!foundation-sites/dist/css/foundation.min.css') // eslint-disable-line import/no-webpack-loader-syntax, import/no-unresolved
+
+$(document).foundation() // eslint-disable-line no-undef
+
 ReactDOM.render(
   (<Router history={hashHistory}>
     <Route path="/" component={App}>

@@ -1,6 +1,21 @@
+const webpack = require('webpack')
+
 module.exports = {
   context: __dirname,
-  entry: './components/router.jsx',
+  entry: [
+    'script!jquery/dist/jquery.min.js',
+    'script!foundation-sites/dist/js/foundation.min.js',
+    './components/router.jsx',
+  ],
+  externals: {
+    jquery: 'jQuery',
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      '$': 'jquery',  // eslint-disable-line quote-props
+      'jQuery': 'jquery', // eslint-disable-line quote-props
+    }),
+  ],
   output: {
     path: `${__dirname}/app/`,
     filename: 'bundle.js',
