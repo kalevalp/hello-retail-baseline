@@ -1,0 +1,21 @@
+  config:
+    plugins:
+      aws-sigv4:
+        serviceName: execute-api
+    target: "https://b43b2ij4qi.execute-api.us-west-2.amazonaws.com" # this hostname will be used for each part of the flow
+    processor: "./product-creator.js"
+    phases:
+      -
+        duration: 1
+        arrivalRate: 1
+#        rampTo: 6
+  scenarios:
+    -
+      flow:
+        -
+          post:
+            url: "/workshop051717/event-writer"
+            beforeRequest:
+              - createRandomProduct
+              - addAmazonSignatureV4
+            json: {"schema":"com.nordstrom/product/create/1-0-0","id":"2169651","origin":"hello-retail/web-client-create-product/amzn1.account.AHMNGKVGNQYJUV7BZZZMFH3HP3KQ/Team Jetpack","category":"C1","name":"N2","brand":"B2","description":"D2"}

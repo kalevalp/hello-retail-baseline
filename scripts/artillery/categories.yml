@@ -1,0 +1,31 @@
+  # Thank you for trying serverless-artillery!
+  # This default script is intended to get you started quickly.
+  # There is a lot more that Artillery can do.
+  # You can find great documentation of the possibilities at:
+  # https://artillery.io/docs/
+  config:
+    plugins:
+      aws-sigv4:
+        serviceName: dynamodb
+        assumeRole: arn:aws:iam::515126931066:role/workshop051717HelloRetailWebIdentity
+    target: https://dynamodb.us-west-2.amazonaws.com
+    phases:
+      -
+        duration: 1
+        arrivalRate: 1
+#        rampTo: 6
+  scenarios:
+    -
+      flow:
+        -
+          post:
+            url: "/"
+            beforeRequest: addAmazonSignatureV4
+            json:
+              TableName: workshop051717-ProductCategory-1
+              AttributesToGet:
+                - category
+            headers:
+              content-type: application/x-amz-json-1.0
+              x-amz-target: DynamoDB_20120810.Scan
+
