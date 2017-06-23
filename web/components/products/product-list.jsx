@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react'
 import { browserHistory } from 'react-router'
 import ProductCard from './product-card'
 
-
 class ProductList extends Component {
   static propTypes = {
     products: PropTypes.arrayOf(PropTypes.object),

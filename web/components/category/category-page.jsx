@@ -22,7 +22,7 @@ class CategoryPage extends Component {
   render() {
     return (
       <div>
-        <h3><em>Categories</em></h3>
+        <h3>Categories</h3>
         <CategoryList className="categoryList" categories={this.state.categoryList} />
         <CategoryDataSource awsLogin={this.props.awsLogin} categoriesLoaded={this.categoriesLoaded} />
       </div>

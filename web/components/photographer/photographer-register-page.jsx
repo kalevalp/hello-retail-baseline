@@ -85,18 +85,16 @@ class PhotographerRegisterPage extends Component {
 
     return (
       <div>
-        <h3><em>Photographer Registration</em></h3>
-        <div>
-          <label>
-            Phone Number:
-            <br />
-            <input value={this.state.phoneNumber} onChange={this.phoneNumberChange} />
-            <br />
-            <h5>(Additional charges may apply.)</h5>
-          </label>
-          <br />
+        <h3>Photography Registration</h3>
+        <p className="small-8 medium-6 large-4 small-centered">
+          Enter your phone number and we will send you text messages to take photos of products for the store!
+          Just reply to the text message with the picture of the requested product.
+        </p>
+        <div className="expanded row column small-7 medium-5 large-4">
+          <input className="small-12 medium-text-left" value={this.state.phoneNumber} onChange={this.phoneNumberChange} placeholder="Phone Number" />
+          <h6><small>(Additional texting and data charges may apply!)</small></h6>
           <ValidationErrors errors={this.state.errors} />
-          <button disabled={!this.state.isPhoneNumberValid} onClick={this.registerPhotographer}>Register</button>
+          <button className="button" disabled={!this.state.isPhoneNumberValid} onClick={this.registerPhotographer}>Register</button>
         </div>
       </div>
     )

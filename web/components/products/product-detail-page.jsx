@@ -71,13 +71,9 @@ class ProductDetailPage extends Component {
 
     let blurb = null
     if (!this.state.buyMessage) {
-      blurb = <button onClick={this.purchaseProduct}>Buy</button>
+      blurb = <button className="button" onClick={this.purchaseProduct}>Buy</button>
     } else {
       blurb = <h4>{this.state.buyMessage}</h4>
-    }
-
-    const backButtonStyle = {
-      margin: '15px',
     }
 
     return (
@@ -91,9 +87,15 @@ class ProductDetailPage extends Component {
           </div>
           <br />
           <ValidationErrors errors={this.state.errors} />
-          {blurb}
+
+          <div className="row small-6">
+            <div>{blurb}</div>
+            <div>
+              <button className="button" onClick={browserHistory.goBack}>Back to List</button>
+            </div>
+          </div>
+
           <ProductDataSource awsLogin={this.props.awsLogin} productId={this.props.params.id} productsLoaded={this.productsLoaded} />
-          <button style={backButtonStyle} onClick={browserHistory.goBack}>Back to List</button>
         </div>
       </div>
     )

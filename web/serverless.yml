@@ -79,7 +79,7 @@ custom:
   webAppBuild:
     configPath: ./config.js
     configValues:
-      WebAppName: Hello Retail
+      WebAppName: Hello, Retail!
       Stage: ${self:custom.stage}
       AuthClientId: ${self:custom.oAuthClientId}
       AWSRegion: ${self:custom.private.region}

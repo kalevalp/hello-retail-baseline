@@ -4,7 +4,7 @@ module.exports = {
   context: __dirname,
   entry: [
     'script!jquery/dist/jquery.min.js',
-    'script!foundation-sites/dist/js/foundation.min.js',
+    'script!foundation-sites/dist/js/foundation.js',
     './components/router.jsx',
   ],
   externals: {

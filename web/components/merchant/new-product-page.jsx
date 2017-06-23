@@ -118,40 +118,32 @@ class NewProductPage extends Component {
       return (
         <div>
           <h2>Product {this.state.name} has been created!</h2>
-          <button onClick={this.ackCreateProduct}>Add More</button>
+          <button className="button" onClick={this.ackCreateProduct}>Add More</button>
         </div>
       )
     }
 
+    const renderInput = (displayName, control) => (
+      <div className="expanded row column small-7 medium-5 large-4">
+        {control}
+      </div>
+    )
+
+    const renderTextInput = (inputName, displayName, handler) =>
+      renderInput(displayName, <input className="small-12 medium-text-left input-space" id="category" value={inputName} onChange={handler} placeholder={displayName} />)
+
+    const renderTextAreaInput = (inputName, displayName, rows, handler) =>
+      renderInput(displayName, <textarea rows={rows} className="small-12 medium-text-left" id="category" value={inputName} onChange={handler} placeholder={`Enter ${displayName} here...`} />)
+
     return (
       <div>
-        <h3><em>Create New Product</em></h3>
-        <div>
-          <label>
-            Category:<br />
-            <input value={this.state.category} onChange={this.categoryChange} />
-          </label>
-        </div>
-        <div>
-          <label>
-            Name:<br />
-            <input value={this.state.name} onChange={this.nameChange} />
-          </label>
-        </div>
-        <div>
-          <label>
-            Brand:<br />
-            <input value={this.state.brand} onChange={this.brandChange} />
-          </label>
-        </div>
-        <div>
-          <label>
-            Description:<br />
-            <textarea rows="10" value={this.state.description} onChange={this.descriptionChange} />
-          </label>
-        </div>
+        <h3>Create New Product</h3>
+        {renderTextInput(this.state.category, 'Category', this.categoryChange)}
+        {renderTextInput(this.state.name, 'Name', this.nameChange)}
+        {renderTextInput(this.state.brand, 'Brand', this.brandChange)}
+        {renderTextAreaInput(this.state.description, 'Description', 10, this.descriptionChange)}
         <ValidationErrors errors={this.state.errors} />
-        <button disabled={!this.state.isProductValid} onClick={this.createProduct}>Add Product</button>
+        <button className="button" disabled={!this.state.isProductValid} onClick={this.createProduct}>Add Product</button>
       </div>
     )
   }
