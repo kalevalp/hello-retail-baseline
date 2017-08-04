@@ -1,30 +1,41 @@
-/* global document */
+/* global document window */
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, hashHistory } from 'react-router'
+import { Provider } from 'react-redux'
+import * as redux from 'redux'
+import thunk from 'redux-thunk'
 
-import App from './app'
-import CategoryPage from './category/category-page'
-import NewProductPage from './merchant/new-product-page'
-import PhotographerRegisterPage from './photographer/photographer-register-page'
-import ProductCategoryPage from './products/product-by-category-page'
-import ProductDetailPage from './products/product-detail-page'
+import App from 'App'
+import Categories from 'Categories'
+import CreateProduct from 'CreateProduct'
+import PhotographerRegisterPage from 'PhotographerRegisterPage'
+import ProductCategory from 'ProductCategory'
+import ProductDetailPage from 'ProductDetailPage'
+import helloRetailReducers from 'reducers'
 
 // Load Foundation
 require('style!css!foundation-sites/dist/css/foundation.min.css') // eslint-disable-line import/no-webpack-loader-syntax, import/no-unresolved
 
 $(document).foundation() // eslint-disable-line no-undef
 
-ReactDOM.render(
-  (<Router history={hashHistory}>
-    <Route path="/" component={App}>
-      <IndexRoute component={CategoryPage} />
+const store = redux.createStore(helloRetailReducers, {}, redux.compose(
+  redux.applyMiddleware(thunk),
+  window.devToolsExtension ? window.devToolsExtension() : x => x,
+))
 
-      <Route path="merchant" component={NewProductPage} />
-      <Route path="photographer" component={PhotographerRegisterPage} />
-      <Route path="category/:category" component={ProductCategoryPage} />
-      <Route path="product/:id" component={ProductDetailPage} />
-    </Route>
-  </Router>),
+ReactDOM.render(
+  (<Provider store={store}>
+    <Router history={hashHistory}>
+      <Route path="/" component={App}>
+        <IndexRoute component={Categories} />
+        <Route path="category/:category" component={ProductCategory} />
+
+        <Route path="merchant" component={CreateProduct} />
+        <Route path="photographer" component={PhotographerRegisterPage} />
+        <Route path="product/:id" component={ProductDetailPage} />
+      </Route>
+    </Router>
+  </Provider>),
   document.getElementById('root'),
 )

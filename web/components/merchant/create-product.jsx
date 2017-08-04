@@ -1,25 +1,8 @@
-import React, { Component, PropTypes } from 'react'
-import ValidationErrors from '../validation-errors'
-import config from '../../config'
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { createNewProduct } from 'actions'
 
-class NewProductPage extends Component {
-  // TODO: DRY up all these duplicate propType declarations everywhere
-  static propTypes = {
-    awsLogin: PropTypes.shape({
-      state: PropTypes.shape({
-        profile: PropTypes.shape({
-          id: PropTypes.string,
-          name: PropTypes.string,
-        }),
-      }),
-      makeApiRequest: PropTypes.func,
-    }),
-  }
-
-  static defaultProps = {
-    awsLogin: null,
-  }
-
+class CreateProduct extends Component {
   constructor(props) {
     super(props)
 
@@ -27,8 +10,6 @@ class NewProductPage extends Component {
     this.nameChange = this.handleProductChange.bind(this, 'name')
     this.brandChange = this.handleProductChange.bind(this, 'brand')
     this.descriptionChange = this.handleProductChange.bind(this, 'description')
-    this.validateProduct = this.validateProduct.bind(this)
-    this.resetProduct = this.resetProduct.bind(this)
     this.createProduct = this.createProduct.bind(this)
     this.ackCreateProduct = this.ackCreateProduct.bind(this)
 
@@ -73,29 +54,16 @@ class NewProductPage extends Component {
 
   createProduct() {
     const product = this.state
+    const { dispatch, userId, userName } = this.props
 
     // Disable "Add Product" button while request is in flight
     this.setState({
       isProductValid: false,
     })
 
-    this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
-      schema: 'com.nordstrom/product/create/1-0-0',
-      id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
-      origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
-      category: product.category.trim(),
-      name: product.name.trim(),
-      brand: product.brand.trim(),
-      description: product.description.trim(),
-    })
-    .then(this.resetProduct)
-    .catch((error) => {
-      // Show error message and re-enable button so user can try again.
-      this.setState({
-        isProductValid: true,
-        errors: [error],
-      })
-    })
+    dispatch(createNewProduct(userId, userName, product))
+
+    this.resetProduct()
   }
 
   ackCreateProduct() {
@@ -142,11 +110,13 @@ class NewProductPage extends Component {
         {renderTextInput(this.state.name, 'Name', this.nameChange)}
         {renderTextInput(this.state.brand, 'Brand', this.brandChange)}
         {renderTextAreaInput(this.state.description, 'Description', 10, this.descriptionChange)}
-        <ValidationErrors errors={this.state.errors} />
         <button className="button" disabled={!this.state.isProductValid} onClick={this.createProduct}>Add Product</button>
       </div>
     )
   }
 }
 
-export default NewProductPage
+export default connect(state => ({
+  userId: state.login.customerId,
+  userName: state.login.customerName,
+}))(CreateProduct)

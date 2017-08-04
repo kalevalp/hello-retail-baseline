@@ -1,43 +1,27 @@
-import React, { Component, PropTypes } from 'react'
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import { browserHistory } from 'react-router'
-import ProductDataSource from './product-data-source'
-import ValidationErrors from '../validation-errors'
-import config from '../../config'
+import config from 'config'
+import { loadProductById, clearProductById } from 'actions'
 
 class ProductDetailPage extends Component {
-  static propTypes = {
-    awsLogin: PropTypes.shape({
-      state: PropTypes.shape({
-        profile: PropTypes.shape({
-          id: PropTypes.string,
-          name: PropTypes.string,
-        }),
-      }),
-      makeApiRequest: PropTypes.func,
-    }).isRequired,
-    params: PropTypes.shape({
-      id: PropTypes.string.isRequired,
-    }).isRequired,
-  }
-
   constructor(props) {
     super(props)
-    this.state = {}
-    this.productsLoaded = this.productsLoaded.bind(this)
     this.purchaseProduct = this.purchaseProduct.bind(this)
-    this.state.errors = []
-    this.state.buyMessage = null
+    this.state = {
+      buyMessage: null,
+    }
   }
 
-  productsLoaded(products) {
-    const p = products[0]
-    this.setState({
-      name: p.name,
-      brand: p.brand,
-      description: p.description,
-      id: p.id,
-      image: p.image ? `https://${p.image}` : null,
-    })
+  componentWillMount() {
+    const { dispatch, params: { id } } = this.props
+    console.log('product id', id)
+    dispatch(loadProductById(id))
+  }
+
+  componentWillUnmount() {
+    const { dispatch } = this.props
+    dispatch(clearProductById())
   }
 
   purchaseProduct() {
@@ -66,40 +50,38 @@ class ProductDetailPage extends Component {
   }
 
   render() {
-    // TODO: Add query for single product by id
-    // TODO: Add image
+    const { product: { name, brand, description, image } } = this.props
 
-    let blurb = null
+    let buyContent = null
     if (!this.state.buyMessage) {
-      blurb = <button className="button" onClick={this.purchaseProduct}>Buy</button>
+      buyContent = <button className="button" onClick={this.purchaseProduct}>Buy</button>
     } else {
-      blurb = <h4>{this.state.buyMessage}</h4>
+      buyContent = <h4>{this.state.buyMessage}</h4>
     }
 
     return (
       <div>
         <div>
-          <h3>{this.state.brand}</h3>
-          <h4>{this.state.name}</h4>
-          <div>{this.state.description}</div>
+          <h3>{brand}</h3>
+          <h4>{name}</h4>
+          <div>{description}</div>
           <div>
-            { this.state.image ? (<img className="productImage" src={this.state.image} alt={this.state.name} />) : null }
+            { image ? (<img className="productImage" src={image} alt={name} />) : null }
           </div>
           <br />
-          <ValidationErrors errors={this.state.errors} />
 
           <div className="row small-6">
-            <div>{blurb}</div>
+            <div>{buyContent}</div>
             <div>
               <button className="button" onClick={browserHistory.goBack}>Back to List</button>
             </div>
           </div>
-
-          <ProductDataSource awsLogin={this.props.awsLogin} productId={this.props.params.id} productsLoaded={this.productsLoaded} />
         </div>
       </div>
     )
   }
 }
 
-export default ProductDetailPage
+export default connect(state => ({
+  product: state.product,
+}))(ProductDetailPage)

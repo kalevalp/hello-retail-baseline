@@ -118,12 +118,12 @@ class ServerlessPlugin {
       return
     }
 
-    this.serverless.cli.log(`Uploading files from /app to S3 bucket ${this.getBucketName()}...`)
+    this.serverless.cli.log(`Uploading files from public/ to S3 bucket ${this.getBucketName()}...`)
 
     this.runAwiCliCommand([
       's3',
       'sync',
-      `${__dirname}/../app/`,
+      `${__dirname}/../public/`,
       `s3://${this.getBucketName()}/`,
     ])
 

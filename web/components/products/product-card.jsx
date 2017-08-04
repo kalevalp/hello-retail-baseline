@@ -1,13 +1,13 @@
 import React, { Component, PropTypes } from 'react'
 import { Link } from 'react-router'
-import config from '../../config'
 
-class ProductCard extends Component {
+export class ProductCard extends Component {
   static propTypes = {
     brand: PropTypes.string,
     description: PropTypes.string,
     id: PropTypes.string,
     name: PropTypes.string,
+    image: PropTypes.string,
   }
 
   static defaultProps = {
@@ -15,36 +15,18 @@ class ProductCard extends Component {
     description: '',
     id: 0,
     name: '',
+    image: null,
   }
 
-  constructor(props) {
-    super(props)
-
-    console.log(props)
-
-    this.domainName = 'hello-retail.biz'
-
-    if (config.Stage !== 'prod') {
-      this.domainName = `${config.Stage}.${this.domainName}`
-    }
-
-    this.state = {}
-  }
-
-  // image ratio: 3:4
   render() {
+    const { id, name, brand, description, image } = this.props
+
     return (
       <div>
-        <div className="productName">
-          <Link
-            className="categoryLink"
-            to={`/product/${encodeURIComponent(this.props.id)}`}
-          >
-            {this.props.name}
-          </Link>
-        </div>
-        <div className="productBrand">{this.props.brand}</div>
-        <div className="productDesc">{this.props.description}</div>
+        {image ? <img src={image} alt={name} /> : null}
+        <Link to={`/product/${id}`}><div className="productName">{name}</div></Link>
+        <div className="productBrand">{brand}</div>
+        <div className="productDesc">{description}</div>
         <br />
       </div>
     )

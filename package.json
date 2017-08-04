@@ -71,7 +71,7 @@
     "web:deploy:all":       "npm run web:build && npm run web:deploy",
     "web:remove:all":       "./build/0.env.sh && ./build/2.sls.sh remove \"Removing Web App\"                                 ./web",
 
-    "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --https --hot --progress --colors --watch --display-error-details --display-cached --content-base ./web/app/"
+    "web:dev:hot": "./node_modules/.bin/webpack-dev-server --config ./web/webpack.config.js --https --hot --progress --colors --watch --display-error-details --display-cached --content-base ./web/public/"
   },
   "repository": {
     "type": "git",
@@ -128,7 +128,10 @@
     "react": "^15",
     "react-addons-test-utils": "^15.4.2",
     "react-dom": "^15",
+    "react-redux": "^5.0.5",
     "react-router": "^3.0.2",
+    "redux": "^3.7.0",
+    "redux-thunk": "^2.2.0",
     "script-loader": "^0.7.0",
     "serverless": "^1.4.0",
     "style-loader": "^0.18.2",

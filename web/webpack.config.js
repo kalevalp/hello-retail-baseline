@@ -17,7 +17,7 @@ module.exports = {
     }),
   ],
   output: {
-    path: `${__dirname}/app/`,
+    path: `${__dirname}/public/`,
     filename: 'bundle.js',
     publicPath: 'https://localhost:7700/',
   },
@@ -42,7 +42,29 @@ module.exports = {
     ],
   },
   resolve: {
+    root: __dirname,
+    modulesDirectories: [
+      'node_modules',
+    ],
     extensions: ['', '.js', '.jsx'],
+    alias: {
+      actions: 'actions/actions.jsx',
+      AmazonLogin: 'components/login/amazon-login',
+      App: 'components/app.jsx',
+      CategoryItem: 'components/categories/category-item',
+      CategoryList: 'components/categories/category-list',
+      Categories: 'components/categories/categories',
+      CreateProduct: 'components/merchant/create-product',
+      config: 'config',
+      login: 'login/amazon-login',
+      Navigation: 'components/navigation/navigation',
+      PhotographerRegisterPage: 'components/photographer/photographer-register-page',
+      ProductCard: 'components/products/product-card',
+      ProductCategory: 'components/products/product-category',
+      ProductDetailPage: 'components/products/product-detail-page',
+      ProductList: 'components/products/product-list',
+      reducers: 'reducers/reducers.jsx',
+    },
   },
   devServer: {
     hot: true,

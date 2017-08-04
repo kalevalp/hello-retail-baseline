@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react'
 import { IndexLink, Link } from 'react-router'
 
-class RoleSelectionPage extends Component {
+class Navigation extends Component {
   static propTypes = {
     name: PropTypes.string,
   }
@@ -32,4 +32,4 @@ class RoleSelectionPage extends Component {
   }
 }
 
-export default RoleSelectionPage
+export default Navigation

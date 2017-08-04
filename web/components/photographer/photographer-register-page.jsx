@@ -1,64 +1,27 @@
-import React, { Component, PropTypes } from 'react'
-import ValidationErrors from '../validation-errors'
-import config from '../../config'
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { registerPhotographer } from 'actions'
 
 class PhotographerRegisterPage extends Component {
-  // TODO: DRY up all these duplicate propType declarations everywhere
-  static propTypes = {
-    awsLogin: PropTypes.shape({
-      state: PropTypes.shape({
-        profile: PropTypes.shape({
-          id: PropTypes.string,
-          name: PropTypes.string,
-        }),
-      }),
-      makeApiRequest: PropTypes.func,
-    }),
-  }
-
-  static defaultProps = {
-    awsLogin: null,
-  }
-
   constructor(props) {
     super(props)
     this.state = {
       registered: false,
       phoneNumber: '',
       validPhoneNumber: false,
-      errors: [],
     }
     this.registerPhotographer = this.registerPhotographer.bind(this)
     this.phoneNumberChange = this.phoneNumberChange.bind(this)
-    this.render = this.render.bind(this)
   }
 
   registerPhotographer() {
+    const { dispatch, userId, userName } = this.props
     const phoneNumber = this.state.phoneNumber
 
-    // Disable the submit button while request is in flight
-    this.setState({
-      validPhoneNumber: false,
-    })
+    dispatch(registerPhotographer(userId, userName, phoneNumber))
 
-    // Call user-info api with update-phone event
-    this.props.awsLogin.makeApiRequest(config.EventWriterApi, 'POST', '/event-writer/', {
-      schema: 'com.nordstrom/user-info/update-phone/1-0-0',
-      id: this.props.awsLogin.state.profile.id,
-      phone: phoneNumber,
-      origin: `hello-retail/web-client-update-phone/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
-    })
-    .then(() => {
-      this.setState({
-        registered: true,
-      })
-    })
-    .catch((error) => {
-      // Show error message and re-enable submit button so user can try again.
-      this.setState({
-        validPhoneNumber: true,
-        errors: [error],
-      })
+    this.setState({
+      registered: true,
     })
   }
 
@@ -93,7 +56,6 @@ class PhotographerRegisterPage extends Component {
         <div className="expanded row column small-7 medium-5 large-4">
           <input className="small-12 medium-text-left" value={this.state.phoneNumber} onChange={this.phoneNumberChange} placeholder="Phone Number" />
           <h6><small>(Additional texting and data charges may apply!)</small></h6>
-          <ValidationErrors errors={this.state.errors} />
           <button className="button" disabled={!this.state.isPhoneNumberValid} onClick={this.registerPhotographer}>Register</button>
         </div>
       </div>
@@ -101,4 +63,7 @@ class PhotographerRegisterPage extends Component {
   }
 }
 
-export default PhotographerRegisterPage
+export default connect(state => ({
+  userId: state.login.customerId,
+  userName: state.login.customerName,
+}))(PhotographerRegisterPage)

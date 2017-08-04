@@ -1,0 +1,82 @@
+.active {
+  font-weight: bold;
+}
+
+.navigation {
+  font-size: larger;
+  margin-bottom: 1em;
+}
+
+.stageLabel {
+  position: fixed;
+  right: 1rem;
+  bottom: 0.5rem;
+  opacity: 0.25;
+}
+
+.input-space {
+  margin-bottom: 0.5em;
+}
+
+/* https://codepen.io/mohammadmusaei/pen/mglEi */
+
+.waiting {
+  width: 100%;
+  height: 100%;
+}
+
+.waiting .circle
+{
+  display:block;
+  position:absolute;
+  margin:0;
+
+  width:80px;
+  height:80px;
+  border-top:7px solid #06F;
+  border-bottom:7px solid #06F;
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+
+  border-radius:80px;
+  -moz-border-radius:80px;
+  -webkit-border-radius:80px;
+  -ms-border-radius:80px;
+  -o-border-radius:80px;
+
+  z-index:1000;
+}
+.waiting .circle
+{
+  box-shadow:0 0 20px #06F;
+  -moz-box-shadow:0 0 20px #06F;
+  -ms-box-shadow:0 0 20px #06F;
+  -o-box-shadow:0 0 20px #06F;
+  -webkit-box-shadow:0 0 20px #06F;
+
+  -webkit-animation: cwSpin 1s linear .2s infinite;
+  -moz-animation: cwSpin .666s linear .2s infinite;
+  -o-animation: cwSpin .666s linear .2s infinite;
+  -ms-animation: cwSpin .666s linear .2s infinite;
+  animation: cwSpin .666s linear .2s infinite;
+}
+#loading2 #outerCircle1 #center
+{
+  margin:25px 0 0 25px;
+  opacity:.6;filter:alpha(opacity=60);
+}
+
+.blue {
+  background-color: lightblue;
+}
+.green {
+  background-color: lightgreen;
+}
+
+.red {
+  background-color: lightcoral;
+}
+
+.productImage {
+  width: 25%;
+}

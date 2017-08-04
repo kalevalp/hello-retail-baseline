@@ -1,5 +1,12 @@
 rules:
-  # Since everything is bundled with webpack, there are technically no runtime dependencies.
+  quote-props: off
+  import/no-named-as-default: off
+  import/no-named-as-default-member: off
   import/no-extraneous-dependencies: off
-  # Accessibility not a priority for sample web interface
-  jsx-a11y/label-has-for: off
+  import/no-webpack-loader-syntax: off
+  import/no-unresolved: off
+  import/extensions: off
+  react/jsx-filename-extension: off
+  react/prop-types: off
+env:
+  shared-node-browser: true
