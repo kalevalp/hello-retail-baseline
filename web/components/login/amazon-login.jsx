@@ -165,7 +165,10 @@ class AmazonLogin extends Component {
 
       const postRequest = https.request(request, (response) => {
         let result = ''
-        response.on('data', d => (result += d))
+        response.on('data', (d) => {
+          result += d
+          return result
+        })
         response.on('end', () => resolve(result))
         response.on('error', error => reject(error))
       })
