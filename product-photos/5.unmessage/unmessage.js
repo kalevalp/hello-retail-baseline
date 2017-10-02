@@ -1,15 +1,15 @@
-'use strict'
+'use strict';
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-const BbPromise = require('bluebird')
-const Twilio = require('twilio')
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const BbPromise = require('bluebird');
+const Twilio = require('twilio');
 
 /**
  * AWS
  */
-aws.config.setPromisesDependency(BbPromise)
-const dynamo = new aws.DynamoDB.DocumentClient()
-const kms = new aws.KMS()
+aws.config.setPromisesDependency(BbPromise);
+const dynamo = new aws.DynamoDB.DocumentClient();
+const kms = new aws.KMS();
 
 /**
  * Twilio
@@ -18,7 +18,7 @@ const twilio = {
   sdk: undefined,
   accountSid: undefined,
   authToken: undefined,
-}
+};
 
 /**
  * Constants
@@ -36,14 +36,14 @@ const constants = {
   TWILIO_ACCOUNT_SID_ENCRYPTED: process.env.TWILIO_ACCOUNT_SID_ENCRYPTED,
   TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
   TWILIO_NUMBER: process.env.TWILIO_NUMBER,
-}
+};
 
 /**
  * Errors
  */
 class ServerError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_SERVER
   }
 }
@@ -56,7 +56,7 @@ const util = {
     data => BbPromise.resolve(data.Plaintext.toString('ascii')),
     error => BbPromise.reject({ field, error }) // eslint-disable-line comma-dangle
   ),
-}
+};
 
 /**
  * Implementation (Internal)
@@ -72,10 +72,10 @@ const impl = {
         util.decrypt('accountSid', constants.TWILIO_ACCOUNT_SID_ENCRYPTED),
         util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED),
       ]).then((values) => {
-        twilio.accountSid = values[0]
-        twilio.authToken = values[1]
-        twilio.sdk = Twilio(twilio.accountSid, twilio.authToken)
-        twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create)
+        twilio.accountSid = values[0];
+        twilio.authToken = values[1];
+        twilio.sdk = Twilio(twilio.accountSid, twilio.authToken);
+        twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create);
         return BbPromise.resolve(event)
       }).catch(err =>
         BbPromise.reject(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${err.field}': ${err.error}`) // eslint-disable-line comma-dangle
@@ -85,7 +85,7 @@ const impl = {
     }
   },
   failAssignment: (event) => {
-    const updated = Date.now()
+    const updated = Date.now();
     const params = {
       TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
       Key: {
@@ -112,7 +112,7 @@ const impl = {
       ReturnValues: 'NONE',
       ReturnConsumedCapacity: 'NONE',
       ReturnItemCollectionMetrics: 'NONE',
-    }
+    };
     return dynamo.update(params).promise().then(
       () => BbPromise.resolve(event),
       err => BbPromise.reject(new ServerError(`error removing assignment from registration: ${err}`)) // eslint-disable-line comma-dangle
@@ -133,7 +133,7 @@ const impl = {
   }).catch(
     ex => BbPromise.reject(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${ex}`) // eslint-disable-line comma-dangle
   ),
-}
+};
 
 // Example event:
 // {
@@ -207,14 +207,14 @@ const impl = {
 // }
 module.exports = {
   handler: (event, context, callback) => {
-    console.log(JSON.stringify(event, null, 2))
+    console.log(JSON.stringify(event, null, 2));
     impl.ensureAuthTokenDecrypted(event)
       .then(impl.failAssignment)
       .then(impl.sendMessage)
       .then((message) => {
-        console.log(`Success: ${JSON.stringify(message, null, 2)}`)
-        const result = event
-        delete result.photographer
+        console.log(`Success: ${JSON.stringify(message, null, 2)}`);
+        const result = event;
+        delete result.photographer;
         if (!result.unassignments) { // keep track of how many times we've unassigned this product photo
           result.unassignments = 1
         } else {
@@ -223,9 +223,9 @@ module.exports = {
         callback(null, result)
       })
       .catch((ex) => {
-        const err = `${constants.MODULE} ${ex.message}:\n${ex.stack}`
-        console.log(err)
+        const err = `${constants.MODULE} ${ex.message}:\n${ex.stack}`;
+        console.log(err);
         callback(err)
       })
   },
-}
+};

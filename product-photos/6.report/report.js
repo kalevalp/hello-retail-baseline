@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
-const AJV = require('ajv')
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const AJV = require('ajv');
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
 /**
  * Constants
@@ -18,38 +18,38 @@ const constants = {
   RETAIL_STREAM_WRITER_ARN: process.env.RETAIL_STREAM_WRITER_ARN,
   TABLE_PHOTO_REGISTRATIONS_NAME: process.env.TABLE_PHOTO_REGISTRATIONS_NAME,
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
-}
+};
 
 /**
  * AJV
  */
 // TODO Get these from a better place later
-const eventSchema = require('./retail-stream-schema-ingress.json')
-const productImageSchema = require('./product-image-schema.json')
+const eventSchema = require('./retail-stream-schema-ingress.json');
+const productImageSchema = require('./product-image-schema.json');
 
 // TODO generalize this?  it is used by but not specific to this module
-const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`
+const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`;
 
-const eventSchemaId = makeSchemaId(eventSchema)
-const productImageSchemaId = makeSchemaId(productImageSchema)
+const eventSchemaId = makeSchemaId(eventSchema);
+const productImageSchemaId = makeSchemaId(productImageSchema);
 
-const ajv = new AJV()
-ajv.addSchema(eventSchema, eventSchemaId)
-ajv.addSchema(productImageSchema, productImageSchemaId)
+const ajv = new AJV();
+ajv.addSchema(eventSchema, eventSchemaId);
+ajv.addSchema(productImageSchema, productImageSchemaId);
 
 /**
  * AWS
  */
-const dynamo = new aws.DynamoDB.DocumentClient()
-const kinesis = new aws.Kinesis()
+const dynamo = new aws.DynamoDB.DocumentClient();
+const kinesis = new aws.Kinesis();
 
 /**
  * Implementation
  */
 const impl = {
   writeToStream: (lambdaEvent, callback) => {
-    const origin = `product-photos/Photographer/${lambdaEvent.photographer.phone}/${lambdaEvent.photographer.name}`
-    const productId = lambdaEvent.data.id.toString()
+    const origin = `product-photos/Photographer/${lambdaEvent.photographer.phone}/${lambdaEvent.photographer.name}`;
+    const productId = lambdaEvent.data.id.toString();
     const imageEvent = {
       schema: eventSchemaId,
       origin,
@@ -59,7 +59,7 @@ const impl = {
         id: productId,
         image: lambdaEvent.image,
       },
-    }
+    };
     if (!ajv.validate(eventSchemaId, imageEvent)) {
       callback(`failure to validate to '${eventSchemaId}' with event:\n${imageEvent}`)
     } else if (!ajv.validate(productImageSchemaId, imageEvent.data)) {
@@ -69,12 +69,12 @@ const impl = {
         Data: JSON.stringify(imageEvent),
         PartitionKey: productId,
         StreamName: constants.RETAIL_STREAM_NAME,
-      }
+      };
       kinesis.putRecord(params, callback)
     }
   },
   succeedAssignment: (event, callback) => {
-    const updated = Date.now()
+    const updated = Date.now();
     const params = {
       TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
       Key: {
@@ -104,7 +104,7 @@ const impl = {
       ReturnValues: 'NONE',
       ReturnConsumedCapacity: 'NONE',
       ReturnItemCollectionMetrics: 'NONE',
-    }
+    };
     dynamo.update(params, callback)
   },
   deleteAssignment: (event, callback) => {
@@ -117,7 +117,7 @@ const impl = {
       ExpressionAttributeNames: {
         '#nu': 'number', // status
       },
-    }
+    };
     dynamo.delete(params, (err) => {
       if (err) {
         if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
@@ -130,7 +130,7 @@ const impl = {
       }
     })
   },
-}
+};
 
 module.exports = {
   /**
@@ -159,7 +159,7 @@ module.exports = {
    * }
    */
   handler: (event, context, callback) => {
-    console.log(JSON.stringify(event))
+    console.log(JSON.stringify(event));
 
     impl.writeToStream(event, (wErr) => {
       if (wErr) {
@@ -173,8 +173,8 @@ module.exports = {
               if (dErr) {
                 callback(`${constants.MODULE} ${constants.METHOD_DELETE_ASSIGNMENT} - ${dErr.stack}`)
               } else {
-                const result = event
-                result.outcome = 'photo taken'
+                const result = event;
+                result.outcome = 'photo taken';
                 callback(null, result)
               }
             })
@@ -183,4 +183,4 @@ module.exports = {
       }
     })
   },
-}
+};

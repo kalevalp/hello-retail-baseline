@@ -1,15 +1,15 @@
-'use strict'
+'use strict';
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-const KH = require('kinesis-handler')
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const KH = require('kinesis-handler');
 
 /**
  * AJV Schemas
  */
 // TODO Get these from a better place later
-const eventSchema = require('./retail-stream-schema-egress.json')
-const updatePhoneSchema = require('./user-update-phone-schema.json')
-const productCreateSchema = require('./product-create-schema.json')
+const eventSchema = require('./retail-stream-schema-egress.json');
+const updatePhoneSchema = require('./user-update-phone-schema.json');
+const productCreateSchema = require('./product-create-schema.json');
 
 const constants = {
   // self
@@ -22,30 +22,30 @@ const constants = {
   // resources
   STEP_FUNCTION: process.env.STEP_FUNCTION,
   TABLE_PHOTO_REGISTRATIONS_NAME: process.env.TABLE_PHOTO_REGISTRATIONS_NAME,
-}
+};
 
 /**
  * Transform record (which will be of the form in ingress schema) to the form of egress schema
  */
 const transformer = (payload, record) => {
-  const result = Object.assign({}, payload)
-  result.schema = 'com.nordstrom/retail-stream-egress/1-0-0'
-  result.eventId = record.eventID
-  result.timeIngest = new Date(record.kinesis.approximateArrivalTimestamp * 1000).toISOString()
-  result.timeProcess = new Date().toISOString()
+  const result = Object.assign({}, payload);
+  result.schema = 'com.nordstrom/retail-stream-egress/1-0-0';
+  result.eventId = record.eventID;
+  result.timeIngest = new Date(record.kinesis.approximateArrivalTimestamp * 1000).toISOString();
+  result.timeProcess = new Date().toISOString();
   return result
-}
+};
 
 /**
  * Event Processor
  */
-const kh = new KH.KinesisHandler(eventSchema, constants.MODULE, transformer)
+const kh = new KH.KinesisHandler(eventSchema, constants.MODULE, transformer);
 
 /**
  * AWS
  */
-const dynamo = new aws.DynamoDB.DocumentClient()
-const stepfunctions = new aws.StepFunctions()
+const dynamo = new aws.DynamoDB.DocumentClient();
+const stepfunctions = new aws.StepFunctions();
 
 const impl = {
   /**
@@ -54,7 +54,7 @@ const impl = {
    * @return {*}
    */
   eventSource: (origin) => {
-    const parts = origin.split('/')
+    const parts = origin.split('/');
     if (parts.length > 2) {
       return {
         uniqueId: parts[2],
@@ -89,8 +89,8 @@ const impl = {
    * @param complete The callback with which to report any errors
    */
   registerPhotographer: (event, complete) => {
-    const updated = Date.now()
-    const name = impl.eventSource(event.origin).friendlyName
+    const updated = Date.now();
+    const name = impl.eventSource(event.origin).friendlyName;
     const putParams = {
       TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
       ConditionExpression: 'attribute_not_exists(id)',
@@ -107,7 +107,7 @@ const impl = {
         assignments: 0,
         timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
       },
-    }
+    };
     dynamo.put(putParams, (err) => {
       if (err) {
         if (err.code && err.code === 'ConditionalCheckFailedException') {
@@ -151,7 +151,7 @@ const impl = {
             ReturnValues: 'NONE',
             ReturnConsumedCapacity: 'NONE',
             ReturnItemCollectionMetrics: 'NONE',
-          }
+          };
           dynamo.update(updateParams, complete)
         } else {
           complete(err)
@@ -181,13 +181,13 @@ const impl = {
    * @param complete The callback with which to report any errors
    */
   startExecution: (event, complete) => {
-    const sfEvent = event
-    sfEvent.merchantName = impl.eventSource(event.origin).friendlyName
+    const sfEvent = event;
+    sfEvent.merchantName = impl.eventSource(event.origin).friendlyName;
     const params = {
       stateMachineArn: constants.STEP_FUNCTION,
       name: sfEvent.data.id,
       input: JSON.stringify(sfEvent),
-    }
+    };
     stepfunctions.startExecution(params, (err) => {
       if (err) {
         if (err.code && err.code === 'ExecutionAlreadyExists') {
@@ -200,14 +200,14 @@ const impl = {
       }
     })
   },
-}
+};
 
-kh.registerSchemaMethodPair(updatePhoneSchema, impl.registerPhotographer)
-kh.registerSchemaMethodPair(productCreateSchema, impl.startExecution)
+kh.registerSchemaMethodPair(updatePhoneSchema, impl.registerPhotographer);
+kh.registerSchemaMethodPair(productCreateSchema, impl.startExecution);
 
 module.exports = {
   processKinesisEvent: kh.processKinesisEvent.bind(kh),
-}
+};
 
-console.log(`${constants.MODULE} - CONST: ${JSON.stringify(constants, null, 2)}`)
-console.log(`${constants.MODULE} - ENV:   ${JSON.stringify(process.env, null, 2)}`)
+console.log(`${constants.MODULE} - CONST: ${JSON.stringify(constants, null, 2)}`);
+console.log(`${constants.MODULE} - ENV:   ${JSON.stringify(process.env, null, 2)}`);

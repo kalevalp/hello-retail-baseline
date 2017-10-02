@@ -1,14 +1,14 @@
-'use strict'
+'use strict';
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-const BbPromise = require('bluebird')
-const Twilio = require('twilio')
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const BbPromise = require('bluebird');
+const Twilio = require('twilio');
 
 /**
  * AWS
  */
-aws.config.setPromisesDependency(BbPromise)
-const kms = new aws.KMS()
+aws.config.setPromisesDependency(BbPromise);
+const kms = new aws.KMS();
 
 /**
  * Twilio
@@ -17,7 +17,7 @@ const twilio = {
   sdk: undefined,
   accountSid: undefined,
   authToken: undefined,
-}
+};
 
 /**
  * Constants
@@ -34,14 +34,14 @@ const constants = {
   TWILIO_ACCOUNT_SID_ENCRYPTED: process.env.TWILIO_ACCOUNT_SID_ENCRYPTED,
   TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
   TWILIO_NUMBER: process.env.TWILIO_NUMBER,
-}
+};
 
 /**
  * Errors
  */
 class ServerError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_SERVER
   }
 }
@@ -51,13 +51,13 @@ class ServerError extends Error {
  */
 const util = {
   serverError: (method, err) => {
-    console.log(`${constants.MODULE} ${method} - ${constants.ERROR_SERVER}: ${err}`)
+    console.log(`${constants.MODULE} ${method} - ${constants.ERROR_SERVER}: ${err}`);
     return util.response(500, constants.ERROR_SERVER)
   },
   decrypt: (field, value) => kms.decrypt({ CiphertextBlob: new Buffer(value, 'base64') }).promise()
     .then(data => BbPromise.resolve(data.Plaintext.toString('ascii')))
     .error(error => BbPromise.reject(field, error)),
-}
+};
 
 /**
  * Implementation (Internal)
@@ -73,10 +73,10 @@ const impl = {
         util.decrypt('accountSid', constants.TWILIO_ACCOUNT_SID_ENCRYPTED),
         util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED),
       ]).then((values) => {
-        twilio.accountSid = values[0]
-        twilio.authToken = values[1]
-        twilio.sdk = Twilio(twilio.accountSid, twilio.authToken)
-        twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create)
+        twilio.accountSid = values[0];
+        twilio.authToken = values[1];
+        twilio.sdk = Twilio(twilio.accountSid, twilio.authToken);
+        twilio.messagesCreate = BbPromise.promisify(twilio.sdk.messages.create);
         return BbPromise.resolve(event)
       }).catch((field, error) =>
         BbPromise.reject(new ServerError(`${constants.METHOD_ENSURE_TWILIO_INITIALIZED} - Error decrypting '${field}': ${error}`)) // eslint-disable-line comma-dangle
@@ -102,7 +102,7 @@ const impl = {
   }).catch(
     err => BbPromise.reject(new ServerError(`${constants.METHOD_SEND_MESSAGE} - Error sending message to photographer via Twilio: ${JSON.stringify(err, null, 2)}`)) // eslint-disable-line comma-dangle
   ),
-}
+};
 
 // Example event:
 // {
@@ -176,16 +176,16 @@ const impl = {
 // }
 module.exports = {
   handler: (event, context, callback) => {
-    console.log(JSON.stringify(event, null, 2))
+    console.log(JSON.stringify(event, null, 2));
     impl.ensureAuthTokenDecrypted(event)
       .then(impl.sendMessage)
       .then((message) => {
-        console.log(`Success: ${JSON.stringify(message, null, 2)}`)
+        console.log(`Success: ${JSON.stringify(message, null, 2)}`);
         callback(null, event)
       })
       .catch((ex) => {
-        console.log(JSON.stringify(ex, null, 2))
+        console.log(JSON.stringify(ex, null, 2));
         callback(`${constants.MODULE} ${ex.message}:\n${ex.stack}`)
       })
   },
-}
+};

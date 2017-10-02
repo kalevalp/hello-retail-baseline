@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
-const dynamo = new aws.DynamoDB.DocumentClient()
+const dynamo = new aws.DynamoDB.DocumentClient();
 
 const constants = {
   // self
@@ -11,7 +11,7 @@ const constants = {
   METHOD_HANDLER: 'handler',
   // External Values
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
-}
+};
 
 const impl = {
   /**
@@ -48,7 +48,7 @@ const impl = {
       ExpressionAttributeNames: {
         '#nu': 'number', // status
       },
-    }
+    };
     dynamo.delete(params, (err) => {
       if (err) {
         if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
@@ -61,7 +61,7 @@ const impl = {
       }
     })
   },
-}
+};
 
 /**
  * Handle the failure of the process to obtain a photograph from a photographer
@@ -89,8 +89,8 @@ const impl = {
  * @param callback see Lambda docs
  */
 exports.handler = (event, context, callback) => {
-  console.log(JSON.stringify(event))
+  console.log(JSON.stringify(event));
 
   impl.deleteAssignment(event, callback)
-}
+};
 

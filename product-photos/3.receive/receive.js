@@ -1,45 +1,45 @@
-'use strict'
+'use strict';
 
-const AJV = require('ajv')
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-const BbPromise = require('bluebird')
-const got = require('got')
-const Twilio = require('twilio')
-const url = require('url')
+const AJV = require('ajv');
+const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const BbPromise = require('bluebird');
+const got = require('got');
+const Twilio = require('twilio');
+const url = require('url');
 
 /**
  * AJV
  */
 // TODO Get these from a better place later
-const twilioRequestSchema = require('./twilio-request-schema.json')
-const photoAssignmentSchema = require('./photo-assignment-schema.json')
+const twilioRequestSchema = require('./twilio-request-schema.json');
+const photoAssignmentSchema = require('./photo-assignment-schema.json');
 
 // TODO generalize this?  it is used by but not specific to this module
-const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`
+const makeSchemaId = schema => `${schema.self.vendor}/${schema.self.name}/${schema.self.version}`;
 
-const twilioRequestSchemaId = makeSchemaId(twilioRequestSchema)
-const photoAssignmentSchemaId = makeSchemaId(photoAssignmentSchema)
+const twilioRequestSchemaId = makeSchemaId(twilioRequestSchema);
+const photoAssignmentSchemaId = makeSchemaId(photoAssignmentSchema);
 
 
-const ajv = new AJV()
-ajv.addSchema(twilioRequestSchema, twilioRequestSchemaId)
-ajv.addSchema(photoAssignmentSchema, photoAssignmentSchemaId)
+const ajv = new AJV();
+ajv.addSchema(twilioRequestSchema, twilioRequestSchemaId);
+ajv.addSchema(photoAssignmentSchema, photoAssignmentSchemaId);
 
 /**
  * AWS
  */
-aws.config.setPromisesDependency(BbPromise)
-const dynamo = new aws.DynamoDB.DocumentClient()
-const kms = new aws.KMS()
-const s3 = new aws.S3()
-const stepfunctions = new aws.StepFunctions()
+aws.config.setPromisesDependency(BbPromise);
+const dynamo = new aws.DynamoDB.DocumentClient();
+const kms = new aws.KMS();
+const s3 = new aws.S3();
+const stepfunctions = new aws.StepFunctions();
 
 /**
  * Twilio
  */
 const twilio = {
   authToken: undefined,
-}
+};
 
 /**
  * Constants
@@ -68,32 +68,32 @@ const constants = {
   IMAGE_BUCKET: process.env.IMAGE_BUCKET,
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
   TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
-}
+};
 
 /**
  * Errors
  */
 class ClientError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_CLIENT
   }
 }
 class AuthError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_UNAUTHORIZED
   }
 }
 class UserError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_USER
   }
 }
 class ServerError extends Error {
   constructor(message) {
-    super(message)
+    super(message);
     this.name = constants.ERROR_SERVER
   }
 }
@@ -111,18 +111,18 @@ const util = {
     body,
   }),
   securityRisk: (schemaId, ajvErrors, items) => {
-    console.log(constants.HASHES)
-    console.log(constants.ERROR_SECURITY_RISK)
-    console.log(`${constants.METHOD_TODO} ${constants.ERROR_DATA_CORRUPTION} could not validate data to '${schemaId}' schema. Errors: ${ajvErrors}`)
-    console.log(`${constants.METHOD_TODO} ${constants.ERROR_DATA_CORRUPTION} bad data: ${JSON.stringify(items)}`)
-    console.log(constants.HASHES)
+    console.log(constants.HASHES);
+    console.log(constants.ERROR_SECURITY_RISK);
+    console.log(`${constants.METHOD_TODO} ${constants.ERROR_DATA_CORRUPTION} could not validate data to '${schemaId}' schema. Errors: ${ajvErrors}`);
+    console.log(`${constants.METHOD_TODO} ${constants.ERROR_DATA_CORRUPTION} bad data: ${JSON.stringify(items)}`);
+    console.log(constants.HASHES);
     return util.response(500, constants.ERROR_SERVER)
   },
   decrypt: (field, value) => kms.decrypt({ CiphertextBlob: new Buffer(value, 'base64') }).promise().then(
     data => BbPromise.resolve(data.Plaintext.toString('ascii')),
     err => BbPromise.reject(new ServerError(`Error decrypting '${field}': ${err}`)) // eslint-disable-line comma-dangle
   ),
-}
+};
 
 /**
  * Implementation (Internal)
@@ -147,7 +147,7 @@ const impl = {
     if (!twilio.authToken) {
       return util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED)
         .then((authToken) => {
-          twilio.authToken = authToken
+          twilio.authToken = authToken;
           return BbPromise.resolve(event)
         })
     } else {
@@ -159,7 +159,7 @@ const impl = {
    * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   validateTwilioRequest: (event) => {
-    const body = url.parse(`?${event.body}`, true).query
+    const body = url.parse(`?${event.body}`, true).query;
     if (!Twilio.validateRequest(twilio.authToken, event.headers['X-Twilio-Signature'], constants.ENDPOINT, body)) {
       return BbPromise.reject(new AuthError('Twilio message signature validation failure!'))
     } else if (body.NumMedia < 1) {
@@ -186,7 +186,7 @@ const impl = {
    * @param results The event representing the HTTPS request from Twilio (SMS sent notification)
    */
   getImageFromTwilio: (results) => {
-    const uri = url.parse(results.body.MediaUrl0)
+    const uri = url.parse(results.body.MediaUrl0);
     if (aws.config.httpOptions.agent) {
       uri.agent = aws.config.httpOptions.agent
     }
@@ -214,15 +214,15 @@ const impl = {
       ],
       ConsistentRead: false,
       ReturnConsumedCapacity: 'NONE',
-    }
+    };
     return dynamo.get(params).promise()
       .then(
         (data) => {
           if (!data.Item) {
             return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  If you have registered and not completed your assignments, we will send one shortly.'))
           } else {
-            const item = data.Item
-            item.taskEvent = JSON.parse(item.taskEvent)
+            const item = data.Item;
+            item.taskEvent = JSON.parse(item.taskEvent);
             return BbPromise.resolve(item)
           }
         },
@@ -237,10 +237,10 @@ const impl = {
    *          results[1] = assignment  // The assignment associated with the given request's phone number
    */
   storeImage: (results) => {
-    const image = results[0]
-    const assignment = results[1]
+    const image = results[0];
+    const assignment = results[1];
 
-    const bucketKey = `i/p/${assignment.taskEvent.data.id}`
+    const bucketKey = `i/p/${assignment.taskEvent.data.id}`;
 
     const params = {
       Bucket: constants.IMAGE_BUCKET,
@@ -250,7 +250,7 @@ const impl = {
       Metadata: {
         from: assignment.taskEvent.photographer.phone,
       },
-    }
+    };
     return s3.putObject(params).promise().then(
       () => BbPromise.resolve({
         assignment,
@@ -264,29 +264,29 @@ const impl = {
    * @param results The results of the placeImage, containing the assignment and new image location
    */
   sendStepSuccess: (results) => {
-    const taskEvent = results.assignment.taskEvent
-    taskEvent.image = results.image
-    taskEvent.success = 'true'
+    const taskEvent = results.assignment.taskEvent;
+    taskEvent.image = results.image;
+    taskEvent.success = 'true';
     const params = {
       output: JSON.stringify(taskEvent),
       taskToken: results.assignment.taskToken,
-    }
+    };
     return stepfunctions.sendTaskSuccess(params).promise().then(
       () => BbPromise.resolve(taskEvent),
       err => BbPromise.reject(`Error sending success to Step Function: ${err}`) // eslint-disable-line comma-dangle
     )
   },
   userErrorResp: (error) => {
-    const msg = new Twilio.TwimlResponse()
-    msg.message(error.message)
+    const msg = new Twilio.TwimlResponse();
+    msg.message(error.message);
     return msg.toString()
   },
   thankYouForImage: (taskEvent) => {
-    const msg = new Twilio.TwimlResponse()
-    msg.message(`Thanks so much ${taskEvent.photographer.name}!`)
+    const msg = new Twilio.TwimlResponse();
+    msg.message(`Thanks so much ${taskEvent.photographer.name}!`);
     return msg.toString()
   },
-}
+};
 /**
  * API (External)
  */
@@ -300,31 +300,31 @@ module.exports = {
       .then(impl.sendStepSuccess)
       .then(impl.thankYouForImage)
       .then((msg) => {
-        const response = util.response(200, msg)
-        response.headers['Content-Type'] = 'text/xml'
+        const response = util.response(200, msg);
+        response.headers['Content-Type'] = 'text/xml';
         callback(null, response)
       })
       .catch(ClientError, (ex) => {
-        console.log(`${constants.MODULE} - ${ex.stack}`)
+        console.log(`${constants.MODULE} - ${ex.stack}`);
         callback(null, util.response(400, `${ex.name}: ${ex.message}`))
       })
       .catch(AuthError, (ex) => {
-        console.log(`${constants.MODULE} - ${ex.stack}`)
+        console.log(`${constants.MODULE} - ${ex.stack}`);
         callback(null, util.response(403, constants.ERROR_UNAUTHORIZED))
       })
       .catch(UserError, (ex) => {
-        console.log(`${constants.MODULE} - ${ex.stack}`)
-        const response = util.response(200, impl.userErrorResp(ex))
-        response.headers['Content-Type'] = 'text/xml'
+        console.log(`${constants.MODULE} - ${ex.stack}`);
+        const response = util.response(200, impl.userErrorResp(ex));
+        response.headers['Content-Type'] = 'text/xml';
         callback(null, response)
       })
       .catch(ServerError, (ex) => {
-        console.log(`${constants.MODULE} - ${ex.stack}`)
+        console.log(`${constants.MODULE} - ${ex.stack}`);
         callback(null, util.response(500, ex.name))
       })
       .catch((ex) => {
-        console.log(`${constants.MODULE} - Uncaught exception: ${ex.stack}`)
+        console.log(`${constants.MODULE} - Uncaught exception: ${ex.stack}`);
         callback(null, util.response(500, constants.ERROR_SERVER))
       })
   },
-}
+};

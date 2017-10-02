@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * Handle the success of the process to obtain a photograph from a photographer
@@ -28,10 +28,10 @@
  * @param callback see Lambda docs
  */
 exports.handler = (event, context, callback) => {
-  console.log(JSON.stringify(event))
+  console.log(JSON.stringify(event));
 
-  const result = event
-  result.assignmentComplete = 'true'
+  const result = event;
+  result.assignmentComplete = 'true';
   callback(null, result)
-}
+};
 
