@@ -13,7 +13,6 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
-    "bluebird": "^3.4.7",
-    "twilio": "^2.11.1"
+    "bluebird": "^3.4.7"
   }
 }
