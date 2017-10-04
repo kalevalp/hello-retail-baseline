@@ -1,10 +1,16 @@
 'use strict';
 
+/* ********************************************************************
+ *                 Hello Retail Minimization:
+ *  - Removed all twilio code, in charge of twilio authentication,
+ *    request validation, and ack responses (error, success messages
+ *    sent to photographer).
+ * ******************************************************************** */
+
 const AJV = require('ajv');
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 const BbPromise = require('bluebird');
 const got = require('got');
-const Twilio = require('twilio');
 const url = require('url');
 
 /**
@@ -34,12 +40,12 @@ const kms = new aws.KMS();
 const s3 = new aws.S3();
 const stepfunctions = new aws.StepFunctions();
 
-/**
- * Twilio
- */
-const twilio = {
-  authToken: undefined,
-};
+// /**
+//  * Twilio
+//  */
+// const twilio = {
+//   authToken: undefined,
+// };
 
 /**
  * Constants
@@ -58,8 +64,8 @@ const constants = {
   MODULE: 'receive.js',
   METHOD_HANDLER: 'handler',
   METHOD_DECRYPT: 'util.decrypt',
-  METHOD_VALIDATE_TWILIO_REQUEST: 'impl.validateTwilioRequest',
-  METHOD_GET_IMAGE_FROM_TWILIO: 'impl.getImageFromTwilio',
+  // METHOD_VALIDATE_TWILIO_REQUEST: 'impl.validateTwilioRequest',
+  // METHOD_GET_IMAGE_FROM_TWILIO: 'impl.getImageFromTwilio',
   METHOD_PLACE_IMAGE_IN_S3: 'impl.storeImage',
   METHOD_SEND_STEP_SUCCESS: 'impl.sendStepSuccess',
 
@@ -67,7 +73,7 @@ const constants = {
   ENDPOINT: process.env.ENDPOINT,
   IMAGE_BUCKET: process.env.IMAGE_BUCKET,
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
-  TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
+  // TWILIO_AUTH_TOKEN_ENCRYPTED: process.env.TWILIO_AUTH_TOKEN_ENCRYPTED,
 };
 
 /**
@@ -139,44 +145,44 @@ const impl = {
       return BbPromise.resolve(event)
     }
   },
-  /**
-   * Ensure that we have decrypted the Twilio credentials and initialized the SDK with them
-   * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
-   */
-  ensureAuthTokenDecrypted: (event) => {
-    if (!twilio.authToken) {
-      return util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED)
-        .then((authToken) => {
-          twilio.authToken = authToken;
-          return BbPromise.resolve(event)
-        })
-    } else {
-      return BbPromise.resolve(event)
-    }
-  },
-  /**
-   * Validate the request as having a proper signature from Twilio.  This provides authentication that the request came from Twillio.
-   * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
-   */
-  validateTwilioRequest: (event) => {
-    const body = url.parse(`?${event.body}`, true).query;
-    if (!Twilio.validateRequest(twilio.authToken, event.headers['X-Twilio-Signature'], constants.ENDPOINT, body)) {
-      return BbPromise.reject(new AuthError('Twilio message signature validation failure!'))
-    } else if (body.NumMedia < 1) {
-      return BbPromise.reject(new UserError('Oops!  We were expecting a product image.  Please send one!  :D'))
-    } else if (body.NumMedia < 1) {
-      return BbPromise.reject(new UserError('Oops!  We can only handle one image.  Sorry... can you please try again?  :D'))
-    } else if (!body.MediaContentType0 || !body.MediaContentType0.startsWith('image/')) {
-      return BbPromise.reject(new UserError('Oops!  We can only accept standard images.  We weren\'t very creative...'))
-    } else if (!body.From) {
-      return BbPromise.reject(new ServerError('Request from Twilio did not contain the phone number the image came from.'))
-    } else {
-      return BbPromise.resolve({
-        event,
-        body,
-      })
-    }
-  },
+  // /**
+  //  * Ensure that we have decrypted the Twilio credentials and initialized the SDK with them
+  //  * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
+  //  */
+  // ensureAuthTokenDecrypted: (event) => {
+  //   if (!twilio.authToken) {
+  //     return util.decrypt('authToken', constants.TWILIO_AUTH_TOKEN_ENCRYPTED)
+  //       .then((authToken) => {
+  //         twilio.authToken = authToken;
+  //         return BbPromise.resolve(event)
+  //       })
+  //   } else {
+  //     return BbPromise.resolve(event)
+  //   }
+  // },
+  // /**
+  //  * Validate the request as having a proper signature from Twilio.  This provides authentication that the request came from Twillio.
+  //  * @param event The event representing the HTTPS request from Twilio (SMS sent notification)
+  //  */
+  // validateTwilioRequest: (event) => {
+  //   const body = url.parse(`?${event.body}`, true).query;
+  //   if (!Twilio.validateRequest(twilio.authToken, event.headers['X-Twilio-Signature'], constants.ENDPOINT, body)) {
+  //     return BbPromise.reject(new AuthError('Twilio message signature validation failure!'))
+  //   } else if (body.NumMedia < 1) {
+  //     return BbPromise.reject(new UserError('Oops!  We were expecting a product image.  Please send one!  :D'))
+  //   } else if (body.NumMedia < 1) {
+  //     return BbPromise.reject(new UserError('Oops!  We can only handle one image.  Sorry... can you please try again?  :D'))
+  //   } else if (!body.MediaContentType0 || !body.MediaContentType0.startsWith('image/')) {
+  //     return BbPromise.reject(new UserError('Oops!  We can only accept standard images.  We weren\'t very creative...'))
+  //   } else if (!body.From) {
+  //     return BbPromise.reject(new ServerError('Request from Twilio did not contain the phone number the image came from.'))
+  //   } else {
+  //     return BbPromise.resolve({
+  //       event,
+  //       body,
+  //     })
+  //   }
+  // },
   getResources: results => BbPromise.all([
     impl.getImageFromTwilio(results),
     impl.getAssignment(results),
@@ -277,14 +283,16 @@ const impl = {
     )
   },
   userErrorResp: (error) => {
-    const msg = new Twilio.TwimlResponse();
-    msg.message(error.message);
-    return msg.toString()
+    console.log("Sending error: ")
+    // const msg = new Twilio.TwimlResponse();
+    // msg.message(error.message);
+    // return msg.toString()
   },
   thankYouForImage: (taskEvent) => {
-    const msg = new Twilio.TwimlResponse();
-    msg.message(`Thanks so much ${taskEvent.photographer.name}!`);
-    return msg.toString()
+    console.log("Sending thank you: ")
+    // const msg = new Twilio.TwimlResponse();
+    // msg.message(`Thanks so much ${taskEvent.photographer.name}!`);
+    // return msg.toString()
   },
 };
 /**
@@ -293,8 +301,8 @@ const impl = {
 module.exports = {
   handler: (event, context, callback) => {
     impl.validateApiGatewayRequest(event)
-      .then(impl.ensureAuthTokenDecrypted)
-      .then(impl.validateTwilioRequest)
+      // .then(impl.ensureAuthTokenDecrypted)
+      // .then(impl.validateTwilioRequest)
       .then(impl.getResources)
       .then(impl.storeImage)
       .then(impl.sendStepSuccess)
