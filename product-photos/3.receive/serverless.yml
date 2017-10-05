@@ -30,7 +30,6 @@ functions:
             - .execute-api.us-west-2.amazonaws.com/${self:custom.stage}/sms
       TABLE_PHOTO_ASSIGNMENTS_NAME:
         Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
-      TWILIO_AUTH_TOKEN_ENCRYPTED: ${self:custom.private.twilio.authToken}
     events:
       - http:
           path: sms
