@@ -6,9 +6,9 @@ rules:
   no-else-return: off
   no-plusplus: off
   no-unexpected-multiline: error
-  semi:
-    - error
-    - never
+  semi: off
+#    - error
+#    - never
   strict: off # doesn't work in node v4
 plugins:
   - react
