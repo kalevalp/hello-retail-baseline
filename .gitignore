@@ -52,3 +52,8 @@ jspm_packages
 
 # Web Project
 web/config.js
+
+package-lock.json
+
+# private project configuration
+private.yml
