@@ -2,9 +2,9 @@
 
 /* ********************************************************************
  *                 Hello Retail Minimization:
- *  - Removed all Twilio code, in charge of Twilio authentication,
- *    request validation, and ack responses (error, success messages
- *    sent to photographer).
+ *  - Removed all Twilio code, in charge of authentication, request
+ *    validation, and ack responses (error, success messages sent
+ *    to photographer).
  *  - Changed returned values to a simple string instead of HTTP
  *    response.
  * ******************************************************************** */
