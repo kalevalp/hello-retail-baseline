@@ -14,5 +14,6 @@
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
     "bluebird": "^3.4.7",
+    "nodemailer": "^4.1.3"
   }
 }
