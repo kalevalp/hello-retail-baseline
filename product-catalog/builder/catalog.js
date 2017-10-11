@@ -1,12 +1,18 @@
-'use strict'
+'use strict';
 
-const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
-const KH = require('kinesis-handler')
+// const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const KH = require('kinesis-handler');
+
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 
 // TODO Get these from a better place later
-const eventSchema = require('./retail-stream-schema-ingress.json')
-const productCreateSchema = require('./product-create-schema.json')
-const productImageSchema = require('./product-image-schema.json')
+const eventSchema = require('./retail-stream-schema-ingress.json');
+const productCreateSchema = require('./product-create-schema.json');
+const productImageSchema = require('./product-image-schema.json');
 
 const constants = {
   // self
@@ -17,11 +23,11 @@ const constants = {
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
-}
+};
 
-const kh = new KH.KinesisHandler(eventSchema, constants.MODULE)
+const kh = new KH.KinesisHandler(eventSchema, constants.MODULE);
 
-const dynamo = new aws.DynamoDB.DocumentClient()
+// const dynamo = new aws.DynamoDB.DocumentClient();
 
 const impl = {
   /**
@@ -43,8 +49,10 @@ const impl = {
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putProduct: (event, complete) => {
-    const updated = Date.now()
-    let priorErr
+    const kv = new KV_Store(conf.host, conf.user, conf.pass);
+
+    const updated = Date.now();
+    let priorErr;
     const updateCallback = (err) => {
       if (priorErr === undefined) { // first update result
         if (err) {
@@ -59,77 +67,148 @@ const impl = {
       } else { // second update result if error was not previously seen
         complete()
       }
-    }
-    const dbParamsCategory = {
-      TableName: constants.TABLE_PRODUCT_CATEGORY_NAME,
-      Key: {
-        category: event.data.category,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),',
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsCategory, updateCallback)
-    const dbParamsProduct = {
-      TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
-      Key: {
-        id: event.data.id,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),',
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#b=:b,',
-        '#n=:n,',
-        '#d=:d,',
-        '#cat=:cat',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#b': 'brand',
-        '#n': 'name',
-        '#d': 'description',
-        '#cat': 'category',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-        ':b': event.data.brand,
-        ':n': event.data.name,
-        ':d': event.data.description,
-        ':cat': event.data.category,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsProduct, updateCallback)
+    };
+    // const dbParamsCategory = {
+    //   TableName: constants.TABLE_PRODUCT_CATEGORY_NAME,
+    //   Key: {
+    //     category: event.data.category,
+    //   },
+    //   UpdateExpression: [
+    //     'set',
+    //     '#c=if_not_exists(#c,:c),',
+    //     '#cb=if_not_exists(#cb,:cb),',
+    //     '#u=:u,',
+    //     '#ub=:ub',
+    //   ].join(' '),
+    //   ExpressionAttributeNames: {
+    //     '#c': 'created',
+    //     '#cb': 'createdBy',
+    //     '#u': 'updated',
+    //     '#ub': 'updatedBy',
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ':c': updated,
+    //     ':cb': event.origin,
+    //     ':u': updated,
+    //     ':ub': event.origin,
+    //   },
+    //   ReturnValues: 'NONE',
+    //   ReturnConsumedCapacity: 'NONE',
+    //   ReturnItemCollectionMetrics: 'NONE',
+    // };
+    // dynamo.update(dbParamsCategory, updateCallback);
+
+    // TODO KALEV - Need to explicitly reference the correct table (maybe pass to the constructor or smth).
+    kv.init((initErr) => {
+      if (initErr) {
+        updateCallback(initErr);
+      } else {
+        kv.put(
+          event.data.category,
+          JSON.stringify({
+            /* *************************************************
+             *    Note: The 'created' field poses a problem in
+             *  our model - an update requires a read first.
+             * ************************************************* */
+            // created: updated,
+            // createdBy: event.origin,
+            updated,
+            updatedBy: event.origin,
+          }),
+          (putErr) => {
+            if (putErr) {
+              updateCallback(putErr);
+            } else {
+              kv.close((closeErr) => {
+                if (closeErr) {
+                  updateCallback(closeErr);
+                } else {
+                  updateCallback(null);
+                }
+              })
+            }
+          })
+      }
+    });
+
+
+    // const dbParamsProduct = {
+    //   TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
+    //   Key: {
+    //     id: event.data.id,
+    //   },
+    //   UpdateExpression: [
+    //     'set',
+    //     '#c=if_not_exists(#c,:c),',
+    //     '#cb=if_not_exists(#cb,:cb),',
+    //     '#u=:u,',
+    //     '#ub=:ub,',
+    //     '#b=:b,',
+    //     '#n=:n,',
+    //     '#d=:d,',
+    //     '#cat=:cat',
+    //   ].join(' '),
+    //   ExpressionAttributeNames: {
+    //     '#c': 'created',
+    //     '#cb': 'createdBy',
+    //     '#u': 'updated',
+    //     '#ub': 'updatedBy',
+    //     '#b': 'brand',
+    //     '#n': 'name',
+    //     '#d': 'description',
+    //     '#cat': 'category',
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ':c': updated,
+    //     ':cb': event.origin,
+    //     ':u': updated,
+    //     ':ub': event.origin,
+    //     ':b': event.data.brand,
+    //     ':n': event.data.name,
+    //     ':d': event.data.description,
+    //     ':cat': event.data.category,
+    //   },
+    //   ReturnValues: 'NONE',
+    //   ReturnConsumedCapacity: 'NONE',
+    //   ReturnItemCollectionMetrics: 'NONE',
+    // };
+    // dynamo.update(dbParamsProduct, updateCallback);
+
+    kv.init((initErr) => {
+      if (initErr) {
+        updateCallback(initErr);
+      } else {
+        kv.put(
+          event.data.id,
+          JSON.stringify({
+            /* *************************************************
+             *    Note: The 'created' field poses a problem in
+             *  our model - an update requires a read first.
+             * ************************************************* */
+            // created: updated,
+            // createdBy: event.origin,
+            updated,
+            updatedBy: event.origin,
+            brand: event.data.brand,
+            name: event.data.name,
+            description: event.data.description,
+            category: event.data.category,
+          }),
+          (putErr) => {
+            if (putErr) {
+              updateCallback(putErr);
+            } else {
+              kv.close((closeErr) => {
+                if (closeErr) {
+                  updateCallback(closeErr);
+                } else {
+                  updateCallback(null);
+                }
+              })
+            }
+          })
+      }
+    });
   },
   /**
    * Put the given image in to the dynamo catalog.  Example event:
@@ -147,48 +226,86 @@ const impl = {
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putImage: (event, complete) => {
-    const updated = Date.now()
-    const dbParamsProduct = {
-      TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
-      Key: {
-        id: event.data.id,
-      },
-      UpdateExpression: [
-        'set',
-        '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
-        '#cb=if_not_exists(#cb,:cb),',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#i=:i',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#c': 'created',
-        '#cb': 'createdBy',
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#i': 'image',
-      },
-      ExpressionAttributeValues: {
-        ':c': updated,
-        ':cb': event.origin,
-        ':u': updated,
-        ':ub': event.origin,
-        ':i': event.data.image,
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-    dynamo.update(dbParamsProduct, complete)
-  },
-}
+    // TODO KALEV - a separate table for images.
 
-kh.registerSchemaMethodPair(productCreateSchema, impl.putProduct)
-kh.registerSchemaMethodPair(productImageSchema, impl.putImage)
+    const kv = new KV_Store(conf.host, conf.user, conf.pass);
+
+    const updated = Date.now();
+    // const dbParamsProduct = {
+    //   TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
+    //   Key: {
+    //     id: event.data.id,
+    //   },
+    //   UpdateExpression: [
+    //     'set',
+    //     '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
+    //     '#cb=if_not_exists(#cb,:cb),',
+    //     '#u=:u,',
+    //     '#ub=:ub,',
+    //     '#i=:i',
+    //   ].join(' '),
+    //   ExpressionAttributeNames: {
+    //     '#c': 'created',
+    //     '#cb': 'createdBy',
+    //     '#u': 'updated',
+    //     '#ub': 'updatedBy',
+    //     '#i': 'image',
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ':c': updated,
+    //     ':cb': event.origin,
+    //     ':u': updated,
+    //     ':ub': event.origin,
+    //     ':i': event.data.image,
+    //   },
+    //   ReturnValues: 'NONE',
+    //   ReturnConsumedCapacity: 'NONE',
+    //   ReturnItemCollectionMetrics: 'NONE',
+    // };
+    // dynamo.update(dbParamsProduct, complete)
+
+    kv.init((initErr) => {
+      if (initErr) {
+        complete(initErr);
+      } else {
+        kv.put(
+          event.data.id,
+          JSON.stringify({
+            /* *************************************************
+             *    Note: The 'created' field poses a problem in
+             *  our model - an update requires a read first.
+             * ************************************************* */
+            // created: updated,
+            // createdBy: event.origin,
+            updated,
+            updatedBy: event.origin,
+            image: event.data.image,
+          }),
+          (putErr) => {
+            if (putErr) {
+              complete(putErr);
+            } else {
+              kv.close((closeErr) => {
+                if (closeErr) {
+                  complete(closeErr);
+                } else {
+                  complete(null);
+                }
+              })
+            }
+          })
+      }
+    });
+
+  },
+};
+
+kh.registerSchemaMethodPair(productCreateSchema, impl.putProduct);
+kh.registerSchemaMethodPair(productImageSchema, impl.putImage);
 
 module.exports = {
   processKinesisEvent: kh.processKinesisEvent.bind(kh),
-}
+};
 
-console.log(`${constants.MODULE} - CONST: ${JSON.stringify(constants, null, 2)}`)
-console.log(`${constants.MODULE} - ENV:   ${JSON.stringify(process.env, null, 2)}`)
+console.log(`${constants.MODULE} - CONST: ${JSON.stringify(constants, null, 2)}`);
+console.log(`${constants.MODULE} - ENV:   ${JSON.stringify(process.env, null, 2)}`);

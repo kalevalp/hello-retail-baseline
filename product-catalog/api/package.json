@@ -1,6 +1,6 @@
 {
   "name": "hello-retail-product-catalog-api",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "An API to obtain product and category information from the Product Catalog",
   "main": "catalogApi.js",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-catalog#readme",
   "dependencies": {
-    "ajv": "^4.10.4"
+    "ajv": "^4.10.4",
+    "kv-store": "file:../../../serverless-ifc/src/kv-store"
   }
 }
