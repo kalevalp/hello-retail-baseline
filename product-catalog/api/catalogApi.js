@@ -94,9 +94,8 @@ const api = {
       //     callback(null, impl.success(data.Items))
       //   }
       // })
-      const kv = new KV_Store(conf.host, conf.user, conf.pass);
+      const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
 
-      // TODO KALEV - Need to explicitly reference the correct table (maybe pass to the constructor or smth).
       // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
       kv.init((initErr) => {
         if (initErr) {
@@ -151,9 +150,9 @@ const api = {
       //   }
       // })
 
-      const kv = new KV_Store(conf.host, conf.user, conf.pass);
+      const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATALOG_NAME);
 
-      // TODO KALEV - Need to explicitly reference the correct table (maybe pass to the constructor or smth).
+      // TODO KALEV - Make sure there's an API that exposes the photos.
       // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
       kv.init((initErr) => {
         if (initErr) {

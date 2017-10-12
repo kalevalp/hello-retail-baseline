@@ -23,6 +23,8 @@ const constants = {
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
+  // TODO KALEV: Make sure this parameter is passed from the environment.
+  TABLE_PRODUCT_PHOTOS_NAME: process.env.TABLE_PRODUCT_PHOTOS_NAME,
 };
 
 const kh = new KH.KinesisHandler(eventSchema, constants.MODULE);
@@ -49,7 +51,7 @@ const impl = {
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putProduct: (event, complete) => {
-    const kv = new KV_Store(conf.host, conf.user, conf.pass);
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
 
     const updated = Date.now();
     let priorErr;
@@ -226,9 +228,7 @@ const impl = {
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putImage: (event, complete) => {
-    // TODO KALEV - a separate table for images.
-
-    const kv = new KV_Store(conf.host, conf.user, conf.pass);
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_PHOTOS_NAME);
 
     const updated = Date.now();
     // const dbParamsProduct = {
