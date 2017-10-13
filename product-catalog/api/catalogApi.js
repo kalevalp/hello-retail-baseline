@@ -97,25 +97,11 @@ const api = {
       const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
 
       // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
-      kv.init((initErr) => {
-        if (initErr) {
-          callback(initErr);
-        } else {
-          kv.keys((keysErr, data) => {
-            if (keysErr) {
-              callback(keysErr);
-            } else {
-              kv.close((closeErr) => {
-                if (closeErr) {
-                  callback(closeErr);
-                } else {
-                  callback(null, data);
-                }
-              })
-            }
-          });
-        }
-      });
+      kv.init()
+        .then(() => kv.keys())
+        .then(result => kv.close().then(() => result))
+        .then(result => callback(null, result))
+        .catch(err => callback(err));
     }
   },
   // TODO this is only filter/query impl, also handle single item request
@@ -154,31 +140,19 @@ const api = {
 
       // TODO KALEV - Make sure there's an API that exposes the photos.
       // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
-      kv.init((initErr) => {
-        if (initErr) {
-          callback(initErr);
-        } else {
-          kv.entries((keysErr, data) => {
-            if (keysErr) {
-              callback(keysErr);
-            } else {
-              kv.close((closeErr) => {
-                if (closeErr) {
-                  callback(closeErr);
-                } else {
-                  callback(null, data.filter(entry => JSON.parse(entry.rowvalue).category === event.queryStringParameters.category).map(entry => ({
-                    id: entry.rowkey,
-                    category: JSON.parse(entry.rowvalue).category,
-                    brand: JSON.parse(entry.rowvalue).brand,
-                    name: JSON.parse(entry.rowvalue).name,
-                    description: JSON.parse(entry.rowvalue).description,
-                  })));
-                }
-              })
-            }
-          });
-        }
-      });
+      kv.init()
+        .then(() => kv.entries())
+        .then(results => kv.close().then(() => results))
+        .then((results) => {
+          callback(null, results.filter(entry => JSON.parse(entry.rowvalue).category === event.queryStringParameters.category).map(entry => ({
+            id: entry.rowkey,
+            category: JSON.parse(entry.rowvalue).category,
+            brand: JSON.parse(entry.rowvalue).brand,
+            name: JSON.parse(entry.rowvalue).name,
+            description: JSON.parse(entry.rowvalue).description,
+          })));
+        })
+        .catch(err => callback(err));
     }
   },
 };

@@ -100,39 +100,22 @@ const impl = {
     // };
     // dynamo.update(dbParamsCategory, updateCallback);
 
-    // TODO KALEV - Need to explicitly reference the correct table (maybe pass to the constructor or smth).
-    kv.init((initErr) => {
-      if (initErr) {
-        updateCallback(initErr);
-      } else {
-        kv.put(
-          event.data.category,
-          JSON.stringify({
-            /* *************************************************
-             *    Note: The 'created' field poses a problem in
-             *  our model - an update requires a read first.
-             * ************************************************* */
-            // created: updated,
-            // createdBy: event.origin,
-            updated,
-            updatedBy: event.origin,
-          }),
-          (putErr) => {
-            if (putErr) {
-              updateCallback(putErr);
-            } else {
-              kv.close((closeErr) => {
-                if (closeErr) {
-                  updateCallback(closeErr);
-                } else {
-                  updateCallback(null);
-                }
-              })
-            }
-          })
-      }
-    });
-
+    kv.init()
+      .then(() => kv.put(
+        event.data.category,
+        JSON.stringify({
+          /* *************************************************
+           *    Note: The 'created' field poses a problem in
+           *  our model - an update requires a read first.
+           * ************************************************* */
+          // created: updated,
+          // createdBy: event.origin,
+          updated,
+          updatedBy: event.origin,
+        })))
+      .then(() => kv.close())
+      .then(() => updateCallback(null))
+      .catch(err => updateCallback(err));
 
     // const dbParamsProduct = {
     //   TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
@@ -176,45 +159,30 @@ const impl = {
     // };
     // dynamo.update(dbParamsProduct, updateCallback);
 
-    kv.init((initErr) => {
-      if (initErr) {
-        updateCallback(initErr);
-      } else {
-        kv.put(
-          event.data.id,
-          JSON.stringify({
-            /* *************************************************
-             *    Note: The 'created' field poses a problem in
-             *  our model - an update requires a read first.
-             * ************************************************* */
-            // created: updated,
-            // createdBy: event.origin,
-            updated,
-            updatedBy: event.origin,
-            brand: event.data.brand,
-            name: event.data.name,
-            description: event.data.description,
-            category: event.data.category,
-          }),
-          (putErr) => {
-            if (putErr) {
-              updateCallback(putErr);
-            } else {
-              kv.close((closeErr) => {
-                if (closeErr) {
-                  updateCallback(closeErr);
-                } else {
-                  updateCallback(null);
-                }
-              })
-            }
-          })
-      }
-    });
+    kv.init()
+      .then(() => kv.put(
+        event.data.id,
+        JSON.stringify({
+          /* *************************************************
+           *    Note: The 'created' field poses a problem in
+           *  our model - an update requires a read first.
+           * ************************************************* */
+          // created: updated,
+          // createdBy: event.origin,
+          updated,
+          updatedBy: event.origin,
+          brand: event.data.brand,
+          name: event.data.name,
+          description: event.data.description,
+          category: event.data.category,
+        })))
+      .then(() => kv.close())
+      .then(() => updateCallback(null))
+      .catch(err => updateCallback(err));
   },
-  /**
-   * Put the given image in to the dynamo catalog.  Example event:
-   * {
+/**
+ * Put the given image in to the dynamo catalog.  Example event:
+ * {
    *   "schema": "com.nordstrom/retail-stream/1-0-0",
    *   "origin": "hello-retail/product-producer-automation",
    *   "timeOrigin": "2017-01-12T18:29:25.171Z",
@@ -224,79 +192,78 @@ const impl = {
    *     "image": "erik.hello-retail.biz/i/p/4579874"
    *   }
    * }
-   * @param event The product to put in the catalog.
-   * @param complete The callback to inform of completion, with optional error parameter.
-   */
+ * @param event The product to put in the catalog.
+ * @param complete The callback to inform of completion, with optional error parameter.
+ */
   putImage: (event, complete) => {
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_PHOTOS_NAME);
 
     const updated = Date.now();
-    // const dbParamsProduct = {
-    //   TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
-    //   Key: {
-    //     id: event.data.id,
-    //   },
-    //   UpdateExpression: [
-    //     'set',
-    //     '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
-    //     '#cb=if_not_exists(#cb,:cb),',
-    //     '#u=:u,',
-    //     '#ub=:ub,',
-    //     '#i=:i',
-    //   ].join(' '),
-    //   ExpressionAttributeNames: {
-    //     '#c': 'created',
-    //     '#cb': 'createdBy',
-    //     '#u': 'updated',
-    //     '#ub': 'updatedBy',
-    //     '#i': 'image',
-    //   },
-    //   ExpressionAttributeValues: {
-    //     ':c': updated,
-    //     ':cb': event.origin,
-    //     ':u': updated,
-    //     ':ub': event.origin,
-    //     ':i': event.data.image,
-    //   },
-    //   ReturnValues: 'NONE',
-    //   ReturnConsumedCapacity: 'NONE',
-    //   ReturnItemCollectionMetrics: 'NONE',
-    // };
-    // dynamo.update(dbParamsProduct, complete)
+  // const dbParamsProduct = {
+  //   TableName: constants.TABLE_PRODUCT_CATALOG_NAME,
+  //   Key: {
+  //     id: event.data.id,
+  //   },
+  //   UpdateExpression: [
+  //     'set',
+  //     '#c=if_not_exists(#c,:c),', // TODO this probably isn't necessary since a photo should never be requested until after product create...?
+  //     '#cb=if_not_exists(#cb,:cb),',
+  //     '#u=:u,',
+  //     '#ub=:ub,',
+  //     '#i=:i',
+  //   ].join(' '),
+  //   ExpressionAttributeNames: {
+  //     '#c': 'created',
+  //     '#cb': 'createdBy',
+  //     '#u': 'updated',
+  //     '#ub': 'updatedBy',
+  //     '#i': 'image',
+  //   },
+  //   ExpressionAttributeValues: {
+  //     ':c': updated,
+  //     ':cb': event.origin,
+  //     ':u': updated,
+  //     ':ub': event.origin,
+  //     ':i': event.data.image,
+  //   },
+  //   ReturnValues: 'NONE',
+  //   ReturnConsumedCapacity: 'NONE',
+  //   ReturnItemCollectionMetrics: 'NONE',
+  // };
+  // dynamo.update(dbParamsProduct, complete)
 
     kv.init((initErr) => {
       if (initErr) {
         complete(initErr);
       } else {
         kv.put(
-          event.data.id,
-          JSON.stringify({
-            /* *************************************************
-             *    Note: The 'created' field poses a problem in
-             *  our model - an update requires a read first.
-             * ************************************************* */
-            // created: updated,
-            // createdBy: event.origin,
-            updated,
-            updatedBy: event.origin,
-            image: event.data.image,
-          }),
-          (putErr) => {
-            if (putErr) {
-              complete(putErr);
-            } else {
-              kv.close((closeErr) => {
-                if (closeErr) {
-                  complete(closeErr);
-                } else {
-                  complete(null);
-                }
-              })
-            }
-          })
+        event.data.id,
+        JSON.stringify({
+          /* *************************************************
+           *    Note: The 'created' field poses a problem in
+           *  our model - an update requires a read first.
+           * ************************************************* */
+          // created: updated,
+          // createdBy: event.origin,
+          updated,
+          updatedBy: event.origin,
+          image: event.data.image,
+        }),
+        (putErr) => {
+          if (putErr) {
+            complete(putErr);
+          } else {
+            kv.close((closeErr) => {
+              if (closeErr) {
+                complete(closeErr);
+              } else {
+                complete(null);
+              }
+            })
+          }
+        })
       }
     });
-
   },
 };
 
