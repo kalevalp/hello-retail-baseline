@@ -15,6 +15,11 @@ const BbPromise = require('bluebird');
 const got = require('got');
 const url = require('url');
 
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 /**
  * AJV
  */
@@ -37,8 +42,6 @@ ajv.addSchema(photoAssignmentSchema, photoAssignmentSchemaId);
  * AWS
  */
 aws.config.setPromisesDependency(BbPromise);
-const dynamo = new aws.DynamoDB.DocumentClient();
-const kms = new aws.KMS();
 const s3 = new aws.S3();
 const stepfunctions = new aws.StepFunctions();
 
@@ -58,7 +61,6 @@ const constants = {
   // Locations
   MODULE: 'receive.js',
   METHOD_HANDLER: 'handler',
-  METHOD_DECRYPT: 'util.decrypt',
   METHOD_GET_IMAGE_FROM_EVENT: 'impl.getImageFromEvent',
   METHOD_PLACE_IMAGE_IN_S3: 'impl.storeImage',
   METHOD_SEND_STEP_SUCCESS: 'impl.sendStepSuccess',
@@ -117,10 +119,6 @@ const util = {
     console.log(constants.HASHES);
     return util.response(500, constants.ERROR_SERVER)
   },
-  decrypt: (field, value) => kms.decrypt({ CiphertextBlob: new Buffer(value, 'base64') }).promise().then(
-    data => BbPromise.resolve(data.Plaintext.toString('ascii')),
-    err => BbPromise.reject(new ServerError(`Error decrypting '${field}': ${err}`)) // eslint-disable-line comma-dangle
-  ),
 };
 
 /**
@@ -164,31 +162,40 @@ const impl = {
    * @param results The event representing the HTTPS request
    */
   getAssignment: (results) => {
-    const params = {
-      Key: {
-        number: results.body.From,
-      },
-      TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
-      AttributesToGet: [
-        'taskToken',
-        'taskEvent',
-      ],
-      ConsistentRead: false,
-      ReturnConsumedCapacity: 'NONE',
-    };
-    return dynamo.get(params).promise()
-      .then(
-        (data) => {
-          if (!data.Item) {
-            return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  If you have registered and not completed your assignments, we will send one shortly.'))
-          } else {
-            const item = data.Item;
-            item.taskEvent = JSON.parse(item.taskEvent);
-            return BbPromise.resolve(item)
-          }
-        },
-        ex => BbPromise.reject(new ServerError(`Failed to retrieve assignment: ${ex}`)) // eslint-disable-line comma-dangle
-      )
+    // const params = {
+    //   Key: {
+    //     number: results.body.From,
+    //   },
+    //   TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
+    //   AttributesToGet: [
+    //     'taskToken',
+    //     'taskEvent',
+    //   ],
+    //   ConsistentRead: false,
+    //   ReturnConsumedCapacity: 'NONE',
+    // };
+    // return dynamo.get(params).promise()
+    //   .then(
+    //     (data) => {
+    //       if (!data.Item) {
+    //         return BbPromise.reject(new UserError('Oops!  We couldn\'t find your assignment.  If you have registered and not completed your assignments, we will send one shortly.'))
+    //       } else {
+    //         const item = data.Item;
+    //         item.taskEvent = JSON.parse(item.taskEvent);
+    //         return BbPromise.resolve(item)
+    //       }
+    //     },
+    //     ex => BbPromise.reject(new ServerError(`Failed to retrieve assignment: ${ex}`)) // eslint-disable-line comma-dangle
+    //   )
+
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_ASSIGNMENTS_NAME);
+
+    // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
+    return kv.init()
+      .then(() => kv.get(results.body.From))
+      .then(res => kv.close().then(() => res))
+      .then(res => JSON.parse(res.rowvalues))
+      .catch(err => BbPromise.reject(err));
   },
   /**
    * Using the results of the `getImageFromEvent` and `getAssignment` invocations, place the obtained image into the
