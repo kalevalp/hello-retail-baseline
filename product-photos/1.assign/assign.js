@@ -1,13 +1,15 @@
 'use strict';
 
-const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 const Promise = require('bluebird');
 
 Promise.config({
   longStackTraces: true,
 });
 
-const dynamo = new aws.DynamoDB.DocumentClient();
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 /**
  * acquire photo states:
@@ -87,9 +89,18 @@ const impl = {
       ReturnItemCollectionMetrics: 'NONE',
     }
   },
-  queryAndAssignPhotographersByAssignmentCount: Promise.coroutine(function* qP(event, assignmentCount, priorData) {
-    const queryParams = impl.queryPhotographersParams(assignmentCount, priorData);
-    const data = yield dynamo.query(queryParams).promise();
+  queryAndAssignPhotographersByAssignmentCount: Promise.coroutine(function* qP(event, assignmentCount/* , priorData */) {
+    let kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
+
+    // const queryParams = impl.queryPhotographersParams(assignmentCount, priorData);
+    // const data = yield dynamo.query(queryParams).promise();
+
+    const data = yield kv.init()
+      .then(() => kv.entries())
+      .then(results => results.filter(res => JSON.parse(res.rowvalues).assignments === assignmentCount))
+      .then(() => kv.close())
+      .catch();
+
     console.log(`query result: ${JSON.stringify(data, null, 2)}`);
     if (data && data.Items && Array.isArray(data.Items) && data.Items.length) { // given a non-empty set of photographers, attempt assignment on the seemingly available ones
       for (let i = 0; i < data.Items.length; i++) {
@@ -101,18 +112,34 @@ const impl = {
           'registrations' in item && Number.isInteger(item.registrations) && // valid registrations attribute
           item.assignments < item.registrations // fewer successful assignments than registrations
         ) {
-          const updateParams = impl.updatePhotographerParams(event, item);
-          const updateData = yield dynamo.update(updateParams).promise()
-            .then(
-              () => Promise.resolve(true),
-              (err) => {
-                if (err.code && err.code === 'ConditionalCheckFailedException') { // don't fail, another claimant obtained the photographer since we queried above
-                  return Promise.resolve()
-                } else {
-                  return Promise.reject(new ServerError(err))
-                }
-              } // eslint-disable-line comma-dangle
-            );
+          kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
+          const updated = Date.now();
+
+          const updateData = yield kv.init()
+            .then(() => kv.put(  // eslint-disable-line no-loop-func
+              item.id,
+              JSON.stringify({
+                updated,
+                updatedBy: event.origin,
+                assignment: event.data.id.toString(),
+              }),
+            ))
+            .then(() => kv.close()) // eslint-disable-line no-loop-func
+            .then(() => true)
+            .catch(err => Promise.reject(new ServerError(err)));
+          //
+          // const updateParams = impl.updatePhotographerParams(event, item);
+          // const updateData = yield dynamo.update(updateParams).promise()
+          //   .then(
+          //     () => Promise.resolve(true),
+          //     (err) => {
+          //       if (err.code && err.code === 'ConditionalCheckFailedException') { // don't fail, another claimant obtained the photographer since we queried above
+          //         return Promise.resolve()
+          //       } else {
+          //         return Promise.reject(new ServerError(err))
+          //       }
+          //     } // eslint-disable-line comma-dangle
+          //   );
           console.log(`update result: ${JSON.stringify(updateData, null, 2)}`);
           if (updateData) {
             return Promise.resolve(item)
