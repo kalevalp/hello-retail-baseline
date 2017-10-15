@@ -2,7 +2,11 @@
 
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
-const dynamo = new aws.DynamoDB.DocumentClient();
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 const stepfunctions = new aws.StepFunctions();
 
 const constants = {
@@ -30,7 +34,7 @@ const impl = {
   },
   putAssignment: (event, task, callback) => {
     const updated = Date.now();
-    const dbParams = {
+/*    const dbParams = {
       TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
       Key: {
         number: event.photographer.phone,
@@ -74,6 +78,22 @@ const impl = {
         callback()
       }
     })
+*/
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_ASSIGNMENTS_NAME);
+    kv.init()
+      .then(() => kv.put(
+        event.photographer.phone,
+        JSON.stringify({
+          // 'created': updated,
+          // 'createdBy': event.origin,
+          updated,
+          updatedBy: event.origin,
+          taskToken: task.taskToken,
+          taskEvent: task.input,
+          status: 'pending',
+        })))
+      .then(() => kv.close())
+      .catch(err => callback(err))
   },
 };
 
