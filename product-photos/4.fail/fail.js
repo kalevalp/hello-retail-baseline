@@ -2,7 +2,10 @@
 
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
-const dynamo = new aws.DynamoDB.DocumentClient();
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 const constants = {
   // self
@@ -39,27 +42,35 @@ const impl = {
    * }
    */
   deleteAssignment: (event, callback) => {
-    const params = {
-      TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
-      Key: {
-        number: event.photographer.phone,
-      },
-      ConditionExpression: 'attribute_exists(#nu)',
-      ExpressionAttributeNames: {
-        '#nu': 'number', // status
-      },
-    };
-    dynamo.delete(params, (err) => {
-      if (err) {
-        if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
-          callback(null, event)
-        } else {
-          callback(err)
-        }
-      } else {
-        callback(null, event)
-      }
-    })
+    // const params = {
+    //   TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
+    //   Key: {
+    //     number: event.photographer.phone,
+    //   },
+    //   ConditionExpression: 'attribute_exists(#nu)',
+    //   ExpressionAttributeNames: {
+    //     '#nu': 'number', // status
+    //   },
+    // };
+    // dynamo.delete(params, (err) => {
+    //   if (err) {
+    //     if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
+    //       callback(null, event)
+    //     } else {
+    //       callback(err)
+    //     }
+    //   } else {
+    //     callback(null, event)
+    //   }
+    // })
+    //
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_ASSIGNMENTS_NAME);
+
+    kv.init()
+      .then(() => kv.del(event.photographer.phone))
+      .then(() => kv.close())
+      .then(() => callback(null, event))
+      .catch(err => callback(err))
   },
 };
 
