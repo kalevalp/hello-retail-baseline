@@ -1,6 +1,6 @@
 {
   "name": "hello-retail-product-photos-report",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A stream producer that emits a product photo event onto the stream",
   "main": "report.js",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
-    "ajv": "^4.10.4"
+    "ajv": "^4.10.4",
+    "kv-store": "file:../../../serverless-ifc/src/kv-store"
   }
 }

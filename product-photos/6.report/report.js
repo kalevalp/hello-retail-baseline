@@ -3,6 +3,11 @@
 const AJV = require('ajv');
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 /**
  * Constants
  */
@@ -40,7 +45,6 @@ ajv.addSchema(productImageSchema, productImageSchemaId);
 /**
  * AWS
  */
-const dynamo = new aws.DynamoDB.DocumentClient();
 const kinesis = new aws.Kinesis();
 
 /**
@@ -75,60 +79,81 @@ const impl = {
   },
   succeedAssignment: (event, callback) => {
     const updated = Date.now();
-    const params = {
-      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-      Key: {
-        id: event.photographer.id,
-      },
-      ConditionExpression: '#aa=:aa',
-      UpdateExpression: [
-        'set',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#as=#as+:as',
-        'remove',
-        '#aa',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#as': 'assignments',
-        '#aa': 'assignment',
-      },
-      ExpressionAttributeValues: {
-        ':u': updated,
-        ':ub': event.origin,
-        ':as': 1,
-        ':aa': event.data.id.toString(),
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    };
-    dynamo.update(params, callback)
+    // const params = {
+    //   TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+    //   Key: {
+    //     id: event.photographer.id,
+    //   },
+    //   ConditionExpression: '#aa=:aa',
+    //   UpdateExpression: [
+    //     'set',
+    //     '#u=:u,',
+    //     '#ub=:ub,',
+    //     '#as=#as+:as',
+    //     'remove',
+    //     '#aa',
+    //   ].join(' '),
+    //   ExpressionAttributeNames: {
+    //     '#u': 'updated',
+    //     '#ub': 'updatedBy',
+    //     '#as': 'assignments',
+    //     '#aa': 'assignment',
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ':u': updated,
+    //     ':ub': event.origin,
+    //     ':as': 1,
+    //     ':aa': event.data.id.toString(),
+    //   },
+    //   ReturnValues: 'NONE',
+    //   ReturnConsumedCapacity: 'NONE',
+    //   ReturnItemCollectionMetrics: 'NONE',
+    // };
+    // dynamo.update(params, callback)
+
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
+    kv.init()
+      .then(kv.put(
+        event.photographer.id,
+        JSON.stringify({
+          updated,
+          updatedBy: event.origin,
+          assignments: 1,
+          assignment: event.data.id.toString(),
+        })))
+      .then(() => kv.close())
+      .then(() => callback(null))
+      .catch(err => callback(err))
   },
   deleteAssignment: (event, callback) => {
-    const params = {
-      TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
-      Key: {
-        number: event.photographer.phone,
-      },
-      ConditionExpression: 'attribute_exists(#nu)',
-      ExpressionAttributeNames: {
-        '#nu': 'number', // status
-      },
-    };
-    dynamo.delete(params, (err) => {
-      if (err) {
-        if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
-          callback()
-        } else {
-          callback(err)
-        }
-      } else {
-        callback()
-      }
-    })
+    // const params = {
+    //   TableName: constants.TABLE_PHOTO_ASSIGNMENTS_NAME,
+    //   Key: {
+    //     number: event.photographer.phone,
+    //   },
+    //   ConditionExpression: 'attribute_exists(#nu)',
+    //   ExpressionAttributeNames: {
+    //     '#nu': 'number', // status
+    //   },
+    // };
+    // dynamo.delete(params, (err) => {
+    //   if (err) {
+    //     if (err.code && err.code === 'ConditionalCheckFailedException') { // consider the deletion of the record to indicate preemption by another component
+    //       callback()
+    //     } else {
+    //       callback(err)
+    //     }
+    //   } else {
+    //     callback()
+    //   }
+    // })
+
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_ASSIGNMENTS_NAME);
+    kv.init()
+      .then(() => kv.del(event.photographer.phone))
+      .then(() => kv.close())
+      .then(() => callback())
+      .catch(err => callback(err))
   },
 };
 
