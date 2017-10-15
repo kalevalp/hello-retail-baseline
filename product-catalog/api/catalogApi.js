@@ -29,8 +29,6 @@ ajv.addSchema(categoryItemsSchema, categoryItemsSchemaId);
 ajv.addSchema(productsRequestSchema, productsRequestSchemaId);
 ajv.addSchema(productItemsSchema, productItemsSchemaId);
 
-// const dynamo = new aws.DynamoDB.DocumentClient();
-
 const constants = {
   // self
   MODULE: 'product-catalog/catalogApi.js',
