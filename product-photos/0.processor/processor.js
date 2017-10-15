@@ -3,6 +3,11 @@
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 const KH = require('kinesis-handler');
 
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 /**
  * AJV Schemas
  */
@@ -44,7 +49,6 @@ const kh = new KH.KinesisHandler(eventSchema, constants.MODULE, transformer);
 /**
  * AWS
  */
-const dynamo = new aws.DynamoDB.DocumentClient();
 const stepfunctions = new aws.StepFunctions();
 
 const impl = {
@@ -91,75 +95,117 @@ const impl = {
   registerPhotographer: (event, complete) => {
     const updated = Date.now();
     const name = impl.eventSource(event.origin).friendlyName;
-    const putParams = {
-      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-      ConditionExpression: 'attribute_not_exists(id)',
-      Item: {
-        id: event.data.id,
-        name,
-        created: updated,
-        createdBy: event.origin,
-        updated,
-        updatedBy: event.origin,
-        phone: `+1${event.data.phone}`,
-        lastEvent: event.eventId,
-        registrations: constants.ASSIGNMENTS_PER_REGISTRATION,
-        assignments: 0,
-        timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
-      },
-    };
-    dynamo.put(putParams, (err) => {
-      if (err) {
-        if (err.code && err.code === 'ConditionalCheckFailedException') {
-          const updateParams = {
-            TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-            Key: {
-              id: event.data.id, // TODO the right thing?
-            },
-            ConditionExpression: '#le<:le', // update if this event has not yet caused an update
-            UpdateExpression: [
-              'set',
-              '#c=if_not_exists(#c,:c),',
-              '#cb=if_not_exists(#cb,:cb),',
-              '#u=:u,',
-              '#ub=:ub,',
-              '#le=:le,',
-              '#re=#re+:re,',
-              '#as=if_not_exists(#as,:as),',
-              '#tt=:tt',
-            ].join(' '),
-            ExpressionAttributeNames: {
-              '#c': 'created',
-              '#cb': 'createdBy',
-              '#u': 'updated',
-              '#ub': 'updatedBy',
-              '#le': 'lastEvent',
-              '#re': 'registrations',
-              '#as': 'assignments',
-              '#tt': 'timeToLive', // TODO automated setup of TTL for table
-            },
-            ExpressionAttributeValues: {
-              ':c': updated,
-              ':cb': event.origin,
-              ':u': updated,
-              ':ub': event.origin,
-              ':le': event.eventId, // TODO the right thing (this field is not currently available in event)
-              ':re': constants.ASSIGNMENTS_PER_REGISTRATION,
-              ':as': 0,
-              ':tt': (Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS).toString(),
-            },
-            ReturnValues: 'NONE',
-            ReturnConsumedCapacity: 'NONE',
-            ReturnItemCollectionMetrics: 'NONE',
-          };
-          dynamo.update(updateParams, complete)
+
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
+
+    kv.init()
+      .then(() => kv.get(event.data.id))
+      .then((res) => {
+        if (res.length !== 0) {
+          const stored = JSON.parse(res[0].rowvalues);
+          return kv.put(
+            event.data.id,
+            JSON.stringify({
+              created: stored.created ? stored.created : updated,
+              createdBy: stored.createdBy ? stored.createdBy : event.origin,
+              updated,
+              updatedBy: event.origin,
+              phone: `+1${event.data.phone}`,
+              lastEvent: event.eventId,
+              registrations: constants.ASSIGNMENTS_PER_REGISTRATION,
+              assignments: stored.assignments ? stored.assignments : 0,
+              timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
+            }))
         } else {
-          complete(err)
+          return kv.put(
+            event.data.id,
+            JSON.stringify({
+              name,
+              created: updated,
+              createdBy: event.origin,
+              updated,
+              updatedBy: event.origin,
+              phone: `+1${event.data.phone}`,
+              lastEvent: event.eventId,
+              registrations: constants.ASSIGNMENTS_PER_REGISTRATION,
+              assignments: 0,
+              timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
+            }))
         }
-      } else {
-        complete()
-      }
-    })
+      })
+      .then(() => kv.close())
+      .then(() => complete())
+      .catch(err => complete(err));
+
+    // const putParams = {
+    //   TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+    //   ConditionExpression: 'attribute_not_exists(id)',
+    //   Item: {
+    //     id: event.data.id,
+    //     name,
+    //     created: updated,
+    //     createdBy: event.origin,
+    //     updated,
+    //     updatedBy: event.origin,
+    //     phone: `+1${event.data.phone}`,
+    //     lastEvent: event.eventId,
+    //     registrations: constants.ASSIGNMENTS_PER_REGISTRATION,
+    //     assignments: 0,
+    //     timeToLive: Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS,
+    //   },
+    // };
+    // dynamo.put(putParams, (err) => {
+    //   if (err) {
+    //     if (err.code && err.code === 'ConditionalCheckFailedException') {
+    //       const updateParams = {
+    //         TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+    //         Key: {
+    //           id: event.data.id, // TODO the right thing?
+    //         },
+    //         ConditionExpression: '#le<:le', // update if this event has not yet caused an update
+    //         UpdateExpression: [
+    //           'set',
+    //           '#c=if_not_exists(#c,:c),',
+    //           '#cb=if_not_exists(#cb,:cb),',
+    //           '#u=:u,',
+    //           '#ub=:ub,',
+    //           '#le=:le,',
+    //           '#re=#re+:re,',
+    //           '#as=if_not_exists(#as,:as),',
+    //           '#tt=:tt',
+    //         ].join(' '),
+    //         ExpressionAttributeNames: {
+    //           '#c': 'created',
+    //           '#cb': 'createdBy',
+    //           '#u': 'updated',
+    //           '#ub': 'updatedBy',
+    //           '#le': 'lastEvent',
+    //           '#re': 'registrations',
+    //           '#as': 'assignments',
+    //           '#tt': 'timeToLive', // TODO automated setup of TTL for table
+    //         },
+    //         ExpressionAttributeValues: {
+    //           ':c': updated,
+    //           ':cb': event.origin,
+    //           ':u': updated,
+    //           ':ub': event.origin,
+    //           ':le': event.eventId, // TODO the right thing (this field is not currently available in event)
+    //           ':re': constants.ASSIGNMENTS_PER_REGISTRATION,
+    //           ':as': 0,
+    //           ':tt': (Math.ceil(updated / 1000 /* milliseconds per second */) + constants.TTL_DELTA_IN_SECONDS).toString(),
+    //         },
+    //         ReturnValues: 'NONE',
+    //         ReturnConsumedCapacity: 'NONE',
+    //         ReturnItemCollectionMetrics: 'NONE',
+    //       };
+    //       dynamo.update(updateParams, complete)
+    //     } else {
+    //       complete(err)
+    //     }
+    //   } else {
+    //     complete()
+    //   }
+    // })
   },
   /**
    * Start and execution corresponding to the given event.  Swallow errors that result from attempting to
