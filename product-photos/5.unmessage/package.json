@@ -1,6 +1,6 @@
 {
   "name": "send-unassignment",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A Lambda function for sending a text to a photographer stating that they have been unassigned.",
   "main": "unmessage.js",
   "scripts": {
@@ -14,6 +14,7 @@
   "homepage": "https://github.com/Nordstrom/hello-retail/product-photos#readme",
   "dependencies": {
     "bluebird": "^3.4.7",
+    "kv-store": "file:../../../serverless-ifc/src/kv-store",
     "nodemailer": "^4.1.3"
   }
 }

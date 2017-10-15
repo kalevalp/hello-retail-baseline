@@ -4,11 +4,15 @@ const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, imp
 const BbPromise = require('bluebird');
 const nodemailer = require('nodemailer');
 
+const { KV_Store } = require('kv-store');
+const fs = require('fs');
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 /**
  * AWS
  */
 aws.config.setPromisesDependency(BbPromise);
-const dynamo = new aws.DynamoDB.DocumentClient();
 
 /**
  * Constants
@@ -40,37 +44,52 @@ class ServerError extends Error {
 const impl = {
   failAssignment: (event) => {
     const updated = Date.now();
-    const params = {
-      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-      Key: {
-        id: event.photographer.id,
-      },
-      ConditionExpression: '#aa=:aa',
-      UpdateExpression: [
-        'set',
-        '#u=:u,',
-        '#ub=:ub',
-        'remove',
-        '#aa',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#aa': 'assignment',
-      },
-      ExpressionAttributeValues: {
-        ':u': updated,
-        ':ub': event.origin,
-        ':aa': event.data.id.toString(),
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    };
-    return dynamo.update(params).promise().then(
-      () => BbPromise.resolve(event),
-      err => BbPromise.reject(new ServerError(`error removing assignment from registration: ${err}`)) // eslint-disable-line comma-dangle
-    )
+    // const params = {
+    //   TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+    //   Key: {
+    //     id: event.photographer.id,
+    //   },
+    //   ConditionExpression: '#aa=:aa',
+    //   UpdateExpression: [
+    //     'set',
+    //     '#u=:u,',
+    //     '#ub=:ub',
+    //     'remove',
+    //     '#aa',
+    //   ].join(' '),
+    //   ExpressionAttributeNames: {
+    //     '#u': 'updated',
+    //     '#ub': 'updatedBy',
+    //     '#aa': 'assignment',
+    //   },
+    //   ExpressionAttributeValues: {
+    //     ':u': updated,
+    //     ':ub': event.origin,
+    //     ':aa': event.data.id.toString(),
+    //   },
+    //   ReturnValues: 'NONE',
+    //   ReturnConsumedCapacity: 'NONE',
+    //   ReturnItemCollectionMetrics: 'NONE',
+    // };
+    // return dynamo.update(params).promise().then(
+    //   () => BbPromise.resolve(event),
+    //   err => BbPromise.reject(new ServerError(`error removing assignment from registration: ${err}`)) // eslint-disable-line comma-dangle
+    // )
+
+    // TODO KALEV - change the way assignments are handled (added/removed).
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
+    kv.init()
+      .then(() => kv.put(
+        event.photographer.id,
+        JSON.stringify({
+          updated,
+          updatedBy: event.origin,
+          assignment: event.data.id.toString(),
+        }),
+      ))
+      .then(() => kv.close())
+      .then(() => event)
+      .catch(err => BbPromise.reject(err))
   },
 
   sendMessage: (event) => {
