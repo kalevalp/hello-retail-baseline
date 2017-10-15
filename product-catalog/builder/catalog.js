@@ -29,8 +29,6 @@ const constants = {
 
 const kh = new KH.KinesisHandler(eventSchema, constants.MODULE);
 
-// const dynamo = new aws.DynamoDB.DocumentClient();
-
 const impl = {
   /**
    * Put the given product in to the dynamo catalog.  Example event:
