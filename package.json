@@ -8,9 +8,9 @@
     "lint": "./node_modules/.bin/eslint ./**/*.js ./**/*.jsx",
 
     "root:install":         "./build/1.install.sh \"Installing Top-Level Project Dependencies\"           .",
-    "root:install:all":     "npm run root:install && npm run writer:install && npm run catalog:install:all && npm run photos:install:all && npm run web:install",
-    "root:deploy:all":      "npm run stream:deploy && npm run writer:deploy && npm run catalog:deploy:all && npm run photos:deploy:all && npm run web:deploy:all",
-    "root:remove:all":      "npm run web:remove:all && npm run photos:remove:all && npm run catalog:remove:all && npm run writer:remove && npm run stream:remove",
+    "root:install:all":     "npm run root:install && npm run writer:install && npm run catalog:install:all && npm run photos:install:all",
+    "root:deploy:all":      "npm run stream:deploy && npm run writer:deploy && npm run catalog:deploy:all && npm run photos:deploy:all",
+    "root:remove:all":      "npm run photos:remove:all && npm run catalog:remove:all && npm run writer:remove && npm run stream:remove",
 
     "writer:install":       "./build/1.install.sh \"Installing Event Writer Dependencies\"                ./event-writer",
     "writer:deploy":        "./build/2.sls.sh deploy \"Deploying Event Writer\"                           ./event-writer",
