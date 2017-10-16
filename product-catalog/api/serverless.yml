@@ -91,15 +91,6 @@ resources:
                       - ':'
                       - - Fn::GetAtt: [ CategoriesLogGroup, Arn ]
                         - '*'
-          - PolicyName: ReadFromCategories
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:Scan'
-                   Resource:
-                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
     ProductCatalogApiProductsReader: # role for Products Lambda
       Type: AWS::IAM::Role
       Properties:
@@ -132,18 +123,3 @@ resources:
                       - ':'
                       - - Fn::GetAtt: [ ProductsLogGroup, Arn ]
                         - '*'
-          - PolicyName: ReadFromProducts
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-# TODO enable once we are getting single items.
-#                -  Effect: Allow
-#                   Action:
-#                     - 'dynamodb:GetItem'
-#                   Resource:
-#                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:Query'
-                   Resource:
-                    Fn::ImportValue: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}

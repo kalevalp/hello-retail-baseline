@@ -51,52 +51,6 @@ resources:
       Properties:
         LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-catalog
         RetentionInDays: 7
-    # Product Catalog Tables
-    ProductCategory:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: category
-            AttributeType: S
-        KeySchema:
-          - AttributeName: category
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:custom.stage}-ProductCategory-${self:custom.productCatalogBuilderVersion}
-    ProductCatalog:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: category
-            AttributeType: S
-          - AttributeName: name
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:custom.stage}-ProductCatalog-${self:custom.productCatalogBuilderVersion}
-        GlobalSecondaryIndexes:
-          - IndexName: Category
-            KeySchema:
-              - AttributeName: category
-                KeyType: HASH
-              - AttributeName: name
-                KeyType: RANGE
-            Projection:
-              ProjectionType: INCLUDE
-              NonKeyAttributes:
-                - brand
-                - description
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
     # Product Catalog Roles
     ProductCatalogBuilder: # role for the Catalog (Maintaining) Lambda
       Type: AWS::IAM::Role
@@ -147,26 +101,6 @@ resources:
                     - 'kinesis:ListStreams'
                   Resource:
                     Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-          - PolicyName: WriteToCatalog
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:UpdateItem'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCategory
-                -  Effect: Allow
-                   Action:
-                     - 'dynamodb:UpdateItem'
-                   Resource:
-                    Fn::Join:
-                      - '/'
-                      - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-                        - Ref: ProductCatalog
 
   Outputs:
     ProductCategoryTableName:
@@ -175,38 +109,9 @@ resources:
         Ref: ProductCategory
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
-    ProductCategoryTableArn:
-      Description: The ARN for the Product Category Table
-      Value:
-        Fn::Join:
-          - '/'
-          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-            - Ref: ProductCategory
-      Export:
-        Name: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableArn}
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
       Value:
         Ref: ProductCatalog
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
-    ProductCatalogTableArn:
-      Description: The ARN for the Product Catalog Table
-      Value:
-        Fn::Join:
-          - '/'
-          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-            - Ref: ProductCatalog
-      Export:
-        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableArn}
-    ProductCatalogTableCategoryIndexArn:
-      Description: The ARN for the Product Catalog Table's Category Index
-      Value:
-        Fn::Join:
-          - '/'
-          - - 'arn:aws:dynamodb:${self:provider.region}:${self:custom.private.accountId}:table'
-            - Ref: ProductCatalog
-            - index
-            - Category
-      Export:
-        Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableCategoryIndexArn}
