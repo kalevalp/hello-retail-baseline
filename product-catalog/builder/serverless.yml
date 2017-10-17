@@ -18,6 +18,8 @@ custom:
   exportProductCatalogTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableArn:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableCategoryIndexArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn:${self:custom.productCatalogBuilderVersion}
+  productCatalogTableName: 'productCatalogTable'
+  productCategoryTableName: 'productCategoryTable'
 
 provider:
   name: aws
@@ -32,10 +34,8 @@ functions:
       Fn::GetAtt: [ ProductCatalogBuilder, Arn ]
     handler: catalog.processKinesisEvent
     environment:
-      TABLE_PRODUCT_CATEGORY_NAME:
-        Ref: ProductCategory
-      TABLE_PRODUCT_CATALOG_NAME:
-        Ref: ProductCatalog
+      TABLE_PRODUCT_CATEGORY_NAME: ${self:custom.productCategoryTableName}
+      TABLE_PRODUCT_CATALOG_NAME: ${self:custom.productCatalogTableName}
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
@@ -105,13 +105,11 @@ resources:
   Outputs:
     ProductCategoryTableName:
       Description: The Name of the Product Category Table
-      Value:
-        Ref: ProductCategory
+      Value: ${self:custom.productCategoryTableName}
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCategoryTableName}
     ProductCatalogTableName:
       Description: The Name of the Product Catalog Table
-      Value:
-        Ref: ProductCatalog
+      Value: ${self:custom.productCatalogTableName}
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
