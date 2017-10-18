@@ -73,3 +73,58 @@ If an errors occur, troubleshoot, resolve, and resume deployment.
 2. Note the `ServiceEndpoint` output from the execution of `npm run photos:deploy:5`.  Alternatively, inspect or describe the stack `hello-retail-product-photos-receive-<stage>` and note the `ServiceEndpoint` output.  This value will look like `https://<apiId>.execute-api.us-west-2.amazonaws.com/<stage>`.  Open the phone number configuration page for the Twilio number that you purchased and set the Messaging Webhook (use defaults "Webhooks/TwiML", "Webhook", and "HTTP POST") value to that value with a `/sms` appended to it (e.g. `https://<apiId>.execute-api.us-west-2.amazonaws.com/<stage>/sms`).  It may be helpful to note the stage name in the "Friendly Name" field as well.  Then save those configuration changes.
 
 3. Enable TTL on the table `<stage>-hello-retail-product-photos-data-PhotoRegistrations-1` using the attribute `timeToLive`
+
+## Event API:
+
+#### purchaseProduct:
+    {
+        schema: 'com.nordstrom/product/purchase/1-0-0',
+        id: <productid>, 
+        origin: `hello-retail/web-client-purchase-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
+    }
+
+#### sendUserLogin
+    {
+        schema: 'com.nordstrom/user-info/login/1-0-0',
+        id: <userId>,
+        name: <userName>,
+        origin: `hello-retail/web-client-login-user/${this.state.profile.id}/${this.state.profile.name}`,
+    }    
+
+#### createProduct
+    {
+      schema: 'com.nordstrom/product/create/1-0-0',
+      id: (`0000000${Math.floor(Math.abs(Math.random() * 10000000))}`).substr(-7),
+      origin: `hello-retail/web-client-create-product/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
+      category: <productCategory>,
+      name: <productName>,
+      brand: <productBrand>,
+      description: <productDescription>,
+    }
+
+#### updatePhotographer
+      schema: 'com.nordstrom/user-info/update-phone/1-0-0',
+      id: <userId>,
+      phone: <phoneNumber>,
+      origin: `hello-retail/web-client-update-phone/${this.props.awsLogin.state.profile.id}/${this.props.awsLogin.state.profile.name}`,
+
+#### Example events and curl commands to execute them
+      '{ "schema": "com.nordstrom/product/purchase/1-0-0", "id": "123456", "origin": "secure-hello-retail/test-script-purchase-product/123456" }'
+      
+      '{ "schema": "com.nordstrom/user-info/login/1-0-0", "id": "654321", "name": "Joe Schmoe", "origin": "hello-retail/test-script-login-user/654321/JoeSchmoe" }'    
+      
+      '{ "schema": "com.nordstrom/product/create/1-0-0", "id": "1234567890", "origin": "hello-retail/test-script-create-product/testid/testname", "category": "Things", "name": "A sort of thing", "brand": "ACME", "description": "A sort of thing from a company that makes everything" }'
+      
+      '{ "schema": "com.nordstrom/user-info/update-phone/1-0-0", "id": "654321", "phone": "5551231234", "origin": "hello-retail/test-script-update-phone/testid/testname" }'
+      
+      curl -X POST --data '{ "schema": "com.nordstrom/product/purchase/1-0-0", "id": "123456", "origin": "secure-hello-retail/test-script-purchase-product/123456" }' https://bkc30zi\k06.execute-api.us-west-2.amazonaws.com/dev/event-writer
+      
+      curl -X POST --data '{ "schema": "com.nordstrom/user-info/login/1-0-0", "id": "654321", "name": "Joe Schmoe", "origin": "hello-retail/test-script-login-user/654321/JoeSchmoe" }' https://bkc30zi\k06.execute-api.us-west-2.amazonaws.com/dev/event-writer    
+      
+      curl -X POST --data '{ "schema": "com.nordstrom/product/create/1-0-0", "id": "1234567890", "origin": "hello-retail/test-script-create-product/testid/testname", "category": "Things", "name": "A sort of thing", "brand": "ACME", "description": "A sort of thing from a company that makes everything" }' https://bkc30zi\k06.execute-api.us-west-2.amazonaws.com/dev/event-writer
+      
+      curl -X POST --data '{ "schema": "com.nordstrom/user-info/update-phone/1-0-0", "id": "654321", "phone": "5551231234", "origin": "hello-retail/test-script-update-phone/testid/testname" }' https://bkc30zi\k06.execute-api.us-west-2.amazonaws.com/dev/event-writer
+
+#### Read data from kinesis stream      
+      > aws kinesis get-shard-iterator --shard-id shardId-000000000008 --shard-iterator-type TRIM_HORIZON --stream-name devRetailStream
+      > aws kinesis get-records --shard-iterator AAAAAAAAAAEJY2/JB8kxEWv3D2V67l9C5561+TJiUH8o01at2GLyiGkZ3XdQqAwAb7NysMj0ZXIT9Z1ActS3NKR14mIPMFQ+3k/NZenfQB4KMkPEc0JlWpWvEZSgISjysLGvVQPgArkvcfPNzB0L6pkES57SALvg/HlJIWV8BCiZPaYtsYx1ZZsKr0/yq98J9rayUwnNMoQ0L3Yj2wKlf01RcQDP5MOl
