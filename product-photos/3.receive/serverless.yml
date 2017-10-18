@@ -11,7 +11,7 @@ custom:
 provider:
   name: aws
   deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
 
@@ -28,8 +28,9 @@ functions:
           - - https://
             - Ref: ApiGatewayRestApi
             - .execute-api.us-west-2.amazonaws.com/${self:custom.stage}/sms
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      TABLE_PHOTO_ASSIGNMENTS_NAME: 'photoAssignmentsTable'
+      # TODO KALEV - Put the table name in a central location for an easier reuse
+#        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
     events:
       - http:
           path: sms
@@ -77,7 +78,6 @@ resources:
                       - ':'
                       - - Fn::GetAtt: [ ReceiveLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.getPhotoAssignment}
           - PolicyName: StoreImageInBucket
             PolicyDocument:
               Version: '2012-10-17'

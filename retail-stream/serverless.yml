@@ -19,7 +19,7 @@ custom:
 provider:
   name: aws
   deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
   environment:

@@ -11,7 +11,7 @@ custom:
 provider:
   name: aws
   deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
 
@@ -23,8 +23,9 @@ functions:
     timeout: 240
     environment:
       ACTIVITY_RECEIVE_ARN: ${self:custom.productPhotos.receiveActivityArn}
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      TABLE_PHOTO_ASSIGNMENTS_NAME: 'photoAssignmentsTable'
+      # TODO KALEV - Put the table name in a central location for an easier reuse
+#        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 resources:
   Resources:
@@ -76,7 +77,6 @@ resources:
                     - 'states:GetActivityTask'
                     - 'states:SendTaskFailure'
                   Resource: ${self:custom.productPhotos.receiveActivityArn}
-          - ${self:custom.productPhotos.updatePhotoAssignment}
   Outputs:
     RecordLambdaName:
       Description: The Name of the Photo Assignments Record Lambda

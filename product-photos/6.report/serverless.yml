@@ -13,7 +13,7 @@ custom:
 provider:
   name: aws
   deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   profile: ${self:custom.private.profile}
   region: ${self:custom.private.region}
 
@@ -27,10 +27,12 @@ functions:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
       RETAIL_STREAM_WRITER_ARN:
         Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamWriterArn}
-      TABLE_PHOTO_REGISTRATIONS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
-      TABLE_PHOTO_ASSIGNMENTS_NAME:
-        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
+      TABLE_PHOTO_REGISTRATIONS_NAME: 'photoRegistrationTable'
+      # TODO KALEV - Put the table name in a central location for an easier reuse
+#        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoRegistrationsTableName}
+      TABLE_PHOTO_ASSIGNMENTS_NAME: 'photoAssignmentsTable'
+      # TODO KALEV - Put the table name in a central location for an easier reuse
+#        Fn::ImportValue: ${self:custom.productPhotos.exportPhotoAssignmentsTableName}
 
 resources:
   Resources:
@@ -73,8 +75,6 @@ resources:
                       - ':'
                       - - 'Fn::GetAtt': [ ReportLogGroup, Arn ]
                         - '*'
-          - ${self:custom.productPhotos.updatePhotoRegistrations}
-          - ${self:custom.productPhotos.deletePhotoAssignment}
           - PolicyName: WriteToRetailStream
             PolicyDocument:
               Version: '2012-10-17'
