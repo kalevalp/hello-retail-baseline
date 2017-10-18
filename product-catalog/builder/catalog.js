@@ -49,7 +49,8 @@ const impl = {
    * @param complete The callback to inform of completion, with optional error parameter.
    */
   putProduct: (event, complete) => {
-    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
+    const categoryKV = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
+    const catalogKV = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATALOG_NAME);
 
     const updated = Date.now();
     let priorErr;
@@ -98,8 +99,8 @@ const impl = {
     // };
     // dynamo.update(dbParamsCategory, updateCallback);
 
-    kv.init()
-      .then(() => kv.put(
+    categoryKV.init()
+      .then(() => categoryKV.put(
         event.data.category,
         JSON.stringify({
           /* *************************************************
@@ -111,7 +112,7 @@ const impl = {
           updated,
           updatedBy: event.origin,
         })))
-      .then(() => kv.close())
+      .then(() => categoryKV.close())
       .then(() => updateCallback(null))
       .catch(err => updateCallback(err));
 
@@ -157,8 +158,8 @@ const impl = {
     // };
     // dynamo.update(dbParamsProduct, updateCallback);
 
-    kv.init()
-      .then(() => kv.put(
+    catalogKV.init()
+      .then(() => catalogKV.put(
         event.data.id,
         JSON.stringify({
           /* *************************************************
@@ -174,7 +175,7 @@ const impl = {
           description: event.data.description,
           category: event.data.category,
         })))
-      .then(() => kv.close())
+      .then(() => catalogKV.close())
       .then(() => updateCallback(null))
       .catch(err => updateCallback(err));
   },
