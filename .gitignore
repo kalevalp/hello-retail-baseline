@@ -57,3 +57,4 @@ package-lock.json
 
 # private project configuration
 private.yml
+conf.json
