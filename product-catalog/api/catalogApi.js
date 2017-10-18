@@ -98,7 +98,7 @@ const api = {
       kv.init()
         .then(() => kv.keys())
         .then(result => kv.close().then(() => result))
-        .then(result => callback(null, result))
+        .then(result => callback(null, impl.success(result)))
         .catch(err => callback(err));
     }
   },
@@ -141,15 +141,14 @@ const api = {
       kv.init()
         .then(() => kv.entries())
         .then(results => kv.close().then(() => results))
-        .then((results) => {
-          callback(null, results.filter(entry => JSON.parse(entry.rowvalue).category === event.queryStringParameters.category).map(entry => ({
-            id: entry.rowkey,
-            category: JSON.parse(entry.rowvalue).category,
-            brand: JSON.parse(entry.rowvalue).brand,
-            name: JSON.parse(entry.rowvalue).name,
-            description: JSON.parse(entry.rowvalue).description,
-          })));
-        })
+        .then(results =>
+          callback(null, impl.success(results.filter(entry => JSON.parse(entry.val).category === event.queryStringParameters.category).map(entry => ({
+            id: entry.key,
+            category: JSON.parse(entry.val).category,
+            brand: JSON.parse(entry.val).brand,
+            name: JSON.parse(entry.val).name,
+            description: JSON.parse(entry.val).description,
+          })))))
         .catch(err => callback(err));
     }
   },
