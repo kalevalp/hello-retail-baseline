@@ -1,6 +1,6 @@
 {
   "name": "hello-retail",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An introduction to the event stream processing model for the purpose of implementing a retail system backbone",
   "main": "index.js",
   "scripts": {
