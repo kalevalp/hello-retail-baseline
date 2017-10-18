@@ -17,9 +17,11 @@ custom:
   exportProductCategoryTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCategoryTableArn:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableName:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableArn:${self:custom.productCatalogBuilderVersion}
+  exportProductPhotosTableName: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductPhotosTableName:${self:custom.productCatalogBuilderVersion}
   exportProductCatalogTableCategoryIndexArn: ${self:custom.productCatalogBuilder.service}:${self:custom.stage}:ProductCatalogTableCategoryIndexArn:${self:custom.productCatalogBuilderVersion}
   productCatalogTableName: 'productCatalogTable'
   productCategoryTableName: 'productCategoryTable'
+  productPhotosTableName: 'productPhotosTable'
 
 provider:
   name: aws
@@ -36,6 +38,7 @@ functions:
     environment:
       TABLE_PRODUCT_CATEGORY_NAME: ${self:custom.productCategoryTableName}
       TABLE_PRODUCT_CATALOG_NAME: ${self:custom.productCatalogTableName}
+      TABLE_PRODUCT_PHOTOS_NAME: ${self:custom.productPhotosTableName}
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
@@ -113,3 +116,8 @@ resources:
       Value: ${self:custom.productCatalogTableName}
       Export:
         Name: ${self:custom.productCatalogBuilder.custom.exportProductCatalogTableName}
+    ProductPhotosTableName:
+      Description: The Name of the Product Photos Table
+      Value: ${self:custom.productPhotosTableName}
+      Export:
+        Name: ${self:custom.productCatalogBuilder.custom.exportProductPhotosTableName}

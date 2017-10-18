@@ -23,7 +23,6 @@ const constants = {
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
-  // TODO KALEV: Make sure this parameter is passed from the environment.
   TABLE_PRODUCT_PHOTOS_NAME: process.env.TABLE_PRODUCT_PHOTOS_NAME,
 };
 
