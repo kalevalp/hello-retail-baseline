@@ -43,52 +43,52 @@ class ServerError extends Error {
 }
 
 const impl = {
-  queryPhotographersParams: (assignmentCount, priorData) => {
-    const params = {
-      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-      IndexName: 'Assignments',
-      KeyConditionExpression: '#as = :as',
-      ExpressionAttributeNames: {
-        '#as': 'assignments',
-      },
-      ExpressionAttributeValues: {
-        ':as': assignmentCount,
-      },
-    };
-    if (priorData && priorData.LastEvaluatedKey) {
-      params.LastEvaluatedKey = priorData.LastEvaluatedKey
-    }
-    return params
-  },
-  updatePhotographerParams: (event, photographer) => {
-    const updated = Date.now();
-    return {
-      TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
-      Key: {
-        id: photographer.id,
-      },
-      ConditionExpression: 'attribute_not_exists(#aa)',
-      UpdateExpression: [
-        'set',
-        '#u=:u,',
-        '#ub=:ub,',
-        '#aa=:aa',
-      ].join(' '),
-      ExpressionAttributeNames: {
-        '#u': 'updated',
-        '#ub': 'updatedBy',
-        '#aa': 'assignment',
-      },
-      ExpressionAttributeValues: {
-        ':u': updated,
-        ':ub': event.origin,
-        ':aa': event.data.id.toString(),
-      },
-      ReturnValues: 'NONE',
-      ReturnConsumedCapacity: 'NONE',
-      ReturnItemCollectionMetrics: 'NONE',
-    }
-  },
+  // queryPhotographersParams: (assignmentCount, priorData) => {
+  //   const params = {
+  //     TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+  //     IndexName: 'Assignments',
+  //     KeyConditionExpression: '#as = :as',
+  //     ExpressionAttributeNames: {
+  //       '#as': 'assignments',
+  //     },
+  //     ExpressionAttributeValues: {
+  //       ':as': assignmentCount,
+  //     },
+  //   };
+  //   if (priorData && priorData.LastEvaluatedKey) {
+  //     params.LastEvaluatedKey = priorData.LastEvaluatedKey
+  //   }
+  //   return params
+  // },
+  // updatePhotographerParams: (event, photographer) => {
+  //   const updated = Date.now();
+  //   return {
+  //     TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
+  //     Key: {
+  //       id: photographer.id,
+  //     },
+  //     ConditionExpression: 'attribute_not_exists(#aa)',
+  //     UpdateExpression: [
+  //       'set',
+  //       '#u=:u,',
+  //       '#ub=:ub,',
+  //       '#aa=:aa',
+  //     ].join(' '),
+  //     ExpressionAttributeNames: {
+  //       '#u': 'updated',
+  //       '#ub': 'updatedBy',
+  //       '#aa': 'assignment',
+  //     },
+  //     ExpressionAttributeValues: {
+  //       ':u': updated,
+  //       ':ub': event.origin,
+  //       ':aa': event.data.id.toString(),
+  //     },
+  //     ReturnValues: 'NONE',
+  //     ReturnConsumedCapacity: 'NONE',
+  //     ReturnItemCollectionMetrics: 'NONE',
+  //   }
+  // },
   queryAndAssignPhotographersByAssignmentCount: Promise.coroutine(function* qP(event, assignmentCount/* , priorData */) {
     let kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
 
@@ -97,15 +97,25 @@ const impl = {
 
     const data = yield kv.init()
       .then(() => kv.entries())
-      .then(results => results.filter(res => JSON.parse(res.rowvalues).assignments === assignmentCount))
-      .then(() => kv.close())
+      .then(results => results.filter(res => JSON.parse(res.val).assignments === assignmentCount).map((res) => {
+        const jval = JSON.parse(res.val);
+        jval.id = res.key;
+        console.log(`%%%% res.val is: ${res.val}`);
+        console.log(`%%%% jval is: ${JSON.stringify(jval, null, 2)}`);
+        return jval;
+      }))
+      .then(res => kv.close().then(() => res))
       .catch();
 
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+    console.log(data);
+    console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
+
     console.log(`query result: ${JSON.stringify(data, null, 2)}`);
-    if (data && data.Items && Array.isArray(data.Items) && data.Items.length) { // given a non-empty set of photographers, attempt assignment on the seemingly available ones
-      for (let i = 0; i < data.Items.length; i++) {
-        const item = data.Items[i];
-        console.log(JSON.stringify(item, null, 2));
+    if (data && Array.isArray(data) && data.length) { // given a non-empty set of photographers, attempt assignment on the seemingly available ones
+      for (let i = 0; i < data.length; i++) {
+        const item = data[i];
+        console.log(item);
         if ( // is the current photographer assignable?
           !item.assignment && // not assigned
           'assignments' in item && Number.isInteger(item.assignments) && // valid assignments attribute
@@ -115,15 +125,16 @@ const impl = {
           kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
           const updated = Date.now();
 
+          const itemClone = JSON.parse(JSON.stringify(item));
+          delete itemClone.id;
+          itemClone.updated = updated;
+          itemClone.updatedBy = event.origin;
+          itemClone.assignment = event.data.id.toString();
+
           const updateData = yield kv.init()
             .then(() => kv.put(  // eslint-disable-line no-loop-func
               item.id,
-              JSON.stringify({
-                updated,
-                updatedBy: event.origin,
-                assignment: event.data.id.toString(),
-              }),
-            ))
+              JSON.stringify(itemClone)))
             .then(() => kv.close()) // eslint-disable-line no-loop-func
             .then(() => true)
             .catch(err => Promise.reject(new ServerError(err)));
@@ -142,12 +153,10 @@ const impl = {
           //   );
           console.log(`update result: ${JSON.stringify(updateData, null, 2)}`);
           if (updateData) {
-            return Promise.resolve(item)
+            itemClone.id = item.id;
+            return Promise.resolve(itemClone)
           }
         } // if not, proceed with any remaining photographers until none are left
-      }
-      if (data.LastEvaluatedKey) { // if there are more photographers with the given assignment count, continue
-        return impl.queryAndAssignPhotographersByAssignmentCount(event, assignmentCount, data)
       }
     }
     // if no photographers were found and/or none was assigned... resolve undefined to indicate one could not be found
