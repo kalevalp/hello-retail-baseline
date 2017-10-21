@@ -21,7 +21,8 @@ functions:
       Fn::GetAtt: [ ReceiveRole, Arn ]
     handler: receive.handler
     environment:
-      IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
+      TABLE_STORED_PHOTOS_NAME: 'storedImagesTable'
+#      IMAGE_BUCKET: ${self:custom.productPhotos.bucket}
       ENDPOINT:
         Fn::Join:
           - ''

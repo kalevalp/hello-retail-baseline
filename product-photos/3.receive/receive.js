@@ -42,7 +42,7 @@ ajv.addSchema(photoAssignmentSchema, photoAssignmentSchemaId);
  * AWS
  */
 aws.config.setPromisesDependency(BbPromise);
-const s3 = new aws.S3();
+// const s3 = new aws.S3();
 const stepfunctions = new aws.StepFunctions();
 
 /**
@@ -67,7 +67,8 @@ const constants = {
 
   // External
   ENDPOINT: process.env.ENDPOINT,
-  IMAGE_BUCKET: process.env.IMAGE_BUCKET,
+  TABLE_STORED_PHOTOS_NAME: process.env.TABLE_STORED_PHOTOS_NAME,
+  // IMAGE_BUCKET: process.env.IMAGE_BUCKET,
   TABLE_PHOTO_ASSIGNMENTS_NAME: process.env.TABLE_PHOTO_ASSIGNMENTS_NAME,
 };
 
@@ -145,13 +146,14 @@ const impl = {
    * @param results The event representing the HTTPS request.
    */
   getImageFromEvent: (results) => {
-    const uri = url.parse(results.body.MediaUrl0);
+    const resultsData = JSON.parse(results.body);
+    const uri = url.parse(resultsData.MediaUrl0);
     if (aws.config.httpOptions.agent) {
       uri.agent = aws.config.httpOptions.agent
     }
     return got.get(uri, { encoding: null }).then(
       res => BbPromise.resolve({
-        contentType: results.body.MediaContentType0,
+        contentType: resultsData.MediaContentType0,
         data: res.body,
       }) // eslint-disable-line comma-dangle
     )
@@ -188,13 +190,19 @@ const impl = {
     //     ex => BbPromise.reject(new ServerError(`Failed to retrieve assignment: ${ex}`)) // eslint-disable-line comma-dangle
     //   )
 
+    const resultsData = JSON.parse(results.body);
+
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_ASSIGNMENTS_NAME);
 
     // TODO KALEV - Make sure to correctly invoke the callback in case of error (see above).
     return kv.init()
-      .then(() => kv.get(results.body.From))
+      .then(() => kv.get(resultsData.From))
       .then(res => kv.close().then(() => res))
-      .then(res => JSON.parse(res.rowvalues))
+      .then((res) => {
+        const parsedRes = JSON.parse(res);
+        parsedRes.taskEvent = JSON.parse(parsedRes.taskEvent);
+        return parsedRes;
+      })
       .catch(err => BbPromise.reject(err));
   },
   /**
@@ -208,24 +216,43 @@ const impl = {
     const image = results[0];
     const assignment = results[1];
 
-    const bucketKey = `i/p/${assignment.taskEvent.data.id}`;
+    // const bucketKey = `i/p/${assignment.taskEvent.data.id}`;
+    //
+    // const params = {
+    //   Bucket: constants.IMAGE_BUCKET,
+    //   Key: bucketKey,
+    //   Body: image.data,
+    //   ContentType: image.contentType,
+    //   Metadata: {
+    //     from: assignment.taskEvent.photographer.phone,
+    //   },
+    // };
+    // return s3.putObject(params).promise().then(
+    //   () => BbPromise.resolve({
+    //     assignment,
+    //     image: `${constants.IMAGE_BUCKET}/${bucketKey}`, // TODO this assumes parity between bucket name and website URI
+    //   }),
+    //   ex => BbPromise.reject(new ServerError(`Error placing image into S3: ${ex}`)) // eslint-disable-line comma-dangle
+    // )
 
-    const params = {
-      Bucket: constants.IMAGE_BUCKET,
-      Key: bucketKey,
-      Body: image.data,
-      ContentType: image.contentType,
-      Metadata: {
-        from: assignment.taskEvent.photographer.phone,
-      },
-    };
-    return s3.putObject(params).promise().then(
-      () => BbPromise.resolve({
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_STORED_PHOTOS_NAME);
+
+    return kv.init()
+      .then(() => kv.put(
+        assignment.taskEvent.data.id,
+        JSON.stringify({
+          Body: image.data,
+          ContentType: image.contentType,
+          Metadata: {
+            from: assignment.taskEvent.photographer.phone,
+          },
+        })))
+      .then(() => kv.close())
+      .then(() => BbPromise.resolve({
         assignment,
-        image: `${constants.IMAGE_BUCKET}/${bucketKey}`, // TODO this assumes parity between bucket name and website URI
-      }),
-      ex => BbPromise.reject(new ServerError(`Error placing image into S3: ${ex}`)) // eslint-disable-line comma-dangle
-    )
+        image: `${constants.TABLE_STORED_PHOTOS_NAME}/${assignment.taskEvent.data.id}`,
+      }))
+      .catch(ex => BbPromise.reject(new ServerError(`Error placing image into S3: ${ex}`)));
   },
   /**
    * Indicate the successful completion of the photographer's image assignment to the StepFunction
@@ -244,7 +271,7 @@ const impl = {
       err => BbPromise.reject(`Error sending success to Step Function: ${err}`) // eslint-disable-line comma-dangle
     )
   },
-  thankYouForImage: taskEvent => `Thanks so much ${taskEvent.photographer.name}!`,
+  thankYouForImage: taskEvent => util.response(200, `Thanks so much ${taskEvent.photographer.name}!`),
 };
 /**
  * API (External)
