@@ -1,6 +1,6 @@
 {
   "name": "hello-retail-product-photos-report",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A stream producer that emits a product photo event onto the stream",
   "main": "report.js",
   "scripts": {

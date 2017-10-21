@@ -113,14 +113,28 @@ const impl = {
 
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
     kv.init()
-      .then(kv.put(
+      .then(() => kv.get(event.photographer.id))
+      .then(res => JSON.parse(res))
+      .then((res) => {
+        console.log(`%% res.assignment: ${res.assignment}`);
+        console.log(`%% event.data.id: ${event.data.id}`);
+        console.log(`%% res.assignment === event.data.id: ${res.assignment === event.data.id.toString()}`);
+
+        if (res.assignment === event.data.id.toString()) {
+          res.assignments++;
+          res.updated = updated;
+          res.updatedBy = event.origin;
+
+          delete res.assignments;
+
+          return res;
+        } else {
+          return kv.close().then(() => Promise.reject('Unexpected assignment for photographer.'));
+        }
+      })
+      .then(res => kv.put(
         event.photographer.id,
-        JSON.stringify({
-          updated,
-          updatedBy: event.origin,
-          assignments: 1,
-          assignment: event.data.id.toString(),
-        })))
+        JSON.stringify(res)))
       .then(() => kv.close())
       .then(() => callback(null))
       .catch(err => callback(err))
