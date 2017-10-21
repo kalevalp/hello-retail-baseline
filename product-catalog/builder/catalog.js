@@ -23,7 +23,6 @@ const constants = {
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
-  TABLE_PRODUCT_PHOTOS_NAME: process.env.TABLE_PRODUCT_PHOTOS_NAME,
 };
 
 const kh = new KH.KinesisHandler(eventSchema, constants.MODULE);
@@ -194,7 +193,7 @@ const impl = {
  * @param complete The callback to inform of completion, with optional error parameter.
  */
   putImage: (event, complete) => {
-    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_PHOTOS_NAME);
+    const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATALOG_NAME);
 
     const updated = Date.now();
   // const dbParamsProduct = {
@@ -230,38 +229,18 @@ const impl = {
   // };
   // dynamo.update(dbParamsProduct, complete)
 
-    kv.init((initErr) => {
-      if (initErr) {
-        complete(initErr);
-      } else {
-        kv.put(
-        event.data.id,
-        JSON.stringify({
-          /* *************************************************
-           *    Note: The 'created' field poses a problem in
-           *  our model - an update requires a read first.
-           * ************************************************* */
-          // created: updated,
-          // createdBy: event.origin,
-          updated,
-          updatedBy: event.origin,
-          image: event.data.image,
-        }),
-        (putErr) => {
-          if (putErr) {
-            complete(putErr);
-          } else {
-            kv.close((closeErr) => {
-              if (closeErr) {
-                complete(closeErr);
-              } else {
-                complete(null);
-              }
-            })
-          }
-        })
-      }
-    });
+    kv.init()
+      .then(() => kv.get(event.data.id))
+      .then((res) => {
+        const parsedRes = JSON.parse(res);
+        parsedRes.image = event.data.image;
+        parsedRes.updated = updated;
+        parsedRes.updatedBy = event.origin;
+        return parsedRes;
+      })
+      .then(res => kv.put(event.data.id, JSON.stringify(res)))
+      .then(() => kv.close())
+      .catch(err => complete(err))
   },
 };
 
