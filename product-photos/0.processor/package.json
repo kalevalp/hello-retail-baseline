@@ -1,6 +1,6 @@
 {
   "name": "hello-retail-product-photos-processor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A stream processor that executes a step function to obtaina photo for each new product",
   "main": "processor.js",
   "scripts": {
