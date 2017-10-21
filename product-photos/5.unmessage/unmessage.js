@@ -43,6 +43,9 @@ class ServerError extends Error {
  */
 const impl = {
   failAssignment: (event) => {
+    console.log('Running failAssignment with input event: ');
+    console.log(JSON.stringify(event, null, 2));
+
     const updated = Date.now();
     // const params = {
     //   TableName: constants.TABLE_PHOTO_REGISTRATIONS_NAME,
@@ -78,21 +81,33 @@ const impl = {
 
     // TODO KALEV - change the way assignments are handled (added/removed).
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PHOTO_REGISTRATIONS_NAME);
-    kv.init()
-      .then(() => kv.put(
+    return kv.init()
+      .then(() => kv.get(event.photographer.id))
+      .then(res => JSON.parse(res))
+      .then((res) => {
+        console.log(`%% res.assignment: ${res.assignment}`);
+        console.log(`%% event.data.id: ${event.data.id}`);
+        console.log(`%% res.assignment === event.data.id: ${res.assignment === event.data.id}`);
+        if (res.assignment === event.data.id) {
+          delete res.assignment;
+          res.updated = updated;
+          return res;
+        } else {
+          return kv.close().then(() => BbPromise.reject('Unexpected assignment for photographer.'));
+        }
+      })
+      .then(res => kv.put(
         event.photographer.id,
-        JSON.stringify({
-          updated,
-          updatedBy: event.origin,
-          assignment: event.data.id.toString(),
-        }),
-      ))
+        JSON.stringify(res)))
       .then(() => kv.close())
       .then(() => event)
       .catch(err => BbPromise.reject(err))
   },
 
   sendMessage: (event) => {
+    console.log('Running sendMessage with input event: ');
+    console.log(JSON.stringify(event, null, 2));
+
     function createTransporter(account) {
       // create reusable transporter object using the default SMTP transport
       const transporter = nodemailer.createTransport({
@@ -115,15 +130,15 @@ We will send an assignment soon!`;
 
     const mailOptions = {
       from: '"The Store" <boss@store.com>',
-      to: event.photographer.email,
-      subject: 'New Photography Assignment From The Store',
+      to: `${event.photographer.phone}@photogs.com`,
+      subject: 'Cancelled Photography Assignment From The Store',
       text: messageText,
       html: `<p>${messageText}</p>`,
     };
 
     // console.log('Sending Email!'),
     nodemailer.createTestAccount()
-      .then(createTransporter())
+      .then(account => createTransporter(account))
       .then(trans => trans.sendMail(mailOptions))
       .then(
         (info) => {

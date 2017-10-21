@@ -1,6 +1,6 @@
 {
   "name": "send-unassignment",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Lambda function for sending a text to a photographer stating that they have been unassigned.",
   "main": "unmessage.js",
   "scripts": {
