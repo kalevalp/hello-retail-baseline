@@ -73,7 +73,7 @@ Created by:
 
     const mailOptions = {
       from: '"The Store" <boss@store.com>',
-      to: event.photographer.email,
+      to: `${event.photographer.phone}@photogs.com`,
       subject: 'New Photography Assignment From The Store',
       text: messageText,
       html: `<p>${messageText}</p>`,
@@ -81,7 +81,7 @@ Created by:
 
     // console.log('Sending Email!'),
     nodemailer.createTestAccount()
-      .then(createTransporter())
+      .then(account => createTransporter(account))
       .then(trans => trans.sendMail(mailOptions))
       .then(
         (info) => {
