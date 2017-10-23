@@ -1,0 +1,90 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.helloRetail.name}-product-purchase
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../private.yml)}
+  helloRetail: ${file(../helloRetail.yml)}
+  retailStreamVersion: 1
+  retailStream: ${file(../retail-stream/serverless.yml)}
+  # Product Catalog Versions & Exports
+  productPurchaserVersion: 1
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  purchase:
+    role:
+      Fn::GetAtt: [ ProductPurchaser, Arn ]
+    handler: purchaseApi.processPurchase
+    events:
+      - stream:
+          arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
+#            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
+          enabled: true
+          startingPosition: TRIM_HORIZON
+
+resources:
+  Resources:
+    # Log Group
+    PurchaseLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-product-purchase
+        RetentionInDays: 7
+    # Product Purchase Roles
+    ProductPurchaser: # role for the Purchase Lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}ProductPurchaser${self:custom.productPurchaserVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                AWS:
+                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    Fn::GetAtt: [ PurchaseLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    Fn::Join:
+                      - ':'
+                      - - Fn::GetAtt: [ PurchaseLogGroup, Arn ]
+                        - '*'
+          - PolicyName: ReadFromKinesis
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'kinesis:GetRecords'
+                    - 'kinesis:GetShardIterator'
+                    - 'kinesis:DescribeStream'
+                    - 'kinesis:ListStreams'
+                  Resource:
+                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}

@@ -31,6 +31,10 @@
     "catalog:remove:2":     "./build/2.sls.sh remove \"Removing Product Catalog API\"                     ./product-catalog/api",
     "catalog:remove:all":   "npm run catalog:remove:2 && npm run catalog:remove:1",
 
+    "purchase:install":     "./build/1.install.sh \"Installing Purchase dependencies\"                    ./product-purchase",
+    "purchase:deploy":      "./build/2.sls.sh deploy \"Deploying Purchase dependencies\"                  ./product-purchase",
+    "purchase:remove":      "./build/2.sls.sh remove \"Removing Purchase dependencies\"                   ./product-purchase",
+
     "photos:install:1":     "./build/1.install.sh \"Installing Product Photos - Processor Dependencies\"  ./product-photos/0.processor",
     "photos:install:2":     "./build/1.install.sh \"Installing Product Photos - Assign Dependencies\"     ./product-photos/1.assign",
     "photos:install:3":     "./build/1.install.sh \"Installing Product Photos - Message Dependencies\"    ./product-photos/2.message",

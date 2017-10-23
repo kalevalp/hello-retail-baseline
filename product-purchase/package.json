@@ -1,0 +1,15 @@
+{
+  "name": "hello-retail-product-purchase",
+  "version": "1.0.0",
+  "description": "",
+  "main": "purchasApi.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../../trapeze/src/kv-store",
+    "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git"
+  }
+}
