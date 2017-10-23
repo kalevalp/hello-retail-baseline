@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "kv-store": "file:../../../serverless-ifc/src/kv-store"
+    "kv-store": "file:../../../trapeze/src/kv-store"
   }
 }

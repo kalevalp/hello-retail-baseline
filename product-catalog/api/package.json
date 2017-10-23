@@ -14,6 +14,6 @@
   "homepage": "https://github.com/Nordstrom/hello-retail/product-catalog#readme",
   "dependencies": {
     "ajv": "^4.10.4",
-    "kv-store": "file:../../../serverless-ifc/src/kv-store"
+    "kv-store": "file:../../../trapeze/src/kv-store"
   }
 }

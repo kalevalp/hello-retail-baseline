@@ -14,6 +14,6 @@
   "homepage": "https://github.com/Nordstrom/hello-retail/product-catalog#readme",
   "dependencies": {
     "kinesis-handler": "git+https://github.com/Nordstrom/kinesis-handler.git",
-    "kv-store": "file:../../../serverless-ifc/src/kv-store"
+    "kv-store": "file:../../../trapeze/src/kv-store"
   }
 }
