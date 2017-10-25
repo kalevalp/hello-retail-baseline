@@ -24,7 +24,7 @@ module.exports.handler = (event, context, callback) => {
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_CREDIT_CARDS_NAME);
 
     kv.init()
-      .then(kv.get(event.user))
+      .then(() => kv.get(event.user))
       .then(cc => kv.close().then(() => cc))
       .then((cc) => {
         if (cc) {

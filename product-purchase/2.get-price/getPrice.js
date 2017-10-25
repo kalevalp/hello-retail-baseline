@@ -15,7 +15,7 @@ module.exports.handler = (event, context, callback) => {
   const result = event;
 
   kv.init()
-    .then(kv.get(event.id))
+    .then(() => kv.get(event.id))
     .then(res => kv.close().then(() => res))
     .then((res) => {
       if (res) {

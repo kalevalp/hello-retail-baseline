@@ -16,7 +16,7 @@ module.exports.handler = (event, context, callback) => {
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_CREDIT_CARDS_NAME);
 
     p = kv.init()
-      .then(kv.put(event.user, event.creditCard))
+      .then(() => kv.put(event.user, event.creditCard))
       .then(() => kv.close())
   } else {
     p = Promise.resolve()

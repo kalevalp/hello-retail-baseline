@@ -11,13 +11,17 @@ const constants = {
 
 
 module.exports.authenticate = (event, context, callback) => {
+  console.log(event);
   const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_AUTHENTICATION_NAME);
   const result = event;
 
   kv.init()
-    .then(kv.get(event.user))
+    .then(() => kv.get(event.user))
     .then(res => kv.close().then(() => res))
     .then((res) => {
+      console.log(res);
+      console.log(event.pass);
+      console.log(res === event.pass);
       if (res === event.pass) {
         // eslint-disable-next-line no-param-reassign
         result.authenticated = 'true';
