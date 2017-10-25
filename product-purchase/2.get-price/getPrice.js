@@ -6,11 +6,11 @@ const fs = require('fs');
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 const constants = {
-  TABLE_PRODUCT_CATALOG_NAME: 'productCatalogTable',
+  TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
 };
 
 
-module.exports.authenticate = (event, context, callback) => {
+module.exports.handler = (event, context, callback) => {
   const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATALOG_NAME);
   const result = event;
 

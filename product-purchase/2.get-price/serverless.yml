@@ -1,0 +1,79 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.purchaseProduct.getPriceName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  purchaseProduct: ${file(../productPurchase.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  getPrice:
+    role:
+      'Fn::GetAtt': [ GetPriceRole, Arn ]
+    handler: getPrice.handler
+    environment:
+      TABLE_PRODUCT_CATALOG_NAME: 'productCatalogTable'
+
+resources:
+  Resources:
+    # Log Group
+    GetPriceLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-getPrice'
+        RetentionInDays: 7
+    # Role
+    GetPriceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}PurchaseProductGetPrice{self:custom.purchaseProduct.purchaseProductVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ GetPriceLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ GetPriceLogGroup, Arn ]
+                        - '*'
+  Outputs:
+    GetPriceLambdaName:
+      Description: The Name of the Product Purchase GetPrice Lambda
+      Value:
+        Ref: GetPriceLambdaFunction
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseGetPriceLambdaName}
+    GetPriceLambdaArn:
+      Description: The Name of the Product Purchase GetPrice Lambda
+      Value:
+        'Fn::GetAtt': [ GetPriceLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseGetPriceLambdaArn}

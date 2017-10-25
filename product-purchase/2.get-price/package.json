@@ -1,0 +1,14 @@
+{
+  "name": "get-price",
+  "version": "1.0.0",
+  "description": "",
+  "main": "getPrice.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../../../trapeze/src/kv-store"
+  }
+}
