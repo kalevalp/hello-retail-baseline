@@ -68,7 +68,33 @@
     "photos:remove:9":      "./build/2.sls.sh remove \"Removing Product Photos - 6.Report\"               ./product-photos/6.report",
     "photos:remove:10":     "./build/2.sls.sh remove \"Removing Product Photos - Process\"                ./product-photos/process",
     "photos:remove:11":     "./build/2.sls.sh remove \"Removing Product Photos - 0.Processor\"            ./product-photos/0.processor",
-    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2"
+    "photos:remove:all":    "npm run photos:remove:11 && npm run photos:remove:10 && npm run photos:remove:9 && npm run photos:remove:8 && npm run photos:remove:7 && npm run photos:remove:6 && npm run photos:remove:5 && npm run photos:remove:4 && npm run photos:remove:3 && npm run photos:remove:2",
+
+    "purchase:install:1":     "./build/1.install.sh \"Installing Product Purchase - Purchase API Dependencies\" ./product-purchase/0.purchaseApi",
+    "purchase:install:2":     "./build/1.install.sh \"Installing Product Purchase - Authenticate Dependencies\" ./product-purchase/1.authenticate",
+    "purchase:install:3":     "./build/1.install.sh \"Installing Product Purchase - Get Price Dependencies\"    ./product-purchase/2.get-price",
+    "purchase:install:4":     "./build/1.install.sh \"Installing Product Purchase - Authorize Dependencies\"    ./product-purchase/3.authorize-cc",
+    "purchase:install:5":     "./build/1.install.sh \"Installing Product Purchase - Store Dependencies\"        ./product-purchase/3.store-cc",
+    "purchase:install:6":     "./build/1.install.sh \"Installing Product Purchase - Publish Dependencies\"      ./product-purchase/4.publish",
+    "purchase:install:all":   "npm run purchase:install:1 && npm run purchase:install:2 && npm run purchase:install:3 && npm run purchase:install:4 && npm run purchase:install:5 && npm run purchase:install:6",
+
+    "purchase:deploy:1":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 1.Authenticate\"          ./product-purchase/1.authenticate",
+    "purchase:deploy:2":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 2.Get Price\"             ./product-purchase/2.get-price",
+    "purchase:deploy:3":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 3.Authorize\"             ./product-purchase/3.authorize-cc",
+    "purchase:deploy:4":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 3.Store\"                 ./product-purchase/3.store-cc",
+    "purchase:deploy:5":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 4.Publish\"               ./product-purchase/4.publish",
+    "purchase:deploy:6":      "./build/2.sls.sh deploy \"Deploying Product Purchase - Purchase SM\"             ./product-purchase/purchase-sm",
+    "purchase:deploy:7":      "./build/2.sls.sh deploy \"Deploying Product Purchase - 0.Purchase API\"          ./product-purchase/0.purchaseApi",
+    "purchase:deploy:all":    "npm run purchase:deploy:1 && npm run purchase:deploy:2 && npm run purchase:deploy:3 && npm run purchase:deploy:4 && npm run purchase:deploy:5 && npm run purchase:deploy:6 && npm run purchase:deploy:7",
+
+    "purchase:remove:1":      "./build/2.sls.sh remove \"Removing Product Purchase - 1.Authenticate\"           ./product-purchase/1.authenticate",
+    "purchase:remove:2":      "./build/2.sls.sh remove \"Removing Product Purchase - 2.Get Price\"              ./product-purchase/2.get-price",
+    "purchase:remove:3":      "./build/2.sls.sh remove \"Removing Product Purchase - 3.Authorize\"              ./product-purchase/3.authorize-cc",
+    "purchase:remove:4":      "./build/2.sls.sh remove \"Removing Product Purchase - 3.Store\"                  ./product-purchase/3.store-cc",
+    "purchase:remove:5":      "./build/2.sls.sh remove \"Removing Product Purchase - 4.Publish\"                ./product-purchase/4.publish",
+    "purchase:remove:6":      "./build/2.sls.sh remove \"Removing Product Purchase - Purchase SM\"              ./product-purchase/purchase-sm",
+    "purchase:remove:7":      "./build/2.sls.sh remove \"Removing Product Purchase - 0.Purchase API\"           ./product-purchase/0.purchaseApi",
+    "purchase:remove:all":    "npm run purchase:remove:7 && npm run purchase:remove:6 && npm run purchase:remove:5 && npm run purchase:remove:4 && npm run purchase:remove:3 && npm run purchase:remove:2 && npm run purchase:remove:1"
 
   },
   "repository": {
