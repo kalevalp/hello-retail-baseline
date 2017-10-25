@@ -14,8 +14,8 @@ exportProductPurchseGetPriceLambdaName: ${self:custom.purchaseProduct.getPriceNa
 exportProductPurchseGetPriceLambdaArn: ${self:custom.purchaseProduct.getPriceName}:${self:custom.stage}:ProductPurchseGetPriceLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
 
 authorizeName: ${self:custom.purchaseProduct.name}-authorize
-exportProductPurchseAuthorizeLambdaName: ${self:custom.purchaseProduct.authorize}:${self:custom.stage}:ProductPurchseAuthorizeLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
-exportProductPurchseAuthorizeLambdaArn: ${self:custom.purchaseProduct.authorize}:${self:custom.stage}:ProductPurchseAuthorizeLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseAuthorizeLambdaName: ${self:custom.purchaseProduct.authorizeName}:${self:custom.stage}:ProductPurchseAuthorizeLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseAuthorizeLambdaArn: ${self:custom.purchaseProduct.authorizeName}:${self:custom.stage}:ProductPurchseAuthorizeLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
 
 storeName: ${self:custom.purchaseProduct.name}-store
 exportProductPurchseStoreLambdaName: ${self:custom.purchaseProduct.storeName}:${self:custom.stage}:ProductPurchseStoreLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
@@ -26,6 +26,6 @@ exportProductPurchsePublishLambdaName: ${self:custom.purchaseProduct.publishName
 exportProductPurchsePublishLambdaArn: ${self:custom.purchaseProduct.publishName}:${self:custom.stage}:ProductPurchsePublishLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
 
 # Step Function
-PurchaseSMName: ${self:custom.purchaseProduct.name}-purchase-sm
-exportProductPurchaseStepFunctionName: ${self:custom.purchaseProduct.processName}:${self:custom.stage}:ProductPurchaseStepFunctionName:${self:custom.purchaseProduct.purchaseProductVersion}
-exportProductPurchaseStepFunctionArn: ${self:custom.purchaseProduct.processName}:${self:custom.stage}:ProductPurchaseStepFunctionArn:${self:custom.purchaseProduct.purchaseProductVersion}
+purchaseSMName: ${self:custom.purchaseProduct.name}-purchase-sm
+exportProductPurchaseStepFunctionName: ${self:custom.purchaseProduct.purchaseSMName}:${self:custom.stage}:ProductPurchaseStepFunctionName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchaseStepFunctionArn: ${self:custom.purchaseProduct.purchaseSMName}:${self:custom.stage}:ProductPurchaseStepFunctionArn:${self:custom.purchaseProduct.purchaseProductVersion}

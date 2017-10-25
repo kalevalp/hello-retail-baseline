@@ -8,7 +8,7 @@ custom:
   helloRetail: ${file(../../helloRetail.yml)}
   retailStream: ${file(../../retail-stream/serverless.yml)}
   retailStreamVersion: 1
-  purchaseProduct: ${file(../purchaseProduct.yml)}
+  purchaseProduct: ${file(../productPurchase.yml)}
 
 provider:
   name: aws

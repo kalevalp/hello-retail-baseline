@@ -1,5 +1,5 @@
 # State Machine (AWS StepFunction for purchasing a product)
-Comment:
+Comment: Handle a product purchase
 StartAt: AuthenticateUser
 States:
   AuthenticateUser:
@@ -9,14 +9,13 @@ States:
 
   CheckAuthenticateUser:
     Type: Choice
-        Type: Choice
-        Choices:
-          - Variable: '$.authenticated'
-            StringEquals: 'false'
-            Next: Publish
-          - Variable: '$.authenticated'
-            StringEquals: 'true'
-            Next: GetPrice
+    Choices:
+      - Variable: '$.authenticated'
+        StringEquals: 'false'
+        Next: Publish
+      - Variable: '$.authenticated'
+        StringEquals: 'true'
+        Next: GetPrice
 
   GetPrice:
     Type: Task
@@ -25,14 +24,13 @@ States:
 
   CheckGetPrice:
     Type: Choice
-        Type: Choice
-        Choices:
-          - Variable: '$.gotPrice'
-            StringEquals: 'false'
-            Next: Publish
-          - Variable: '$.gotPrice'
-            StringEquals: 'true'
-            Next: ParallelCCHandling
+    Choices:
+      - Variable: '$.gotPrice'
+        StringEquals: 'false'
+        Next: Publish
+      - Variable: '$.gotPrice'
+        StringEquals: 'true'
+        Next: ParallelCCHandling
 
   ParallelCCHandling:
     Type: Parallel

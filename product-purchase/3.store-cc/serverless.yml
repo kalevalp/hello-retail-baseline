@@ -36,7 +36,7 @@ resources:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}PurchaseProductStore{self:custom.purchaseProduct.purchaseProductVersion}
+        RoleName: ${self:custom.stage}PurchaseProductStore${self:custom.purchaseProduct.purchaseProductVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
