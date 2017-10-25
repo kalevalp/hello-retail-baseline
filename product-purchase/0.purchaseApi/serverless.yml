@@ -1,15 +1,14 @@
 frameworkVersion: '>=1.0.0 <2.0.0'
 
-service: ${self:custom.helloRetail.name}-product-purchase
+service: ${self:custom.purchaseProduct.purchaseApiName}
 
 custom:
   stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
-  private: ${file(../private.yml)}
-  helloRetail: ${file(../helloRetail.yml)}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStream: ${file(../../retail-stream/serverless.yml)}
   retailStreamVersion: 1
-  retailStream: ${file(../retail-stream/serverless.yml)}
-  # Product Catalog Versions & Exports
-  productPurchaserVersion: 1
+  purchaseProduct: ${file(../purchaseProduct.yml)}
 
 provider:
   name: aws
@@ -19,39 +18,37 @@ provider:
   region: ${self:custom.private.region}
 
 functions:
-  purchase:
+  purchaseApi:
     role:
-      Fn::GetAtt: [ ProductPurchaser, Arn ]
-    handler: purchaseApi.processPurchase
+      'Fn::GetAtt': [ PurchaseApiRole, Arn ]
+    handler: purchaseApi.handler
+    environment:
+      STAGE: ${self:custom.stage}
+      STEP_FUNCTION:
+        'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchaseStepFunctionArn}
     events:
-      - stream:
-          arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
-#            Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
-          enabled: true
-          startingPosition: TRIM_HORIZON
+      - http:
+          path: purchase
+          method: post
+          cors: true
 
 resources:
   Resources:
     # Log Group
-    PurchaseLogGroup:
+    PurchaseApiLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:custom.stage}-product-purchase
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-purchaseApi'
         RetentionInDays: 7
-    # Product Purchase Roles
-    ProductPurchaser: # role for the Purchase Lambda
+    # Role
+    PurchaseApiRole:
       Type: AWS::IAM::Role
       Properties:
         Path: /
-        RoleName: ${self:custom.stage}ProductPurchaser${self:custom.productPurchaserVersion}
+        RoleName: ${self:custom.stage}ProductPurchaseApi${self:custom.purchaseProduct.purchaseProductVersion}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
-            - Effect: Allow
-              Action: sts:AssumeRole
-              Principal:
-                AWS:
-                  - 'arn:aws:iam::${self:custom.private.accountId}:role/${self:custom.private.teamRole}'
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
@@ -67,24 +64,21 @@ resources:
                   Action:
                     - 'logs:CreateLogStream'
                   Resource:
-                    Fn::GetAtt: [ PurchaseLogGroup, Arn ]
+                    'Fn::GetAtt': [ PurchaseApiLogGroup, Arn ]
                 - Effect: Allow
                   Action:
                     - 'logs:PutLogEvents'
                   Resource:
-                    Fn::Join:
+                    'Fn::Join':
                       - ':'
-                      - - Fn::GetAtt: [ PurchaseLogGroup, Arn ]
+                      - - 'Fn::GetAtt': [ PurchaseApiLogGroup, Arn ]
                         - '*'
-          - PolicyName: ReadFromKinesis
+          - PolicyName: ExecuteStepFunction  # see https://forums.aws.amazon.com/thread.jspa?messageID=755476&tstart=0 for StepFunction IAM docs
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action:
-                    - 'kinesis:GetRecords'
-                    - 'kinesis:GetShardIterator'
-                    - 'kinesis:DescribeStream'
-                    - 'kinesis:ListStreams'
+                    - 'states:StartExecution'
                   Resource:
-                    Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamArn}
+                    'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchaseStepFunctionArn}
