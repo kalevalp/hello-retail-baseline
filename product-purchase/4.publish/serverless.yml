@@ -1,0 +1,93 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.purchaseProduct.publishName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  purchaseProduct: ${file(../productPurchase.yml)}
+  retailStreamVersion: 1
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  publish:
+    role:
+      'Fn::GetAtt': [ PublishRole, Arn ]
+    handler: publish.handler
+    environment:
+      RETAIL_STREAM_NAME:
+        Fn::ImportValue: ${self:custom.retailStream.custom.exportRetailStreamName}
+
+resources:
+  Resources:
+    # Log Group
+    PublishLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-publish'
+        RetentionInDays: 7
+    # Role
+    PublishRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}PurchaseProductPublish{self:custom.purchaseProduct.purchaseProductVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ PublishLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ PublishLogGroup, Arn ]
+                        - '*'
+          - PolicyName: WriteToRetailStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'kinesis:PutRecord'
+                  Resource:
+                    'Fn::ImportValue': ${self:custom.retailStream.custom.exportRetailStreamArn}
+
+  Outputs:
+    PublishLambdaName:
+      Description: The Name of the Product Purchase Publish Lambda
+      Value:
+        Ref: PublishLambdaFunction
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchsePublishLambdaName}
+    PublishLambdaArn:
+      Description: The Name of the Product Purchase Publish Lambda
+      Value:
+        'Fn::GetAtt': [ PublishLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchsePublishLambdaArn}

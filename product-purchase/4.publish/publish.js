@@ -2,19 +2,14 @@
 
 const aws = require('aws-sdk'); // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
 
-// const { KV_Store } = require('kv-store');
-// const fs = require('fs');
-//
-// const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
-
 /**
  * AWS
  */
 const kinesis = new aws.Kinesis();
 
 const constants = {
-  RETAIL_STREAM_NAME: ;
-}
+  RETAIL_STREAM_NAME: process.env.RETAIL_STREAM_NAME,
+};
 
 module.exports = {
   handler: (event, context, callback) => {
