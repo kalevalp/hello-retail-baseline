@@ -1,0 +1,79 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.purchaseProduct.authenticateName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  purchaseProduct: ${file(../productPurchase.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  authenticate:
+    role:
+      'Fn::GetAtt': [ AuthenticateRole, Arn ]
+    handler: authenticate.authenticate
+    environment:
+      TABLE_AUTHENTICATION_NAME: 'authenticationTable'
+
+resources:
+  Resources:
+    # Log Group
+    AuthenticateLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-authenticate'
+        RetentionInDays: 7
+    # Role
+    AuthenticateRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}PurchaseProductAuthenticate{self:custom.purchaseProduct.purchaseProductVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ AuthenticateLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ AuthenticateLogGroup, Arn ]
+                        - '*'
+  Outputs:
+    AuthenticateLambdaName:
+      Description: The Name of the Product Purchase Authenticate Lambda
+      Value:
+        Ref: AuthenticateLambdaFunction
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseAuthenticateLambdaName}
+    AuthenticateLambdaArn:
+      Description: The Name of the Product Purchase Authenticate Lambda
+      Value:
+        'Fn::GetAtt': [ AuthenticateLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseAuthenticateLambdaArn}
