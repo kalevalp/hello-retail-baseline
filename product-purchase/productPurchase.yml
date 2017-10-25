@@ -1,0 +1,31 @@
+# Project
+name: ${self:custom.helloRetail.name}-purchase-product
+purchaseProductVersion: 1
+
+# Lambdas
+purchaseApiName: ${self:custom.purchaseProduct.name}-purchaseApi
+
+authenticateName: ${self:custom.purchaseProduct.name}-authenticate
+exportProductPurchseAuthenticateLambdaName: ${self:custom.purchaseProduct.authenticateName}:${self:custom.stage}:ProductPurchseAuthenticateLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseAuthenticateLambdaArn: ${self:custom.purchaseProduct.authenticateName}:${self:custom.stage}:ProductPurchseAuthenticateLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+
+getPriceName: ${self:custom.purchaseProduct.name}-getPrice
+exportProductPurchseGetPriceLambdaName: ${self:custom.purchaseProduct.getPriceName}:${self:custom.stage}:ProductPurchseGetPriceLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseGetPriceLambdaArn: ${self:custom.purchaseProduct.getPriceName}:${self:custom.stage}:ProductPurchseGetPriceLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+
+authorizeName: ${self:custom.purchaseProduct.name}-authorize
+exportProductPurchseAuthorizeLambdaName: ${self:custom.purchaseProduct.authorize}:${self:custom.stage}:ProductPurchseAuthorizeLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseAuthorizeLambdaArn: ${self:custom.purchaseProduct.authorize}:${self:custom.stage}:ProductPurchseAuthorizeLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+
+storeName: ${self:custom.purchaseProduct.name}-store
+exportProductPurchseStoreLambdaName: ${self:custom.purchaseProduct.storeName}:${self:custom.stage}:ProductPurchseStoreLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchseStoreLambdaArn: ${self:custom.purchaseProduct.storeName}:${self:custom.stage}:ProductPurchseStoreLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+
+publishName: ${self:custom.purchaseProduct.name}-publish
+exportProductPurchsePublishLambdaName: ${self:custom.purchaseProduct.publishName}:${self:custom.stage}:ProductPurchsePublishLambdaName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchsePublishLambdaArn: ${self:custom.purchaseProduct.publishName}:${self:custom.stage}:ProductPurchsePublishLambdaArn:${self:custom.purchaseProduct.purchaseProductVersion}
+
+# Step Function
+PurchaseSMName: ${self:custom.purchaseProduct.name}-purchase-sm
+exportProductPurchaseStepFunctionName: ${self:custom.purchaseProduct.processName}:${self:custom.stage}:ProductPurchaseStepFunctionName:${self:custom.purchaseProduct.purchaseProductVersion}
+exportProductPurchaseStepFunctionArn: ${self:custom.purchaseProduct.processName}:${self:custom.stage}:ProductPurchaseStepFunctionArn:${self:custom.purchaseProduct.purchaseProductVersion}

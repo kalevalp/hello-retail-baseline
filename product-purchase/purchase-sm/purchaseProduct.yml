@@ -1,0 +1,62 @@
+# State Machine (AWS StepFunction for purchasing a product)
+Comment:
+StartAt: AuthenticateUser
+States:
+  AuthenticateUser:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.purchaseProduct.authenticateName}-${self:custom.stage}-authenticate
+    Next: CheckAuthenticateUser
+
+  CheckAuthenticateUser:
+    Type: Choice
+        Type: Choice
+        Choices:
+          - Variable: '$.authenticated'
+            StringEquals: 'false'
+            Next: Publish
+          - Variable: '$.authenticated'
+            StringEquals: 'true'
+            Next: GetPrice
+
+  GetPrice:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.purchaseProduct.getPriceName}-${self:custom.stage}-getPrice
+    Next: CheckGetPrice
+
+  CheckGetPrice:
+    Type: Choice
+        Type: Choice
+        Choices:
+          - Variable: '$.gotPrice'
+            StringEquals: 'false'
+            Next: Publish
+          - Variable: '$.gotPrice'
+            StringEquals: 'true'
+            Next: ParallelCCHandling
+
+  ParallelCCHandling:
+    Type: Parallel
+    Branches:
+      - StartAt: AuthorizeCreditCard
+        States:
+          AuthorizeCreditCard:
+            Type: Task
+            Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.purchaseProduct.authorizeName}-${self:custom.stage}-authorize
+            End: true
+      - StartAt: StoreCreditCard
+        States:
+          StoreCreditCard:
+            Type: Task
+            Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.purchaseProduct.storeName}-${self:custom.stage}-store
+            End: true
+    Next: ExtractCCHandlingResult
+
+  ExtractCCHandlingResult:
+    InputPath: '$.[0]'
+    Type: 'Pass'
+    Next: Publish
+
+  Publish:
+    Type: Task
+    Resource: arn:aws:lambda:${self:custom.private.region}:${self:custom.private.accountId}:function:${self:custom.purchaseProduct.publishName}-${self:custom.stage}-publish
+    End: true

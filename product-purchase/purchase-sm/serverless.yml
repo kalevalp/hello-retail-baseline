@@ -1,0 +1,70 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.purchaseProduct.purchaseSMName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  retailStream: ${file(../../retail-stream/serverless.yml)}
+  retailStreamVersion: 1
+  purchaseProduct: ${file(../productPurchase.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+resources:
+  Resources:
+    # Role
+    StepFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          Path: /
+          RoleName: ${self:custom.stage}PurchaseProductStepFunction${self:custom.purchaseProduct.purchaseProductVersion}
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: states.${self:custom.private.region}.amazonaws.com
+          ManagedPolicyArns:
+            - ${self:custom.private.teamPolicy}
+          Policies:
+            - PolicyName: InvokeLambdas
+              PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - 'lambda:InvokeFunction'
+                    Resource:
+                      - 'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchseAuthenticateLambdaArn}
+                      - 'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchseGetPriceLambdaArn}
+                      - 'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchseAuthorizeLambdaArn}
+                      - 'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchseStoreLambdaArn}
+                      - 'Fn::ImportValue': ${self:custom.purchaseProduct.exportProductPurchsePublishLambdaArn}
+    # Step Function
+    StepFunction:
+      Type: 'AWS::StepFunctions::StateMachine'
+      Properties:
+        DefinitionString: '${file(purchaseProduct.js):shim}'
+        RoleArn:
+          'Fn::GetAtt': [ StepFunctionRole, Arn ]
+  Outputs:
+    ProductPurchaseStepFunctionName:
+      Description: The name of the product purchase Step Function
+      Value:
+        'Fn::GetAtt': [StepFunction, Name]
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchaseStepFunctionName}
+    ProductPurchaseStepFunctionArn:
+      Description: The ARN of the product purchase Step Function
+      Value:
+        Ref: StepFunction
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchaseStepFunctionArn}
