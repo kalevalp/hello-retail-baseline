@@ -1,0 +1,79 @@
+frameworkVersion: '>=1.0.0 <2.0.0'
+
+service: ${self:custom.purchaseProduct.storeName}
+
+custom:
+  stage: ${opt:stage, self:provider.stage, self:custom.private.stage}
+  private: ${file(../../private.yml)}
+  helloRetail: ${file(../../helloRetail.yml)}
+  purchaseProduct: ${file(../productPurchase.yml)}
+
+provider:
+  name: aws
+  deploymentBucket: ${self:custom.helloRetail.deploymentBucket}
+  runtime: nodejs6.10
+  profile: ${self:custom.private.profile}
+  region: ${self:custom.private.region}
+
+functions:
+  store:
+    role:
+      'Fn::GetAtt': [ StoreRole, Arn ]
+    handler: storeCreditCard.handler
+    environment:
+      TABLE_CREDIT_CARDS_NAME: 'creditCardsTable'
+
+resources:
+  Resources:
+    # Log Group
+    StoreLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: '/aws/lambda/${self:service}-${self:custom.stage}-store'
+        RetentionInDays: 7
+    # Role
+    StoreRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: ${self:custom.stage}PurchaseProductStore{self:custom.purchaseProduct.purchaseProductVersion}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - ${self:custom.private.teamPolicy}
+        Policies:
+          - PolicyName: CreateAndWriteToLogStream
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogStream'
+                  Resource:
+                    'Fn::GetAtt': [ StoreLogGroup, Arn ]
+                - Effect: Allow
+                  Action:
+                    - 'logs:PutLogEvents'
+                  Resource:
+                    'Fn::Join':
+                      - ':'
+                      - - 'Fn::GetAtt': [ StoreLogGroup, Arn ]
+                        - '*'
+  Outputs:
+    StoreLambdaName:
+      Description: The Name of the Product Purchase Store Lambda
+      Value:
+        Ref: StoreLambdaFunction
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseStoreLambdaName}
+    StoreLambdaArn:
+      Description: The Name of the Product Purchase Store Lambda
+      Value:
+        'Fn::GetAtt': [ StoreLambdaFunction, Arn ]
+      Export:
+        Name: ${self:custom.purchaseProduct.exportProductPurchseStoreLambdaArn}

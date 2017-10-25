@@ -6,10 +6,10 @@ const fs = require('fs');
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 const constants = {
-  TABLE_CREDIT_CARDS_NAME: 'creditCardsTable',
+  TABLE_CREDIT_CARDS_NAME: process.env.TABLE_CREDIT_CARDS_NAME,
 };
 
-module.exports.authenticate = (event, context, callback) => {
+module.exports.handler = (event, context, callback) => {
   let p;
 
   if (event.storeCC) {
