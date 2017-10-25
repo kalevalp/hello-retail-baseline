@@ -7,5 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../../../trapeze/src/kv-store"
+  }
 }
