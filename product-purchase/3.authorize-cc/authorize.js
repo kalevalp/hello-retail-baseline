@@ -10,30 +10,31 @@ const constants = {
 };
 
 module.exports.handler = (event, context, callback) => {
+  console.log(event);
   const result = event;
   if (event.creditCard) {
     if (Math.random() < 0.01) { // Simulate failure in 1% of purchases (expected).
-      result.approved = 'true';
-      result.authorization = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-    } else {
       result.approved = 'false';
       result.failureReason = 'Credit card authorization failed';
+    } else {
+      result.approved = 'true';
+      result.authorization = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
     return callback(null, result);
   } else {
     const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_CREDIT_CARDS_NAME);
 
-    kv.init()
+    return kv.init()
       .then(() => kv.get(event.user))
       .then(cc => kv.close().then(() => cc))
       .then((cc) => {
         if (cc) {
           if (Math.random() < 0.01) { // Simulate failure in 1% of purchases (expected).
-            result.approved = 'true';
-            result.authorization = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-          } else {
             result.approved = 'false';
             result.failureReason = 'Credit card authorization failed';
+          } else {
+            result.approved = 'true';
+            result.authorization = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
           }
         } else {
           result.approved = 'false';
