@@ -13,7 +13,8 @@
     "brand":  { "type": "string" },
     "name":  { "type": "string" },
     "description": { "type": "string" },
-    "category": { "type": "string"}
+    "category": { "type": "string"},
+    "price": { "type": "string"}
   },
   "required": [
     "schema",
