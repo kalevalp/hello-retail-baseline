@@ -23,6 +23,7 @@ const constants = {
   // resources
   TABLE_PRODUCT_CATEGORY_NAME: process.env.TABLE_PRODUCT_CATEGORY_NAME,
   TABLE_PRODUCT_CATALOG_NAME: process.env.TABLE_PRODUCT_CATALOG_NAME,
+  TABLE_PRODUCT_PRICE_NAME: process.env.TABLE_PRODUCT_PRICE_NAME,
 };
 
 const kh = new KH.KinesisHandler(eventSchema, constants.MODULE);
@@ -49,6 +50,7 @@ const impl = {
   putProduct: (event, complete) => {
     const categoryKV = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATEGORY_NAME);
     const catalogKV = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_CATALOG_NAME);
+    const priceKV = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_PRODUCT_PRICE_NAME);
 
     const updated = Date.now();
     let priorErr;
@@ -111,6 +113,15 @@ const impl = {
           updatedBy: event.origin,
         })))
       .then(() => categoryKV.close())
+      .then(() => {
+        if (event.data.price) {
+          return priceKV.init()
+            .then(() => priceKV.put(event.data.id, event.data.price))
+            .then(() => priceKV.close())
+        } else {
+          return Promise.resolve()
+        }
+      })
       .then(() => updateCallback(null))
       .catch(err => updateCallback(err));
 

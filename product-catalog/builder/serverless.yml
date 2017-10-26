@@ -22,6 +22,7 @@ custom:
   productCatalogTableName: 'productCatalogTable'
   productCategoryTableName: 'productCategoryTable'
   productPhotosTableName: 'productPhotosTable'
+  productPriceTableName: 'productPriceTable'
 
 provider:
   name: aws
@@ -39,6 +40,7 @@ functions:
       TABLE_PRODUCT_CATEGORY_NAME: ${self:custom.productCategoryTableName}
       TABLE_PRODUCT_CATALOG_NAME: ${self:custom.productCatalogTableName}
       TABLE_PRODUCT_PHOTOS_NAME: ${self:custom.productPhotosTableName}
+      TABLE_PRODUCT_PRICE_NAME: ${self:custom.productPriceTableName}
     events:
       - stream:
           arn: 'arn:aws:kinesis:${self:provider.region}:${self:custom.private.accountId}:stream/${self:custom.stage}RetailStream' # replace this with the below, once supported by Serverless
