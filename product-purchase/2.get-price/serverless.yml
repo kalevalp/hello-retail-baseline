@@ -21,7 +21,7 @@ functions:
       'Fn::GetAtt': [ GetPriceRole, Arn ]
     handler: getPrice.handler
     environment:
-      TABLE_PRODUCT_CATALOG_NAME: 'productCatalogTable'
+      TABLE_PRODUCT_PRICE_NAME: 'productPriceTable'
 
 resources:
   Resources:
