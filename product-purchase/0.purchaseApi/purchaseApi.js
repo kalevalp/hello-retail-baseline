@@ -32,12 +32,12 @@ module.exports.handler = (event, context, callback) => {
   stepfunctions.startExecution(params, (err) => {
     if (err) {
       if (err.code && err.code === 'ExecutionAlreadyExists') {
-        callback(util.success('Purchase has submitted previously. You will not be charged twice.'))
+        callback(null, util.success('Purchase was submitted previously. You will not be charged twice.'))
       } else {
         callback(err)
       }
     } else {
-      callback(util.success('Purchase submitted. Thank you!'))
+      callback(null, util.success('Purchase submitted. Thank you!'))
     }
   })
 };
