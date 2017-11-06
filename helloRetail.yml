@@ -4,5 +4,5 @@
 #   helloRetail: ${file(../helloRetail.yml)}}
 # ```
 # Top Level Project
-name: hello-retail
+name: hello-retail-baseline
 deploymentBucket: com.${self:custom.private.company}.${self:custom.private.team}.serverless.${self:provider.region}
