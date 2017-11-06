@@ -102,7 +102,7 @@ const impl = {
       .then(() => kv.get(event.data.id))
       .then((res) => {
         if (res.length !== 0) {
-          const stored = JSON.parse(res[0].rowvalues);
+          const stored = JSON.parse(res);
           return kv.put(
             event.data.id,
             JSON.stringify({
