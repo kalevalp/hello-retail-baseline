@@ -1,5 +1,5 @@
 # Project
-name: ${self:custom.helloRetail.name}-purchase-product
+name: ${self:custom.helloRetail.name}-purpro
 purchaseProductVersion: 1
 
 # Lambdas
