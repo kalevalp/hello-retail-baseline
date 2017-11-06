@@ -108,15 +108,15 @@ const impl = {
     console.log('Running sendMessage with input event: ');
     console.log(JSON.stringify(event, null, 2));
 
-    function createTransporter(account) {
+    function createTransporter() {
       // create reusable transporter object using the default SMTP transport
       const transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {
-          user: account.user, // generated ethereal user
-          pass: account.pass,  // generated ethereal password
+          user: 'vqx6tnt2bar5fhcu@ethereal.email',
+          pass: 'PsFzkYR7nXpcJZEF7s',
         },
       });
       return Promise.resolve(transporter);
@@ -137,8 +137,7 @@ We will send an assignment soon!`;
     };
 
     // console.log('Sending Email!'),
-    nodemailer.createTestAccount()
-      .then(account => createTransporter(account))
+    createTransporter()
       .then(trans => trans.sendMail(mailOptions))
       .then(
         (info) => {
