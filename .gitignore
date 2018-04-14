@@ -54,7 +54,3 @@ jspm_packages
 web/config.js
 
 package-lock.json
-
-# private project configuration
-private.yml
-conf.json
