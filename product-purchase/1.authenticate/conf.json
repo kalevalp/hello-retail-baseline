@@ -1,0 +1,19 @@
+{
+  "unsecLambda" : "authenticate.js",
+  "secLambdaFullPath" : "/var/task/secure-authenticate.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-authenticate.js",
+  "handlers" : ["authenticate"],
+  "usingPO" : true,
+  "runFromSF" : true,
+  "processEnv" : [
+    "TABLE_AUTHENTICATION_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

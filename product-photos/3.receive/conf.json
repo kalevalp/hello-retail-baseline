@@ -1,0 +1,20 @@
+{
+  "unsecLambda" : "receive.js",
+  "secLambdaFullPath" : "/var/task/secure-receive.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-receive.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "processEnv" : [
+    "TABLE_STORED_PHOTOS_NAME",
+    "ENDPOINT",
+    "TABLE_PHOTO_ASSIGNMENTS_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

@@ -1,0 +1,18 @@
+{
+  "unsecLambda" : "purchaseApi.js",
+  "secLambdaFullPath" : "/var/task/secure-purchaseApi.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-purchaseApi.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "processEnv" : [
+    "STEP_FUNCTION"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

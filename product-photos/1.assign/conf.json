@@ -1,0 +1,19 @@
+{
+  "unsecLambda" : "assign.js",
+  "secLambdaFullPath" : "/var/task/secure-assign.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-assign.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "runFromSF" : true,
+  "processEnv" : [
+    "TABLE_PHOTO_REGISTRATIONS_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

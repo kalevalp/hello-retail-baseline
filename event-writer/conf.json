@@ -1,0 +1,22 @@
+{
+  "unsecLambda" : "eventWriterApi.js",
+  "secLambdaFullPath" : "/var/task/secure-eventWriterApi.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-eventWriterApi.js",
+  "handlers" : ["eventWriter"],
+  "usingPO" : true,
+  "processEnv" : [
+    "STREAM_NAME"
+  ],
+  "securityBounds" : {
+    "nodeFetch" : "owner",
+    "nodemailer" : "owner",
+    "got" : "owner"
+  },
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

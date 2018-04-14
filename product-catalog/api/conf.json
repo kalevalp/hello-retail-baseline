@@ -1,0 +1,21 @@
+{
+  "unsecLambda" : "catalogApi.js",
+  "secLambdaFullPath" : "/var/task/secure-catalogApi.js",
+  "handlers" : ["categories", "products"],
+  "runFromGET" : true,
+  "userPassForIFCOnly" : true,
+  "usingPO" : true,
+  "processEnv" : [
+    "TABLE_PRODUCT_CATEGORY_NAME",
+    "TABLE_PRODUCT_CATALOG_NAME",
+    "TABLE_PRODUCT_PRICE_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

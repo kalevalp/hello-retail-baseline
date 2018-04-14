@@ -1,0 +1,19 @@
+{
+  "unsecLambda" : "publish.js",
+  "secLambdaFullPath" : "/var/task/secure-publish.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-publish.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "runFromSF" : true,
+  "processEnv" : [
+    "RETAIL_STREAM_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

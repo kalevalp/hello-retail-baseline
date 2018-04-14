@@ -1,0 +1,22 @@
+{
+  "unsecLambda" : "report.js",
+  "secLambdaFullPath" : "/var/task/secure-report.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-report.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "runFromSF" : true,
+  "processEnv" : [
+    "RETAIL_STREAM_NAME",
+    "RETAIL_STREAM_WRITER_ARN",
+    "TABLE_PHOTO_REGISTRATIONS_NAME",
+    "TABLE_PHOTO_ASSIGNMENTS_NAME"
+  ],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

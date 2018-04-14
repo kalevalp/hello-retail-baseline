@@ -1,0 +1,17 @@
+{
+  "unsecLambda" : "success.js",
+  "secLambdaFullPath" : "/var/task/secure-success.js",
+  "LOCALsecLambdaFullPath" : "/Users/kalpernas/serverless/hello-retail-secure/event-writer/secure-success.js",
+  "handlers" : ["handler"],
+  "usingPO" : true,
+  "runFromSF" : true,
+  "processEnv" : [],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+    "securityBounds" : {    "nodeFetch" : "owner",    "nodemailer" : "owner",    "got" : "owner"  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}
