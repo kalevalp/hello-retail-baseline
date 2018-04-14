@@ -1,0 +1,10 @@
+region: 
+
+profile: 
+accountId: 
+
+teamRole: 
+teamPolicy: arn:aws:iam::aws:policy/AdministratorAccess
+
+company: 
+team: 
